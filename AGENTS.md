@@ -11,6 +11,9 @@ For any speaking character, import the **full N.mp3** directly to that avatar th
 ## Always review a contact sheet
 After poses and after every camera pass: render stills and combine them with `scripts/contact_sheet.py` into one image, look at it, fix bad shots, send it to the user. See docs/rules.md (Review step).
 
+## Start here
+**docs/WORKFLOW.md** = the step list. **data/** = ready-made data for all 11 parts (times, transcripts, story text, assets).
+
 ## Read first
 1. `docs/rules.md`: every rule the user has given (cameras, lights, motion speed, files, timeline…). **Follow all of them.**
 2. `docs/scene_anchors.md`: coordinates of every scene spot already measured (where characters/cameras go).

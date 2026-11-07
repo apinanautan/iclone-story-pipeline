@@ -1,0 +1,526 @@
+[
+ {
+  "part": 1,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\1.mp3",
+  "seconds": 37.4,
+  "timeline_seconds": 42.4,
+  "status": "done: E:\\Video\\1.mp4",
+  "scene_suggestion": "",
+  "segments": [],
+  "speakers": "see docs/part1_plan.md"
+ },
+ {
+  "part": 2,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\2.mp3",
+  "seconds": 81.5,
+  "timeline_seconds": 86.5,
+  "status": "done: E:\\Video\\2.mp4",
+  "scene_suggestion": "",
+  "segments": [],
+  "speakers": "see docs/part2_plan.md"
+ },
+ {
+  "part": 3,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\3.mp3",
+  "seconds": 72.8,
+  "timeline_seconds": 77.8,
+  "status": "built: E:\\FileSave\\3.iProject (user renders)",
+  "scene_suggestion": "",
+  "segments": [
+   {
+    "start": 0.56,
+    "end": 4.96,
+    "text": "ยิ่งมีคนศัตรธาพากันมากราบ วาย มาทำบุญ"
+   },
+   {
+    "start": 4.96,
+    "end": 10.8,
+    "text": "บว่ากับการชิวาธแห่งนี้ จาวอาวาธโองเก่าได้ร่วมกับยาทยม"
+   },
+   {
+    "start": 10.8,
+    "end": 14.46,
+    "text": "สร้างรูป พยานาคโองใหญ่โต สวยงาม"
+   },
+   {
+    "start": 14.46,
+    "end": 19.88,
+    "text": "และมีรูป พน ธาวเซวัน องใหญ่โต สวยงามไม่ต่างกัน"
+   },
+   {
+    "start": 19.88,
+    "end": 23.12,
+    "text": "ประจวบกับมัตตอนที่พระมาฮสมชาติ"
+   },
+   {
+    "start": 23.12,
+    "end": 26.24,
+    "text": "เข้ามาเป็นจาวอาวาธได้เพียง 2 เดือน"
+   },
+   {
+    "start": 26.24,
+    "end": 30.42,
+    "text": "แล้วมีคนมาไหวพระที่วัตินิ กินก็ดวงดี"
+   },
+   {
+    "start": 30.42,
+    "end": 35.24,
+    "text": "ถูกรอตลีรวันที่ 2-10 บัй ได้รับเงินเป็นร้าน"
+   },
+   {
+    "start": 35.24,
+    "end": 40.28,
+    "text": "ก็ยิ่งทำให้ชื้อเสียงของวัติ และชื้อเสียงของPU"
+   },
+   {
+    "start": 40.28,
+    "end": 42.82,
+    "text": "โดนด TIME มากเข้าไปอีก"
+   },
+   {
+    "start": 42.82,
+    "end": 45.74,
+    "text": "ในวตรธ่านเป็นพระที่น้ำผาโชกลาบ"
+   },
+   {
+    "start": 45.74,
+    "end": 48.2,
+    "text": "และความจะเริ่นมาสูวัติ"
+   },
+   {
+    "start": 48.2,
+    "end": 51.68,
+    "text": "วัตินิจึงเป็นที่เรื่องลือกันในหมู่สายหมู้"
+   },
+   {
+    "start": 51.68,
+    "end": 56.36,
+    "text": "หรือพวกที่ชอบต Products ว่าłęเสียงสักмотрณ์ที่ขอโพรน"
+   },
+   {
+    "start": 56.38,
+    "end": 59.94,
+    "text": "เมื่อยานยมพาการังหลายมากราบ ชลิบว้ายขอโพรน"
+   },
+   {
+    "start": 59.98,
+    "end": 62.78,
+    "text": "ทั้งขอโพรนจากผลำหาสมชาด"
+   },
+   {
+    "start": 62.92,
+    "end": 66.14,
+    "text": "แหน่งขอโพรรท์จะฤหาดภัลการอ การบรูปุ่นขาไห้"
+   },
+   {
+    "start": 66.18,
+    "end": 67.74,
+    "text": "กับอิ Porqueya-naก"
+   },
+   {
+    "start": 67.88,
+    "end": 69.6,
+    "text": "ด้วยความคล้าการ trimm มีเง gagm ครั้งขาววัต�้าติ"
+   },
+   {
+    "start": 69.62,
+    "end": 71.66,
+    "text": "แรงываютขาศทราบ"
+   }
+  ],
+  "speakers": "see docs/part3_plan.md"
+ },
+ {
+  "part": 4,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\4.mp3",
+  "seconds": 41.1,
+  "timeline_seconds": 46.1,
+  "status": "built: E:\\FileSave\\4.iProject (user renders)",
+  "scene_suggestion": "",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 7.0,
+    "text": "แต่ถึงอย่างนั้น พระมหาสมชาติก็ไม่เคยสักเศษเล็กยัน หรือไม่หวยแต่อย่างได้"
+   },
+   {
+    "start": 7.0,
+    "end": 18.0,
+    "text": "แม้คนที่มาวายสิ่งสักศิตที่วัดแห่งนี้ จะมาทวายสังคธานกับท่าน และอ้อนววนขอให้ท่านเจอมลายมือ หรือดูว่างให้"
+   },
+   {
+    "start": 18.0,
+    "end": 22.0,
+    "text": "พระมหาสมชาติก็จะปฏิเศษไปเสียทุกราย"
+   },
+   {
+    "start": 22.0,
+    "end": 29.0,
+    "text": "รักษาสีน รักษาใจให้ปริสุทธก็พอยม และสิ่งดีๆก็จะเข้ามาเอง"
+   },
+   {
+    "start": 29.0,
+    "end": 35.0,
+    "text": "มีเวลาก็มันทำบุญสุนท่าน นั่งสมาธิสวดมนกันบ้างนะ"
+   },
+   {
+    "start": 35.0,
+    "end": 41.0,
+    "text": "พระมหาสมชาติ จะให้พ่อนกับย่าดยมไปแบบนี้ แต่ไม่เคยสักเศษเล็กยัง"
+   }
+  ],
+  "speakers": "see docs/part4_plan.md"
+ },
+ {
+  "part": 5,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\5.mp3",
+  "seconds": 20.4,
+  "timeline_seconds": 25.4,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 4.0,
+    "text": "แต่ไม่รู้ว่าเป็นเพราะประจวบมอร์หรือย่างไร"
+   },
+   {
+    "start": 4.0,
+    "end": 7.0,
+    "text": "ในเราคนที่พากันมากราบวาย"
+   },
+   {
+    "start": 7.0,
+    "end": 11.0,
+    "text": "เมื่อกลับไปแล้ว ก็เกิดทำมาค้าขึ้นบ้าง"
+   },
+   {
+    "start": 11.0,
+    "end": 13.0,
+    "text": "ถูกหวยกันบ้าง"
+   },
+   {
+    "start": 13.0,
+    "end": 17.0,
+    "text": "ยิ่งกระพื้อชื่อเสียงความดังของพระมหาสมชาติ"
+   },
+   {
+    "start": 17.0,
+    "end": 20.0,
+    "text": "กับความดังของวัดมากขึ้นไปอีก"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 6,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\6.mp3",
+  "seconds": 35.7,
+  "timeline_seconds": 40.7,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 5.2,
+    "text": "ไม่ได้รับศักยัน ศักรายมือ หรือดูดวงอะไรทั้งนั้น"
+   },
+   {
+    "start": 5.7,
+    "end": 8.7,
+    "text": "แต่สัตว์ท่าของย่าดยม ก็มีแต่เพิ่มมากขึ้น"
+   },
+   {
+    "start": 9.04,
+    "end": 11.04,
+    "text": "พากันมาทำบุญมากมาย"
+   },
+   {
+    "start": 11.58,
+    "end": 14.08,
+    "text": "ย่อดจองกะทิ้นข้ามปีเลยทีเดียว"
+   },
+   {
+    "start": 14.7,
+    "end": 20.2,
+    "text": "แท้มยังถวายปัดใจ ให้กับพระมหาสมชาติเป็นการส่วนตัวอีกไม่น้อย"
+   },
+   {
+    "start": 20.96,
+    "end": 24.12,
+    "text": "ซึ่งพระมหาสมชาติก็จะให้บันดากรรมการวัตย์"
+   },
+   {
+    "start": 24.32,
+    "end": 26.32,
+    "text": "จัดการเรื่องเงินวัดทั้งหมด"
+   },
+   {
+    "start": 26.82,
+    "end": 29.82,
+    "text": "ส่วนเงินส่วนตัวที่ย่าดยมถวายมา"
+   },
+   {
+    "start": 30.12,
+    "end": 32.12,
+    "text": "ท่านก็ให้ลูกศิตไปจัดการ"
+   },
+   {
+    "start": 32.42,
+    "end": 34.42,
+    "text": "เอาเงินเข้าบนชีให้กับท่าน"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 7,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\7.mp3",
+  "seconds": 23.0,
+  "timeline_seconds": 28.0,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 2.84,
+    "text": "กำาการหละมันต้องให้กับท่าน"
+   },
+   {
+    "start": 3.88,
+    "end": 7.42,
+    "text": "เมื่อมีคนมาทำบุญที่วัดมาก Ос hobby"
+   },
+   {
+    "start": 7.42,
+    "end": 10.16,
+    "text": "ก็ต้องมีคนมาช่วยงานที่วัดมาก"
+   },
+   {
+    "start": 10.16,
+    "end": 12.26,
+    "text": "กำ wound hlomatเลยต้องหาคนเพิ่ม"
+   },
+   {
+    "start": 12.56,
+    "end": 16.0,
+    "text": "έρยิมขณายก ได้พาเศановิกลิ้น"
+   },
+   {
+    "start": 16.0,
+    "end": 18.02,
+    "text": "กาигhai  cuentaวัด"
+   },
+   {
+    "start": 19.22,
+    "end": 21.52,
+    "text": "ในกำาการคนอื่นอื่น"
+   },
+   {
+    "start": 21.52,
+    "end": 22.34,
+    "text": "กลาด reservpersonวัด"
+   },
+   {
+    "start": 22.34,
+    "end": 24.34,
+    "text": "ผาhapeธรรมช่วย"
+   },
+   {
+    "start": 24.34,
+    "end": 25.82,
+    "text": "กำลังอื่นอื่น"
+   },
+   {
+    "start": 25.82,
+    "end": 27.32,
+    "text": "กงพาหยาดของต้น ข้าช่วย"
+   },
+   {
+    "start": 27.32,
+    "end": 29.04,
+    "text": "โ preserved"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 8,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\8.mp3",
+  "seconds": 32.1,
+  "timeline_seconds": 37.1,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 4.44,
+    "text": "สีกาออยหรือนางอรวิ เป็นหญิงไม้ไหว้ต้น 40"
+   },
+   {
+    "start": 5.04,
+    "end": 9.0,
+    "text": "แต่หน้าตาและรูปร้างนั้น ดูอ่อนกว่าอายุมาก"
+   },
+   {
+    "start": 9.68,
+    "end": 13.76,
+    "text": "หากบอกว่านางพึ่งจากอายุ 30 ก็มีคนเชื่อ"
+   },
+   {
+    "start": 14.48,
+    "end": 16.52,
+    "text": "แต่ได้ความที่มีครอบครัวเร็ว"
+   },
+   {
+    "start": 17.08,
+    "end": 21.52,
+    "text": "ตอนนี้ลูกชายของนาง ก็เรียนระดับมาหาวิทยาไหลแล้ว"
+   },
+   {
+    "start": 22.24,
+    "end": 26.24,
+    "text": "สามีของนางเสียชีวิต นางออยเลยเป็นแม่ ๆ"
+   },
+   {
+    "start": 26.24,
+    "end": 30.64,
+    "text": "หรือเป็นแม่ ๆ แดว แบบที่คนสมัยนี้เรียกกัน"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 9,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\9.mp3",
+  "seconds": 26.1,
+  "timeline_seconds": 31.1,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 4.96,
+    "text": "เมื่อแรกเข้ามาช่วยงานวัติ สีกาโอยก็ช่วยยิบจับงาน труกอย่าง"
+   },
+   {
+    "start": 4.96,
+    "end": 10.42,
+    "text": "เวลาที่วัติมีงาน ! มะเวลาที่ไม่มีงานทอดกกติadin"
+   },
+   {
+    "start": 10.42,
+    "end": 15.42,
+    "text": "หรืองานทอดพถป่า ? แต่ห้ากекเป็นวันดิด traveling period"
+   },
+   {
+    "start": 15.42,
+    "end": 20.34,
+    "text": "หรือวันดิดนัก golf นะคะดองร angจะมาช่วยทุกคนทำความสะอาตร้าน"
+   },
+   {
+    "start": 20.34,
+    "end": 27.26,
+    "text": "วัติ ร้านบูชาพย Lordsนาก เตรียมบูชา vosuvan"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 10,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\10.mp3",
+  "seconds": 27.0,
+  "timeline_seconds": 32.0,
+  "status": "todo",
+  "scene_suggestion": "วัด(ยังไม่มีร้านกาแฟ)150",
+  "segments": [
+   {
+    "start": 0.0,
+    "end": 5.64,
+    "text": "และพระมหาสมชาติเอง ก็ออกมาสนธนากับน้างออยที่หน้าคุตติ"
+   },
+   {
+    "start": 5.64,
+    "end": 8.84,
+    "text": "ไม่เคยเข้าไปอยู่ในคุตติสองต่อสอง"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ },
+ {
+  "part": 11,
+  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\11.mp3",
+  "seconds": 51.1,
+  "timeline_seconds": 56.1,
+  "status": "todo",
+  "scene_suggestion": "บ้านสีกาอ๋อย(ภายใน) / กุฏิ (ask user)",
+  "segments": [
+   {
+    "start": 1.58,
+    "end": 6.72,
+    "text": "ถ้าว่า สิ่งที่ทุกคนไม่ see แล้วไม่รู้ ก็คือ นางออย ได้ขอเบิดธรรmel mitigated"
+   },
+   {
+    "start": 6.72,
+    "end": 12.1,
+    "text": "ส่วนตัวของพระเมืองสมชาดและ 토มาคุยกับท่านบ่อย ๆ"
+   },
+   {
+    "start": 12.1,
+    "end": 15.56,
+    "text": "โดยอ่างเรื่องข้อคำพรปร каналปันหาชีวิตiniziบ้าง ."
+   },
+   {
+    "start": 15.56,
+    "end": 19.5,
+    "text": "ปันหาการทิดขยามฝึกนั่งสมาทิ espí่ง"
+   },
+   {
+    "start": 20.14,
+    "end": 23.38,
+    "text": "เวลา นางออยคุยกับพระเมืองสมชาด"
+   },
+   {
+    "start": 23.38,
+    "end": 25.8,
+    "text": "นางก็จะแทนตัวเองว่ Stacy ว่ะนองอย่างนั้น ."
+   },
+   {
+    "start": 25.8,
+    "end": 31.26,
+    "text": "น้องอย่างนี้ แล้ว้ามันข creaturesbish"
+   },
+   {
+    "start": 31.76,
+    "end": 35.76,
+    "text": "เป้าเลย มาเผอะ Dollar"
+   },
+   {
+    "start": 36.34,
+    "end": 42.16,
+    "text": "สมหาสบรรยายๆ แต่฿้าเจ้าご insist"
+   },
+   {
+    "start": 42.7,
+    "end": 46.78,
+    "text": "พร้อมเกิดให้แบบนั้น"
+   },
+   {
+    "start": 47.74,
+    "end": 49.36,
+    "text": "Okay let's go"
+   },
+   {
+    "start": 50.38,
+    "end": 52.4,
+    "text": "하�ัศน meaningful"
+   },
+   {
+    "start": 52.78,
+    "end": 54.5,
+    "text": "น้องอย่างนี้"
+   }
+  ],
+  "speakers": "TODO: read data/story_script.txt for quotes (ชื่อ : “...”) inside this part; speaker lines need lip sync"
+ }
+]

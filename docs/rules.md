@@ -104,3 +104,5 @@
 - **Review step (mandatory, every AI):** after placing characters/poses AND after every camera pass, render stills (cameras: MODE "stills" in the cams script = middle frame of each shot) and build ONE contact sheet: `python scripts/contact_sheet.py "<ic8_jobs>\c3_*.png" sheet.jpg`. Look at the sheet, fix any shot that shows backs only, blocked views, full bodies/legs, off-centre or empty framing, then re-render the sheet. Send the final sheet to the user before saving/rendering video. Also check mouths with scripts/ic8_mouth_check.py the same way.
 
 - **User (2026-11-07):** keep the Timeline zoomed to show the WHOLE project (0 → end frame, e.g. 0–4600), never a 200–300 frame window. Statue/landmark view shots: show the WHOLE statue, big in frame (part 3 Naga: cam ~2700 cm away at 80mm), with the same slow camera move.
+
+- **User (2026-11-07):** the user renders videos themselves; build each part, save, send the contact sheet, then STOP (no render unless asked). Full step list for any AI: docs/WORKFLOW.md; per-part data: data/parts_index.json, data/story_script.txt, data/assets.json; transcripts by GPU whisper: tools/transcribe.py.

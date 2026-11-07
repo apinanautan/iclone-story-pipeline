@@ -1,7 +1,8 @@
 # Trim viseme keys to each speaker's window after the FULL N.mp3 was imported via
 # Animation > Create Script > Audio File (GUI; RAudio.LoadAudioToObject makes no visemes).
 import RLPy, os
-WIN = {'p2_old': (1.4, 4.7), 'p2_im': (13.4, 24.6), 'p2_woman': (31.7, 40.5), 'p2_young': (40.8, 50.6)}
+import json as _j
+WIN = _j.loads(os.environ.get('LIPWIN', 'null')) or {'p2_old': (1.4, 4.7), 'p2_im': (13.4, 24.6), 'p2_woman': (31.7, 40.5), 'p2_young': (40.8, 50.6)}
 OUT = os.path.join(os.environ['LOCALAPPDATA'], 'Tidmunz Studio', 'snapgen_data', 'ic8_jobs', 'lip_trim.txt')
 out = []
 for a in RLPy.RScene.GetAvatars():
