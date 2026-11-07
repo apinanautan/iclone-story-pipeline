@@ -1,0 +1,60 @@
+---
+name: iclone-key
+description: Key one story part in iClone 8 into a finished video (คีย์ไอโคน): plan shots from the audio, place CC5 characters in the scene, motions, half-body cameras, audio in iClone, render mp4. Use when the user sends an audio part (audio_output\N.mp3) or says คีย์ไอโคน / คีย์ท่อน N.
+---
+The output is a **video file with sound**, not a project. Open only the scene file in `<story>\ฉาก\` (don't open the user's saves). Save only `E:\FileSave\N.iProject` + render `E:\Video\N.mp4` (just the audio length). Don't write anything into the G: story folder. No preview/backup/extra files. Follow the order:
+
+## Driving iClone with no mouse (do this first, saves credits)
+- Audio: `C:\Users\Apinan\Downloads\audio_output\N.mp3`. ffmpeg: `C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe`.
+- After iClone starts: `ic8_ui.ps1 click "OK"` then `click "No, thank you."` clears the popups (UIA, no mouse). Scripts are in `Documents\CC5 Characters\iclone\`.
+- **Load `ic8_watch.py` once** (Script > Load Python, the only mouse step). After that, drop any .py into `ic8_jobs\run\`: it runs inside iClone within ~1 s, gets renamed .done/.err, and writes `<name>.log`. Never open the Script menu again.
+- Open/Save dialogs: `ic8_open.ps1 "<path>"` (Win32 WM_SETTEXT+IDOK). If it says "no dialog", click the File name box and type the path instead. Save only to `E:\FileSave\N.iProject`, where N = the audio number (user's rule). If N.iProject already exists from an older story, ask before overwriting.
+- agent-desktop (`rtk agent-desktop`) works headless after removing CodexSandboxUsers from the ACL of `~\.agent-desktop` (icacls). It sees iClone's panels but **not the menu bar or timeline**, so watcher + scripts are the main path.
+- **Extend the timeline to audio + 5 s every time (user):** `RGlobal.SetProjectLength(T(L)); RGlobal.SetEndTime(T(L))`. SetEndTime alone does nothing; the scene stays at its old End Frames (e.g. 1799). Check the Project panel's End Frames = L×60.
+- **First step of every part (user):** load the audio into the project and **make the Sound row visible**. If there's no Sound row: click the ⌄ (dropdown) on the timeline's Project row → tick **Sound**. Then import. Never hang the audio on a hidden prop instead.
+- Sound: put the audio on the **Project > Sound track** (right-click the Sound row at frame 0 > Import > pick the mp3). RLPy has no API for this track; don't use audio_host.
+- Single standing character: `ic8_solo.py` + `solo.json` (avatar, pos, motion, length, cam, target, mode still/setup). **ONE motion clip slowed so it ends with the audio (speed = clip_len/audio_len), not looped** (user's rule).
+- Plain standing motion: `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\Stand00.iMotion` (22.2 s). More motions in that folder.
+- **Video output: always `E:\Video\N.mp4`, 1920x1080, 60 fps only (no 30)** (user's rule from part 2 on).
+- **Rendering by script works:** `ic8_render2.py` (+render.json) → `RGlobal.SetRenderExportType(1)` (1 = Video, 0 = Image) + `SetRenderExportParameter(p)` + `RenderVideo(path)`. Takes ~15 min for 2000 frames at 1080p30 and blocks the watcher, so wait in the background. It **ignores the frame range and renders the whole project (~66.7 s)**, so trim afterwards with ffmpeg `-t <audio+5>` (re-encode). Audio comes along from the Sound track.
+- Scene `มหาอกหัก\ฉาก\วัด(ยังไม่มีร้านกาแฟ)150`: temple front faces -Y, stairs centered around x=-860 y≈700. Monk at (-860,450,yaw 0), cam (-860,180,150) → target (-860,450,140) = half body with the stairs behind. Contains an extra avatar "3.ตาบุญ…" to hide or delete.
+- New camera: RLPy can't create one. Use Create menu (74,31) > Camera (130,249) > Linear Camera (287,250) on a 1920 screen. It's named `Camera_0`; then key its position/rotation with a watcher script and `SetCurrentCamera`.
+- **Camera rule (user):** lens is **80 or 100 mm only** (I pick). Keep the same subject size by distance = 270cm × focal/50 (100mm ≈ 5.4 m). **Always turn on DOF**: focus on the character, background blurred. `d=RLPy.RCameraDofData(); d.SetEnable(True); d.SetFocus(<cm from camera to character>); d.SetRange(40); d.SetFarTransitionRegion(150); d.SetNearTransitionRegion(80); d.SetFarBlurScale(1); d.SetNearBlurScale(1); k=RLPy.RKey(); k.SetTime(t); cam.AddDofKey(k,d)`. Tested: sharp monk, soft temple.
+- **Every character gets auto-blink:** `av.GetFaceComponent().SetAutoBlinkName('Normal')` (options: None, Normal, Nervous, Speechless, Charming, Child). `names[0]` = None, so don't use it.
+- **Tail (user):** motion and cameras run **~300 frames (5 s at 60 fps) past the end of the audio**, so the edit has slack. Render the full length, audio + tail.
+- Multiple cameras: `RScene.ClearSwitchCameraKeys(); RScene.AddSwitchCameraKey(RTime, cam)` for each cut. Pick the cut point from a pause in the audio (`ffmpeg -af silencedetect=n=-30dB:d=0.25`).
+- Opening shot design that works: 80mm wide on the temple roof → tilt/crane down onto the character (Camera, 0→cut), then 100mm half body with DOF and a slow push in (Camera_0). Shot 1 of part 1 is in `shots1.py` (ic8_jobs\run\shots1.done).
+- **Faces must not be dark (user):** add a soft face light to every character. Create menu (74,31) > hover Light (130,208) > Spot Light (262,227) creates `Spotlight` → script it: rename `FaceLight`, position front-left and a bit above the face (~2.7 m: face + (-150,-220,+50)), rotate like a camera (look() with base Rx90) toward the face, `SetColor(t, RRgb(255,236,214))`, **`SetMultiplier(t, 0.04)`** (0.08 is already bright, 0.6 blows out), `SetRange(t,700)`, `SetCastShadow(False)`. `SetSpotLightBeam` needs a 4th arg (fAttenuation).
+- **Wide/establishing shots: no DOF** (blur ruins them). DOF only on character shots. Turn it off with `d.SetEnable(False)` + AddDofKey at 0.
+- **Anything irrelevant blocking the shot (beams, trees, fences): hide it (`RScene.Hide(obj)` / Hide in the Scene panel)** instead of nudging the camera repeatedly (user's tip). Check stills for black edges.
+- Temple establishing shot that works (scene วัด(ยังไม่มีร้านกาแฟ)150): 80mm, low angle inside the yard, cam (-1900,-1090,93)→(-1860,-1095,96), target ~(-790,1500,920-950) = the carved gable against the sky, slow sideways slide, monk out of frame. Keep the camera **inside the wall (y > -1250)**; outside it a tree and the fence block the view.
+- **When everything is set up: switch the viewport camera to "Switcher"** (user wants to just press Play). The top toolbar dropdown (930,56) > "Switcher" item (912,81). It's greyed out during playback, so `RGlobal.Stop()` first.
+- **Face (iTalk) for every standing character (user):** `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\Digital Soul 100+\1.Watch\Look front.iTalk` (20.4 s, looks straight ahead). Others: Look around_*, Look up_*, 2.Think\*, 4.Feel_Like\* (by mood). Load: `RScene.SelectObject(av); RGlobal.SetTime(0); RFileIO.LoadFile(path)` → `av.GetFaceComponent().GetClip(0)`.
+- **Speed rule for every clip (body + face):** slow it as much as possible so it spans the whole length (speed = clip_len / total). If the clip is so short that this drops below ~0.5, use speed ~0.5 and chain 2–3 copies back to back to fill the length (pick by context).
+- **Placement anchors (user's method):** the user drops a marker prop in the scene where people should go, once per scene/spot. Read its position with the survey (`ic8_survey`/`a_survey.py`), place characters around it, and **record the anchor coordinates in `scene_anchors.md` (next to this file)** so the next part needs no guessing. Don't place characters by guessing from bounding boxes.
+- Scene `ภายในโบสถ์ของวัดอีกวัด`: floor z≈25765, altar toward +Y (candle holders y≈1400), contains extra avatar `Sunee` (hide it), no camera or spot light in the scene (create them), no Sound row (import audio by hand).
+- Create menu submenus (Light/Camera) need a **click**, not a hover.
+- **Every instruction the user gives must go into this skill right away** (user: "so I don't have to keep telling you").
+- **Seated poses use AccuPOSE** (list and rules in `accupose_presets.md`): clear all animation → frame 0 → apply the pose in the panel → then add face/blink/lip sync with a script (`ic8_part2_build.py`, USE_BODY_MOTION=False). Don't use SitG motions (arms out / leaning back look wrong).
+- **Save often** (Ctrl+S / Save As E:\FileSave\N.iProject) after each big step: iClone can crash, and everything since the last save is lost.
+- After an iClone restart: load `ic8_watch.py` again (Script > Load Python), once.
+- Do one step at a time as the user says. Don't render until told to.
+- PowerShell: variables are case-insensitive, so `$j` overwrites `$J`.
+
+1. **Plan before building** (the user must see it first): get the part's text (storyboard_history.json or the user pastes it) + time each phrase from the volume dips in the wav (no silence; there's background music: RMS per 0.1 s, below 35% of median = pause). Write a table: time | narration | what the characters do | camera. **Half-body/MCU/OTS only, no full body**, 4–6 cuts. Send it to the user to approve.
+2. Load characters into the scene: `ic8_key_shot.py` (job json + shot.txt). Know the scene first: `ic8_survey.py`→survey.txt and `ic8_look.py` (top render). Known scene: บ้านครอบครัววีนา, stairs ~(4280,3700) facing -Y, yard x3700-4400 y3000-3600.
+3. Create > Camera > Linear Camera (one per project; save it in the project).
+4. `ic8_jobs\stage.json` → run `ic8_stage.py`: mode "stills" renders stage_shotNa/b.png → combine into one sheet (PIL, 400px) and check → fix → mode "video" renders mp4 + puts the wav (ffmpeg mp3→wav) on the hidden avatar (`audio_host`) so it doesn't lip-sync.
+   - actors: pos [x,y,yaw], motions [[t,path]] (each repeats until the next), moves [[t,x,y,yaw]] = walk path (Walk.iMotion walks in place, the moves keys carry it). Keep walking until the part ends so nobody stands left behind.
+   - shots: [t,[cam xyz],[target xyz]] cut instantly. Distance ~1.8–2.5 m, eye height 150–160 = half body.
+   - yaw 0 = face -Y, 90 = +X, 180 = +Y.
+5. Motion: `G:\ไดรฟ์ของฉัน\.ไฟล์ต่างๆ (ห้ามลบ)\โมชั่น\` → MixMoves Communication 200 (Stand Idle_Response/Idle_Talk/Arms Crossed), CC MixMove Walk, Bros&Pals Greeting Gesture (wave). Don't use Daily Life Motion.
+
+Driving iClone (computer-use):
+- Thai paths: `Set-Clipboard` in PowerShell, then Ctrl+V. **Zoom to check the box text before pressing Enter**, because the user may have copied something else.
+- open_application iClone before every batch (focus slips often).
+- The "script not compatible" popup that shows up when opening the Script menu is a leftover: Cancel, then open Load Python again. Missing texture: OK.
+- Wait for the result from the log/png with an until-loop. Don't keep taking screenshots.
+- If iClone freezes (Not Responding > 3 minutes), ask before force-closing.
+
+RLPy gotchas: **RTime = 1/6000 s ticks (not ms!)**, int only, `FromValue(int(sec*6000))`. Render with `ic8_render.py` (render.json start/end in sec → `RGlobal.RenderVideo(start, end, path)`), then mux the audio part with ffmpeg → `E:\Video\N.mp4`. Before the full render, test-render 1 s and check the duration and the shot are correct. Camera base rotation = Rx(+90°) (don't read it from Front view; it flips on a re-run). The script's SaveFile doesn't write → use File > Save Project As yourself. `RemoveAllAnimations` before re-keying.

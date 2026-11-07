@@ -1,0 +1,310 @@
+{
+ "name": "ท่อน 7",
+ "mode": "setup",
+ "length": 26.6,
+ "audio": "C:/Users/Apinan/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/part7.wav",
+ "out": "C:/Users/Apinan/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/render7.mp4",
+ "motion_root": "G:/ไดรฟ์ของฉัน/.ไฟล์ต่างๆ (ห้ามลบ)/โมชั่น",
+ "beats": "7.txt (6 ช็อต): 0-4.2 วีนาเริ่มมัธยม | 4.2-10.3 วันดีแต่งกับทหาร | 10.3-14.2 ไปอยู่ค่ายทหาร (เดินซ้ายไปขวา) | 14.2-18.3 OTS วีนามองพี่สาวสองคน | 18.3-22.1 CU วีนา | 22.1-26.6 MCU วีนาหันออก คางเชิด",
+ "actors": {
+  "วีนา วัยสาว": {
+   "pos": [
+    4100,
+    3190,
+    205
+   ],
+   "moves": [
+    [
+     22.05,
+     4100,
+     3190,
+     205
+    ],
+    [
+     22.1,
+     4100,
+     3190,
+     150
+    ]
+   ],
+   "motions": [
+    [
+     0,
+     "Motion/MixMoves Communication 200_Female/Stand/Idle_Response/Happy.iMotion"
+    ],
+    [
+     14.2,
+     "Motion/MixMoves Communication 200_Female/Stand/Arms Crossed_Response/Disagree01.iMotion"
+    ],
+    [
+     22.1,
+     "Motion/MixMoves Communication 200_Female/Stand/Hand on Hips_Response/Denial.iMotion"
+    ]
+   ]
+  },
+  "Wandee": {
+   "pos": [
+    4225,
+    3560,
+    0
+   ],
+   "moves": [
+    [
+     10.25,
+     4225,
+     3560,
+     0
+    ],
+    [
+     10.3,
+     4380,
+     2760,
+     -90
+    ],
+    [
+     14.15,
+     3930,
+     2760,
+     -90
+    ],
+    [
+     14.2,
+     4060,
+     3470,
+     30
+    ]
+   ],
+   "motions": [
+    [
+     0,
+     "Motion/MixMoves Communication 200_Female/Stand/Idle_Response/Happy.iMotion"
+    ],
+    [
+     10.3,
+     "04_CC MixMove_Female/Walk.iMotion"
+    ],
+    [
+     14.2,
+     "Motion/MixMoves Communication 200_Female/Stand/Idle_Response/Happy.iMotion"
+    ]
+   ]
+  },
+  "Soldier": {
+   "pos": [
+    4295,
+    3560,
+    0
+   ],
+   "moves": [
+    [
+     10.25,
+     4295,
+     3560,
+     0
+    ],
+    [
+     10.3,
+     4380,
+     2690,
+     -90
+    ],
+    [
+     14.15,
+     3930,
+     2690,
+     -90
+    ],
+    [
+     14.2,
+     5600,
+     1800,
+     0
+    ]
+   ],
+   "motions": [
+    [
+     0,
+     "Motion/MixMoves Communication 200_Male/Stand/Idle_Response/Happy.iMotion"
+    ],
+    [
+     10.3,
+     "03_CC MixMove_Male/Walk.iMotion"
+    ],
+    [
+     14.2,
+     "Motion/MixMoves Communication 200_Male/Stand/Idle_Response/Happy.iMotion"
+    ]
+   ]
+  },
+  "ลำดวน วัยสาว": {
+   "pos": [
+    3960,
+    3440,
+    30
+   ],
+   "motions": [
+    [
+     0,
+     "Motion/MixMoves Communication 200_Female/Stand/Idle_Response/Happy.iMotion"
+    ]
+   ]
+  }
+ },
+ "shots": [
+  [
+   0,
+   [
+    4100,
+    3420,
+    152
+   ],
+   [
+    4100,
+    3190,
+    150
+   ],
+   [
+    4100,
+    3380,
+    152
+   ],
+   [
+    4100,
+    3190,
+    152
+   ]
+  ],
+  [
+   4.2,
+   [
+    4260,
+    3300,
+    150
+   ],
+   [
+    4225,
+    3560,
+    140
+   ],
+   [
+    4260,
+    3290,
+    150
+   ],
+   [
+    4260,
+    3560,
+    138
+   ]
+  ],
+  [
+   10.3,
+   [
+    4420,
+    3120,
+    150
+   ],
+   [
+    4380,
+    2720,
+    125
+   ],
+   [
+    3960,
+    3120,
+    150
+   ],
+   [
+    3930,
+    2720,
+    125
+   ],
+   35
+  ],
+  [
+   14.2,
+   [
+    4235,
+    3060,
+    162
+   ],
+   [
+    4000,
+    3455,
+    140
+   ],
+   [
+    4215,
+    3100,
+    160
+   ],
+   [
+    4000,
+    3455,
+    140
+   ]
+  ],
+  [
+   18.3,
+   [
+    4058,
+    3285,
+    160
+   ],
+   [
+    4100,
+    3190,
+    158
+   ],
+   [
+    4075,
+    3250,
+    159
+   ],
+   [
+    4100,
+    3190,
+    158
+   ]
+  ],
+  [
+   22.1,
+   [
+    4175,
+    3320,
+    155
+   ],
+   [
+    4100,
+    3190,
+    152
+   ],
+   [
+    4210,
+    3385,
+    152
+   ],
+   [
+    4100,
+    3190,
+    148
+   ]
+  ]
+ ],
+ "shot_notes": [
+  "1 0-4.2 MW วีนา ดอลลี่เข้า",
+  "2 4.2-10.3 MW วันดี(ซ้าย)+ทหาร(ขวา) แพนจากวันดีไปกลางคู่",
+  "3 10.3-14.2 Wide เดินซ้ายไปขวา กล้องตามข้าง",
+  "4 14.2-18.3 OTS หลังวีนา มองวันดี+ลำดวน ดอลลี่เข้า",
+  "5 18.3-22.1 CU วีนา ดอลลี่เข้า",
+  "6 22.1-26.6 MCU วีนาหันออก ดอลลี่ออก"
+ ],
+ "hide": [
+  "ตอนเหมือนปอบ (โดนยายเมียวเข้าสิง)",
+  "Somchai",
+  "วีนา วัยสาว_0"
+ ],
+ "audio_host": "",
+ "focal": 100,
+ "speed": 0.6
+}
