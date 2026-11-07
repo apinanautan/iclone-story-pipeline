@@ -86,3 +86,5 @@
 - Prefer the typed tools in mcp_server/server.py via the existing authorized Dino Tunnel connection for project/status/job tasks. Do not bypass safeguards by injecting arbitrary scripts into the watcher.
 - Queue read-only inspections freely when explicitly requested, but inspect watcher logs and the inner JSON result before claiming success.
 - Stage/motion/camera changes require the user's instruction; do not render without direct instruction. The OpenPlugin auto-start is optional and requires the user's UAC approval; never restart iClone with potentially unsaved scene work.
+
+- **User (2026-11-07):** every new rule/lesson also goes into Claude's own skill `~/.claude/skills/iclone-key/SKILL.md` (copy in docs/iclone-key-SKILL.md).

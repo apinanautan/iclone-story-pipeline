@@ -4,6 +4,10 @@ description: Key one story part in iClone 8 into a finished video (คีย์�
 ---
 The output is a **video file with sound**, not a project. Open only the scene file in `<story>\ฉาก\` (don't open the user's saves). Save only `E:\FileSave\N.iProject` + render `E:\Video\N.mp4` (just the audio length). Don't write anything into the G: story folder. No preview/backup/extra files. Follow the order:
 
+## Main project (source of truth): `C:\Users\Apinan\Documents\iClone Story Pipeline`
+Use the scripts in `scripts\` there, rules in `docs\rules.md`, coordinates in `docs\scene_anchors.md`, poses in `docs\accupose_presets.md`.
+Every new rule/script **goes into that project** (and `rules.md`) so other AIs can continue. Paths below that say `Documents\CC5 Characters\iclone\` are old copies.
+
 ## Driving iClone with no mouse (do this first, saves credits)
 - Audio: `C:\Users\Apinan\Downloads\audio_output\N.mp3`. ffmpeg: `C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe`.
 - After iClone starts: `ic8_ui.ps1 click "OK"` then `click "No, thank you."` clears the popups (UIA, no mouse). Scripts are in `Documents\CC5 Characters\iclone\`.
@@ -58,3 +62,14 @@ Driving iClone (computer-use):
 - If iClone freezes (Not Responding > 3 minutes), ask before force-closing.
 
 RLPy gotchas: **RTime = 1/6000 s ticks (not ms!)**, int only, `FromValue(int(sec*6000))`. Render with `ic8_render.py` (render.json start/end in sec → `RGlobal.RenderVideo(start, end, path)`), then mux the audio part with ffmpeg → `E:\Video\N.mp4`. Before the full render, test-render 1 s and check the duration and the shot are correct. Camera base rotation = Rx(+90°) (don't read it from Front view; it flips on a re-run). The script's SaveFile doesn't write → use File > Save Project As yourself. `RemoveAllAnimations` before re-keying.
+
+## Current rules + proven workflow (มหาอกหัก parts 1–2, 2026-11-07) — project: C:\Users\Apinan\Documents\iClone Story Pipeline (scripts/, docs/rules.md)
+Order per part: plan table (user approves) → open `<story>\ฉาก\` scene → load watcher (Script > Load Python > scripts/ic8_watch.py; jobs: drop .py in `%LOCALAPPDATA%\Tidmunz Studio\snapgen_data\ic8_jobs\run\`) → **import N.mp3 to Project Sound track first** (File > Import, Project row ⌄ tick Sound) → `SetProjectLength(T)` + `SetEndTime(T)`, T = audio + 5 s → characters (user drops marker blocks; read positions by script) → poses → face/blink/lips → mouth QA → cameras LAST → Switcher → save → render only when told.
+- Save only `E:\FileSave\N.iProject` (Ctrl+S often; iClone crashes; on restart choose OK to restore). Video only `E:\Video\N.mp4`, 1920×1080 **60 fps**. Never write to G:.
+- Seated: clear animation → frame 0 → **AccuPOSE in the GUI only** (Modify (1172,150) > Motion (1228,132) > AccuPOSE (1320,326) > pose > Apply Pose (482,580); select by `scripts/ic8_select.ps1 <name>`; panel closes on selection change). Men/monk = Sit Ground Cross Legs, women = Kneel Seiza. **Never** load .rlDikPreset by script (crash), **never** RemoveAllAnimations on posed avatars.
+- Meetings with a monk: villagers in two rows facing each other, monk at the head.
+- Face: Digital Soul `Look front.iTalk` slowed (~0.5, chained). Blink: `GetFaceComponent().SetAutoBlinkName('Normal')` for everyone. Face light per character: spot, RRgb(255,236,214), multiplier 0.04.
+- **Lip sync:** select speaker → Animation > Create Script > **Audio File** → full N.mp3 (dialog opens in audio_output; 2.mp3 at (958,280), Open (1206,686) on 1456-wide screenshot frame) → run `scripts/ic8_lip_trim.py` (edit WIN = speaker windows) to delete viseme keys outside that speaker's lines. `RAudio.LoadAudioToObject` makes NO visemes. Index `RVisemeKeyVector` as `kv[i]`; RTime → `.ToFloat()`. Then `scripts/ic8_mouth_check.py` (2 speaking + 1 silent close-up per speaker) and look before calling it done.
+- **Cameras (user):** 80/100 mm only; chest-up MCU only — never full body, seated legs, knees or the monk's lower robe; DOF on character shots, none on pure view shots; **never static: every shot slow zoom in/out + slow pan**; at least one villager group shot at a diagonal with heads overlapping ("หลบๆ โผล่ๆ"); hide blocking props instead of nudging. Template: `scripts/ic8_part2_cams.py` (one camera, hard cuts, DOF keys, head bone targeting, MODE "stills" renders mid-shot PNGs → contact sheet). Then viewport dropdown → Switcher (close the Render panel RenderImage leaves open first).
+- Render: `scripts/ic8_render2.py` + render.json → `E:\Video\N_raw.mp4` (renders whole project; ~40 min for 86 s at 60 fps, file appears at the end, don't touch iClone) → ffmpeg map video + N.mp3 audio, `-t` audio+5 → `E:\Video\N.mp4` (avoids doubled avatar voice).
+- Git in project: `git -c user.name=Apinan -c user.email=apinan.autan@gmail.com commit`. Add every new user instruction to docs/rules.md AND here.
