@@ -40,13 +40,13 @@ try:
     cam = [c for c in RLPy.RScene.GetCameras() if c.GetName() == 'Camera'][0]
     RLPy.RGlobal.RemoveAllAnimations(cam)
     ctl = cam.GetControl("Transform")
-    def setk(s, c, q, f, dist):
+    def setk(s, c, q, f, dist, rng=30):
         t = RLPy.RTransform(); ctl.GetValue(T(s), t)
         t.T().x, t.T().y, t.T().z = c
         t.R().x, t.R().y, t.R().z, t.R().w = q
         ctl.SetValue(T(s), t)
         cam.SetFocalLength(T(s), f)
-        d = RLPy.RCameraDofData(); d.SetEnable(True); d.SetFocus(dist); d.SetRange(30)
+        d = RLPy.RCameraDofData(); d.SetEnable(True); d.SetFocus(dist); d.SetRange(rng)
         d.SetFarTransitionRegion(120); d.SetNearTransitionRegion(60); d.SetFarBlurScale(1); d.SetNearBlurScale(1)
         k = RLPy.RKey(); k.SetTime(T(s)); cam.AddDofKey(k, d)
     mids = []
@@ -59,10 +59,10 @@ try:
         if ots == 'GROUP':  # villagers group view from behind the east row: foreground heads peek in, slow pan
             wx, wy, wz = head['p2_woman']
             # from the aisle's far (south) end, diagonally along the west row: heads overlap in depth
-            c0 = (120, head['p2_young'][1] - 150, hz - 4)
-            c1 = (105, head['p2_young'][1] - 130, hz - 4)
-            tgt = (hx, (head['p2_im'][1] + head['p2_old'][1]) / 2, hz + 2)
-            tgt1 = (hx, head['p2_old'][1] - 10, hz + 2)
+            # user: two people centered, tight, BOTH sharp, no sideways pan -> slow straight push-in only
+            tgt = tgt1 = (hx, (head['p2_im'][1] + head['p2_old'][1]) / 2, hz)
+            c0 = (30, head['p2_young'][1] - 170, hz - 4)
+            c1 = tuple(c0[k] + (tgt[k] - c0[k]) * 0.08 for k in range(3))
         elif ots:  # camera just behind the shoulder of `ots`, looking at subject
             ox, oy, oz = head[ots]
             vx, vy = ox - hx, oy - hy; L = math.hypot(vx, vy)
@@ -71,14 +71,15 @@ try:
         else:  # user: never static -> slow zoom (alternate in/out) + slow pan (orbit a few degrees)
             d1 = push or (dist * 0.85 if i % 2 == 0 else dist)
             if not push and i % 2: dist = dist * 0.85
-            a1 = a + math.radians(5 if i % 2 == 0 else -5)
+            a1 = a + math.radians(2 if i % 2 == 0 else -2)
             ex, ey = fx*math.cos(a1) - fy*math.sin(a1), fx*math.sin(a1) + fy*math.cos(a1)
             c0 = (hx + dx*dist, hy + dy*dist, hz - 5)
             c1 = (hx + ex*d1, hy + ey*d1, hz - 5)
         e2 = e - 1/60.0 if e < END else e
         D0 = math.dist(c0, tgt); D1 = math.dist(c1, tgt1)
-        setk(s, c0, look(c0, tgt), f, D0)
-        setk(e2, c1, look(c1, tgt1), f, D1)
+        rng = 250 if ots == 'GROUP' else 30
+        setk(s, c0, look(c0, tgt), f, D0, rng)
+        setk(e2, c1, look(c1, tgt1), f, D1, rng)
         mids.append((i, (s + e) / 2))
         log.append("shot %d %.2f-%.2f %s cam %s" % (i, s, e, n, tuple(round(v) for v in c0)))
     RLPy.RScene.ClearSwitchCameraKeys()

@@ -88,3 +88,5 @@
 - Stage/motion/camera changes require the user's instruction; do not render without direct instruction. The OpenPlugin auto-start is optional and requires the user's UAC approval; never restart iClone with potentially unsaved scene work.
 
 - **User (2026-11-07):** every new rule/lesson also goes into Claude's own skill `~/.claude/skills/iclone-key/SKILL.md` (copy in docs/iclone-key-SKILL.md).
+
+- **User (2026-11-07, after 2.mp4):** camera moves must be very slow (orbit ≤2°, never a fast sideways slide). Keep people in the CENTRE of frame. Two-shots: tight, no empty middle, BOTH people sharp (DOF range ~250, no pan; slow straight push-in only).
