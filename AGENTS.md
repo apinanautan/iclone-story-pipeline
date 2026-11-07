@@ -8,6 +8,9 @@ The user speaks Thai; answer in Thai. They want work done one step at a time as 
 ## Mandatory lip-sync audio workflow (user update 2026-11-07)
 For any speaking character, import the **full N.mp3** directly to that avatar through iClone's Voice/AccuLips process, then **split/trim/remove unused speech sections within the iClone Timeline** to leave only that character's dialogue at the original timestamps. Repeat with the original full audio for every speaker. **Do not pre-cut short WAVs externally to import as lip-sync source.** Leave full original audio on Project Sound track; prevent doubled playback. Verify actual Viseme clips, mouth animation and speaker timing, not just Look front.iTalk or successful audio import. Preserve AccuPOSE. See docs/iclone-key-SKILL.md and docs/rules.md. Last survey showed 0 Viseme clips for all 6 Part 2 avatars.
 
+## Always review a contact sheet
+After poses and after every camera pass: render stills and combine them with `scripts/contact_sheet.py` into one image, look at it, fix bad shots, send it to the user. See docs/rules.md (Review step).
+
 ## Read first
 1. `docs/rules.md`: every rule the user has given (cameras, lights, motion speed, files, timeline…). **Follow all of them.**
 2. `docs/scene_anchors.md`: coordinates of every scene spot already measured (where characters/cameras go).
