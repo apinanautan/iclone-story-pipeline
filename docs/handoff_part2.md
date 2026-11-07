@@ -1,3 +1,5 @@
+> **OUTDATED (part 2 finished).** Use AGENTS.md + docs/rules.md. Pre-cut WAV lip sync below is no longer allowed.
+
 # Handoff prompt: continue มหาอกหัก part 2 (paste to GPT / another AI)
 
 You are continuing an iClone 8 animation job on the user's Windows PC. Answer the user in Thai.
@@ -39,3 +41,4 @@ new instruction from the user to rules.md immediately. Do one step at a time; do
 - A "python script not compatible" popup → Cancel.
 - If iClone crashes: on restart choose OK to restore unsaved data, save it to `E:\FileSave\2.iProject`.
 - Never write into the G: story folder. Only `E:\FileSave\2.iProject` and `E:\Video\2.mp4`.
+
