@@ -59,6 +59,7 @@
 - Cut on pauses in the narration (`ffmpeg -af silencedetect=n=-30dB:d=0.25`).
 - When finished: viewport camera → **Switcher** so the user can just press Play.
 - Cameras are designed LAST, after audio, characters, poses.
+- **กล้องห้ามนิ่ง (user 2026-11-07):** ทุกช็อตค่อยๆ ซูมเข้า/ออกช้าๆ + แพนช้าๆ (สลับเข้า/ออก, orbit ~5°). ใส่ช็อตกลุ่มชาวบ้านหลายคนอย่างน้อย 1 ช็อต มุมทแยงให้หัวซ้อนกัน หลบๆ โผล่ๆ ไม่เห็นเต็มตัว (`scripts/ic8_part2_cams.py`, shot 'GROUP').
 
 - **Part 2 monk shots (7.0-13.45 s and 53.82-75.5 s): frame chest-up only (อกขึ้นไป); hide lower robes because the clothing is unattractive.**
 
