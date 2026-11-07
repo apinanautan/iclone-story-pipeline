@@ -2,6 +2,28 @@
 Folder: C:\Program Files\Reallusion\iClone 8\Resource\ICMotion\RLDeepIK\Style\<Pack>\Dikpreset\<name>.rlDikPreset
 **! Never call RFileIO.LoadFile(<.rlDikPreset>) from a script: iClone crashed and closed (2026-11-07). Apply poses through the AccuPOSE panel only (Modify > Motion > AccuPOSE > Pose Presets > pick > Apply Pose). Save before trying anything risky.**
 Order of use (user): clear all character animation -> frame 0 -> apply pose -> then add face/lip/blink.
+## Core grid in the AccuPOSE panel (scrolled to the end and recorded, 3 per row, top → bottom)
+| row | left | middle | right |
+|---|---|---|---|
+| 1 | Basic Stand | Cross Arms | Akimbo |
+| 2 | Cross Hands | Lean on Wall | Sit Hands on Lap |
+| 3 | Sit Lean Forward | Sit Lean Back | Sit Cross Arms |
+| 4 | Sit Cross Legs R | Sit Hold Knee R | Sit Drape Arm R |
+| 5 | Sit Ground Hands on Knees | Sit Ground Cross Legs R | Sit Ground Cross Legs |
+| 6 | Sit Ground Lean Back | Sit Ground Lean Back L | Sit Ground Knee Up L |
+| 7 | Squat Arm on Knee L | Squat Tiptoe | Squat Elbows on Knees |
+| 8 | Squat Leg Forward R | Kneel L | Kneel Sit |
+| 9 | Kneel | **Kneel Seiza** | Crawl |
+| 10 | Crawl on Knees | Lie | Lie Leg Up R |
+| 11 | Lie Daydream | Lie Sleep | Lie Side L |
+| 12 | Lie Sleep L | Prone on Elbows | Prone |
+| 13 | Prone Reading | Basic Walk 1 | Basic Walk 2 |
+| 14 | Basic Walk 3 | Basic Walk 4 | |
+Scrolling: one wheel tick ≈ 1/6 row; the panel keeps its scroll position between openings. The other Training Model
+categories (Daily Life, Occupation, Communication, Action & Adventure, Combat, Dance) hold the packs listed below.
+
+**Used by the user:** women sitting tidily in the temple = **Kneel Seiza** (row 9 middle); men + monk = Sit Ground Cross Legs.
+
 Temple sitting: Sit Ground Cross Legs (cross-legged), Sit Ground Hands on Knees, Kneel Seiza / Kneel Sit (sitting on the heels, polite), Sit Listen 1-3 / Sit Talk 1-5 (sitting while talking or listening).
 
 - **Agent Female**: Draw Gun R, Draw Guns, Dropping Arm Span, Dual Draw, Handspring, Land Graceful, One-Hand Vault R, Ready 1, Ready 2, Roll Forward, Roll Side, Shoot Dual Lean Back Low, Shoot Dual Low, Shoot Dual, Shoot R, Sneak from Wall, Walk 1, Walk 2, Walk 3, Walk 4, Walk Shoot R, Walk with Gun R, Windmill
