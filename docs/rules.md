@@ -5,7 +5,8 @@
 - Every instruction the user gives → write it here right away.
 - Script everything you can (watcher). Avoid screenshots/mouse; they waste credits.
 - **Save often** to `E:\FileSave\N.iProject` after each big step (iClone can crash).
-- Ask before overwriting a file that already exists from another story.
+- Ask before overwriting a file that already exists from another story. (User OK'd overwriting the old 1.iProject, 1.mp4, 2.iProject from 31/10 for มหาอกหัก.)
+- After an iClone crash, on restart choose **OK** to restore unsaved data, then save it as `E:\FileSave\N.iProject`.
 
 ## Files
 - Project: `E:\FileSave\N.iProject` only (N = audio number). Video: `E:\Video\N.mp4` only.
@@ -43,9 +44,24 @@
 - When finished: viewport camera → **Switcher** so the user can just press Play.
 - Cameras are designed LAST, after audio, characters, poses.
 
+## AccuPOSE in the GUI (works, part 2)
+- Per character: select it by script (`scripts/ic8_select.ps1 <name>`, also goes to frame 0) → Modify tab (1172,150) →
+  Motion (1228,132) → AccuPOSE (1320,326) → wait 5 s → click the pose → Apply Pose (482,580). The panel closes when the
+  selection changes, so repeat the whole sequence for each character. The scroll position is kept between openings.
+- With the list scrolled to the "Sit Ground" row: Sit Ground Hands on Knees (290,228), Sit Ground Cross Legs (494,228).
+- Part 2: men + monk = Sit Ground Cross Legs, women = Sit Ground Hands on Knees.
+
 ## Placement
+- Meeting/discussion with a monk (user): villagers in **two rows facing each other**, monk at the **head of the table**
+  (far end, centre) facing down the aisle. Script: `scripts/ic8_part2_layout.py`.
 - The user drops a marker block where things should go. Read its position by script, place around it,
   record it in `scene_anchors.md`, then delete the marker (or keep it hidden, but never put audio on it).
 
 ## Render
 - Script render: `ic8_render2.py` (1920×1080, **60 fps**), then trim with ffmpeg to audio + 5 s, output `E:\Video\N.mp4`.
+
+
+## GPT / MCP workflow (2026-11-07)
+- Prefer the typed tools in mcp_server/server.py via the existing authorized Dino Tunnel connection for project/status/job tasks. Do not bypass safeguards by injecting arbitrary scripts into the watcher.
+- Queue read-only inspections freely when explicitly requested, but inspect watcher logs and the inner JSON result before claiming success.
+- Stage/motion/camera changes require the user's instruction; do not render without direct instruction. The OpenPlugin auto-start is optional and requires the user's UAC approval; never restart iClone with potentially unsaved scene work.
