@@ -29,6 +29,22 @@
   (cut that line from the audio, `RAudio.LoadAudioToObject(avatar, wav, start)`).
 - Every character: auto blink `GetFaceComponent().SetAutoBlinkName('Normal')`.
 
+## Workflow ใหม่: นำเข้าเสียงเต็มให้ตัวละคร แล้วตัดช่วงที่ไม่พูดใน iClone
+- **ห้ามนำ WAV ที่ตัดภายนอกมาใส่ตัวละครเพื่อทำปากพูด** ให้เลือก Avatar ผู้พูดทีละคน นำเข้า **N.mp3 ฉบับเต็ม** จากต้นฉบับด้วยเครื่องมือ Voice/AccuLips ของ iClone เพื่อสร้าง Voice + Viseme ก่อน
+- วิเคราะห์ว่าใครพูดเวลาใด แล้วใช้ **เครื่องมือตัด/Split/Trim ใน Timeline iClone** ตัด/ลบช่วงที่ Avatar นั้น **ไม่ได้พูด** ออกให้เหลือเฉพาะประโยคของเขา **ตรงเวลาไฟล์ต้นฉบับ** ทำซ้ำกับผู้พูดคนอื่นโดยเริ่มจากไฟล์เต็มใหม่ทุกตัว
+- **Project > Sound** เก็บเสียงต้นฉบับครบและเป็นแหล่งเสียงหลัก ตรวจไม่ให้ Voice บนตัวละครเกิดเสียงซ้อน/ก้อง; ห้ามลบ Sound หลักและห้ามลบ Viseme ที่ต้องใช้
+- ก่อนถือว่างานเสร็จ ต้องตรวจ Viseme Clip/Keys และตรวจปากอย่างน้อยสองเวลาขณะพูดและหนึ่งเวลาขณะเงียบ **ห้ามถือว่า Look front, Blink หรือ LoadAudioToObject เท่ากับมีบทพูด**
+- รักษาท่า AccuPOSE เดิม ไม่ใช้ RemoveAllAnimations/.rlDikPreset ไม่เรนเดอร์ก่อนตรวจปากครบ. กฎนี้ **แทนที่วิธีตัด WAV ภายนอก** ที่ระบุไว้ก่อนหน้า. วิธีละเอียดอยู่ใน docs/iclone-key-SKILL.md
+
+- **วิธีที่ใช้ได้จริง (ทดสอบ 2026-11-07):** เลือกผู้พูด (`scripts/ic8_select.ps1 <name>`) → Animation > Create Script > **Audio File** → เลือก N.mp3 เต็ม → Open (สร้าง viseme 652 keys ตลอด 81.5 s) → รัน `scripts/ic8_lip_trim.py` ลบ viseme key นอกช่วงพูดของคนนั้น. `RAudio.LoadAudioToObject` ใส่แค่เสียง **ไม่สร้าง viseme**. ตอนเรนเดอร์ใช้เสียงจาก mp3 ด้วย ffmpeg กันเสียงซ้อน.
+
+## บทพูด / Lip Sync (บังคับสำหรับทุกท่อน)
+- **ฉากที่ตัวละครมีบทพูด ตัวละครนั้นต้องพูดตรงเนื้อหาและเวลาจริง ห้ามนั่งนิ่งหรือปากไม่ขยับขณะมีบทพูด**. ก่อนทำฉาก ให้วิเคราะห์ N.mp3 และบทถอดเสียง สร้าง speaker | dialogue | start | end | full MP3 imported | in-iClone trimmed | viseme verified โดยแยกเสียงผู้บรรยายกับบทพูด.
+- นำเข้า MP3 เต็มให้ Avatar ผ่าน iClone แล้วใช้เครื่องมือตัดใน iClone ให้เหลือเฉพาะช่วงที่พูด และสร้าง/รักษา lip sync หรือ viseme ตั้งแต่ต้นถึงท้ายประโยค ไม่ให้คนอื่นขยับปากผิดเวลา. ต้องตรวจทั้งคลิปเงียบและช่วงพูด.
+- **Look front.iTalk/Auto Blink ไม่ได้แทนการขยับปาก** และผลลัพธ์ RAudio.LoadAudioToObject / watcher OK ยังไม่ใช่หลักฐานว่าพูดจริง. ตรวจ track viseme หรือผลภาพปากอย่างน้อยสองจังหวะขณะพูดพร้อมเทียบเสียง และตรวจหนึ่งจังหวะเงียบ; หากไม่มีหลักฐานให้รายงานว่า 'ยังไม่ตรวจผ่าน' ไม่ Render เป็นงานสำเร็จ.
+- เก็บเสียงต้นฉบับบน Project Sound track. เมื่อใส่ WAV เพื่อสร้างปากพูด ตรวจว่าเสียงจาก Avatar ไม่ถูกเล่นซ้ำจนก้อง; แก้เฉพาะเสียงซ้ำโดยไม่ลบ Sound ต้นฉบับ.
+- คงท่า AccuPOSE และ Body Motion เดิมทุกครั้ง ห้าม RemoveAllAnimations หรือโหลด .rlDikPreset ทางสคริปต์เพื่อแก้ปาก. ข้อกำหนดละเอียดอยู่ที่ docs/iclone-key-SKILL.md หัวข้อ บทพูดและลิปซิงก์.
+
 ## Look
 - Faces must not be dark: one soft spot light per character, front-left a bit above the face, warm white
   `RRgb(255,236,214)`, **multiplier 0.04**, range 700, no shadow.
@@ -43,6 +59,10 @@
 - Cut on pauses in the narration (`ffmpeg -af silencedetect=n=-30dB:d=0.25`).
 - When finished: viewport camera → **Switcher** so the user can just press Play.
 - Cameras are designed LAST, after audio, characters, poses.
+
+- **Part 2 monk shots (7.0-13.45 s and 53.82-75.5 s): frame chest-up only (อกขึ้นไป); hide lower robes because the clothing is unattractive.**
+
+- **Part 2 visual quality (user, 2026-11-07): NEVER use a wide shot or composition that reveals full bodies, seated legs, knees, or lower robes. Cinematic eye-level chest-up MCU/close-ups and carefully cropped OTS/reaction shots only. Reject previews showing full-body, large blank walls, or obstructing foreground.**
 
 ## AccuPOSE in the GUI (works, part 2)
 - Per character: select it by script (`scripts/ic8_select.ps1 <name>`, also goes to frame 0) → Modify tab (1172,150) →
