@@ -94,3 +94,5 @@
 - **User (2026-11-07):** no lurch/speed-up at the start or end of a shot (กล้องบืด). Fix used: alternate two cameras (Camera / Camera_0) with a Switcher key at every cut, and key each shot densely (every 0.25 s) on a straight line with 2 extra keys continuing past both ends, so speed is constant.
 
 - **User approved (2026-11-07): the final part 2 camera style is THE standard** — scripts/ic8_part2_cams.py as template for every part (constant-speed slow zoom, orbit ≤2°, two-camera Switcher cuts, centred chest-up, tight sharp two-shots).
+
+- **iClone freeze (2026-11-07):** importing audio froze iClone 3× while Parsec was connected (Parsec virtual audio). Disconnect Parsec before File > Import of audio. Load the cast ONE avatar per watcher job (ic8_part3_build.py ONLY=...). After Save As, verify the file time on disk — a 'saved' report isn't proof (3.iProject was once an old project). Ctrl+S may show an 'update file version' popup → OK.

@@ -12,3 +12,5 @@
 - ! Camera_0 at (93,-184,25974) looking +Y renders only grey blur, no characters. Something blocks it. Ask the user to drop a marker box at the camera position too, or frame the viewport themselves.
 
 - Part 2 tested monk chest-up framing: camera `Camera` at (33,696,25910), target (33,896,25844), **100mm + DOF**. PNG previews at 9s and 60s: head and upper chest in frame, lower robes out of frame. Use for monk shots (7-13.45s, 53.82-75.5s); switching keys not yet built.
+## วัด(ยังไม่มีร้านกาแฟ)150 — statues (part 3)
+- Naga statues: node_0 (410,-869) and node_1 (1553,-862), ~620 tall. Thao Wessuwan (giant): node_3 (973,-924), 1218 tall. All face +Y (seen from y≈+600). Avatar '3.ตาบุญ…' at (236,1285) = hide.
