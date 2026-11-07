@@ -90,3 +90,5 @@
 - **User (2026-11-07):** every new rule/lesson also goes into Claude's own skill `~/.claude/skills/iclone-key/SKILL.md` (copy in docs/iclone-key-SKILL.md).
 
 - **User (2026-11-07, after 2.mp4):** camera moves must be very slow (orbit ≤2°, never a fast sideways slide). Keep people in the CENTRE of frame. Two-shots: tight, no empty middle, BOTH people sharp (DOF range ~250, no pan; slow straight push-in only).
+
+- **User (2026-11-07):** no lurch/speed-up at the start or end of a shot (กล้องบืด). Fix used: alternate two cameras (Camera / Camera_0) with a Switcher key at every cut, and key each shot densely (every 0.25 s) on a straight line with 2 extra keys continuing past both ends, so speed is constant.

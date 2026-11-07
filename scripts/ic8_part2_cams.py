@@ -6,7 +6,7 @@
 import math, os, traceback
 import RLPy
 J = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "ic8_jobs")
-MODE = "stills"
+MODE = "keys"
 END = 86.5
 SHOTS = [
     (0.0,   7.0,   'p2_old',  -20, 270, 100, None, None),
@@ -37,9 +37,10 @@ try:
     for n, a in av.items():
         b = [b for b in a.GetSkeletonComponent().GetSkinBones() if b.GetName().endswith('Head')][0]
         h = b.WorldTransform().T(); head[n] = (h.x, h.y, h.z)
-    cam = [c for c in RLPy.RScene.GetCameras() if c.GetName() == 'Camera'][0]
-    RLPy.RGlobal.RemoveAllAnimations(cam)
-    ctl = cam.GetControl("Transform")
+    # user: no lurch at cuts -> alternate two cameras (Switcher), so no spline runs across a cut
+    CAMS = [c for n in ('Camera', 'Camera_0') for c in RLPy.RScene.GetCameras() if c.GetName() == n]
+    for c in CAMS: RLPy.RGlobal.RemoveAllAnimations(c)
+    cam = CAMS[0]; ctl = cam.GetControl("Transform")
     def setk(s, c, q, f, dist, rng=30):
         t = RLPy.RTransform(); ctl.GetValue(T(s), t)
         t.T().x, t.T().y, t.T().z = c
@@ -49,7 +50,7 @@ try:
         d = RLPy.RCameraDofData(); d.SetEnable(True); d.SetFocus(dist); d.SetRange(rng)
         d.SetFarTransitionRegion(120); d.SetNearTransitionRegion(60); d.SetFarBlurScale(1); d.SetNearBlurScale(1)
         k = RLPy.RKey(); k.SetTime(T(s)); cam.AddDofKey(k, d)
-    mids = []
+    mids = []; switch = []
     for i, (s, e, n, ang, dist, f, push, ots) in enumerate(SHOTS):
         hx, hy, hz = head[n]
         tgt = (hx, hy, hz - 6)
@@ -78,13 +79,20 @@ try:
         e2 = e - 1/60.0 if e < END else e
         D0 = math.dist(c0, tgt); D1 = math.dist(c1, tgt1)
         rng = 250 if ots == 'GROUP' else 30
-        setk(s, c0, look(c0, tgt), f, D0, rng)
-        setk(e2, c1, look(c1, tgt1), f, D1, rng)
+        # user: no lurch at shot start/end -> dense linear keys (every 0.25 s) so the spline can't ease/overshoot
+        cam = CAMS[i % 2]; ctl = cam.GetControl("Transform"); switch.append((s, cam))
+        nk = max(2, int((e2 - s) / 0.25) + 1)
+        for j in range(-2, nk + 3):  # 2 extra keys each side continue the same straight motion
+            if not 0 <= s + (e2 - s) * j / nk <= END: continue
+            u = j / nk
+            cu = tuple(c0[k] + (c1[k] - c0[k]) * u for k in range(3))
+            tu = tuple(tgt[k] + (tgt1[k] - tgt[k]) * u for k in range(3))
+            setk(s + (e2 - s) * u, cu, look(cu, tu), f, D0 + (D1 - D0) * u, rng)
         mids.append((i, (s + e) / 2))
         log.append("shot %d %.2f-%.2f %s cam %s" % (i, s, e, n, tuple(round(v) for v in c0)))
     RLPy.RScene.ClearSwitchCameraKeys()
-    RLPy.RScene.AddSwitchCameraKey(T(0), cam)
-    RLPy.RScene.SetCurrentCamera(cam)
+    for s0, c0_ in switch: RLPy.RScene.AddSwitchCameraKey(T(s0), c0_)
+    RLPy.RScene.SetCurrentCamera(CAMS[0])
     if MODE == "stills":
         for i, m in mids:
             RLPy.RGlobal.SetTime(T(m))
