@@ -64,3 +64,10 @@
 - [ ] iClone เด้ง (0xc0000005 ตอน SaveProject): ตรวจโปรเซสทันที, ลบ .iProject ที่เขียนไม่จบ, ลบคิว run/*.py ที่ค้าง, เปิดใหม่ด้วยขั้นตอนข้อ A
 - [ ] ผู้ใช้สั่งหยุด = หยุดทันที (TaskStop + ลบงานในคิว) แล้วรอคำสั่ง
 - [ ] หน้าต่างหลัก iClone อยู่จอ 1 (24V2W1G5)
+
+## PART4_2_MERGE_AND_STATIC_COMFORT_20261111
+- 4.1 + 4.2 is ONE continuous factory-working event in E:/ไฟล์งาน/ไฟล์ Save/นิทาน/4.1.iProject. Part4 local 0.0-30.3s, 35.3s iClone timeline including tail. 4.2 work is local 15.3-30.3s. DO NOT create duplicate 4.2.iProject or split merely at camera switches.
+- Use the real สุนีย์ (red floral blouse, hair bun), not scene placeholder Sunee; keep placeholder hidden. Factory work: slow, small natural movement, no gratuitous turn/walk/drama.
+- Latest user rule for 3.4 comfort: FAKE EMBRACE by camera composition; characters grouped and almost still, only very small head/breathing motion. NO exaggerated Hug Kid mocap, no required literal arm contact, no forced transitions, and NO Look At on 3.4. Existing 3.4 is NOT verified updated to this direction.
+- Do not render 4.1/4.2 before user approval; contact-sheet QA is not a finished MP4. Story WAV must be continuous across 4.1+4.2 to 4.3.
+- Live iClone 4.1 has two Cam41_A/B cameras, six switches, 28 props. Read-only QA checked 18 source frames during 15.3-30.2s: visible red-clad Sunee, mixing bowl and restrained work. See docs/part4_2_qa_20261111.md.

@@ -269,3 +269,17 @@ Original audio is single 67.40s WAV source, 3,235,200 sample frames @48kHz. Fina
 Canonical frame plan: data/part3_frame_edl.json.
 
 **STALE VIDEO 3.MP4 CAUTION — 2026-11-11:** E:/Video/3.mp4 is an OLD unrelated/incomplete render: ffprobe says 77.824 seconds @60fps (4669 video frames, 32kHz AAC). It is NOT the 67.40s / 30fps Part3 master. Do not confuse file existence with finished current part. 3.2–3.5 event videos are still missing awaiting user review/render approval.
+
+## LATEST PART 4.1+4.2 VERIFIED UPDATE — 2026-11-11
+
+This supersedes stale Part 3-only overall/current status above.
+
+- iClone is open at iClone 8 - 4.1.iProject and responsive.
+- Current file E:/ไฟล์งาน/ไฟล์ Save/นิทาน/4.1.iProject, 1,775,772,305 bytes, saved 2026-11-11 18:22:24.
+- 4.1 + 4.2 are intentionally ONE factory working event. Local source audio 0.0–30.3s, iClone working tail through 35.3s. 4.2 corresponds to 15.3–30.3s and should not become a duplicate iProject.
+- Read-only live scene/timeline succeeded: real Sunee red-floral blouse, hidden placeholder Sunee, 28 props including bowls, 2 cameras Cam41_A/B, 6 Switcher keys (0,6,11.5,17.5,23.5,29s), 4 lights, 60fps and 35.3s timeline end.
+- 18 actual iClone sample stills of 4.2 captured at 15.3–30.2s; chronological contact sheet checked, calm working hands and bowl/counter visible. QA report docs/part4_2_qa_20261111.md.
+- Project Sound row visible but exact current WAV clip start/name was not independently read from GUI; old worklog records Part4 WAV imported at frame 0.
+- NO new video rendered or authorized, and 4.1 project was not altered during this read-only 4.2 QA.
+- NEXT unfinished independent action 4.3: Sunee worried about two children and school costs; final Sunee spoken phrase needs real lip-sync.
+- Important Part3.4 correction still outstanding: latest user wants camera-suggested static comfort/fake hug with slight head motion, no actual elaborate hug mocap or Look At. Old project is not approved under the latest rule.
