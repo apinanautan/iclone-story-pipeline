@@ -1,5 +1,23 @@
 # Workflow for one audio part (any AI: follow in order, report to the user after each step)
 
+## CURRENT OVERRIDE — Event-clip render-first workflow (2026-11-11)
+
+For action-heavy story parts such as ดวงเมียน้อย Part 3, this section OVERRIDES the legacy one-audio-part = one-long-project/timeline procedure below.
+
+Use docs/event_clip_workflow.md as canonical.
+
+- Build one complete dramatic event per numbered clip/project.
+- Camera changes and reactions inside the same event DO NOT create new clip numbers.
+- Speaker changes inside the same conversation DO NOT create new clip numbers.
+- New number begins when the story changes to a new main action/event.
+- Save/check/render that event before starting the next event.
+- Do not hard-code event boundaries from audio timestamps. Audio is sync, not structure.
+- Part 3 canonical plan: docs/part3_event_clip_plan.md and data/part3_event_clips.json.
+- Old fixed 3.1/3.2/3.3 WAV split is reference only.
+- After each event passes, assemble event videos into one final Part 3 master.
+
+
+
 Data you get for free (no need to re-derive):
 - `data/parts_index.json` — every part 1–11: audio path, seconds, timeline length (+5 s), status, scene suggestion,
   whisper segments with times. Transcripts: `audio_output\ถอดเสียง\N.txt` (whisper, rough Thai — use the story text for wording).
@@ -47,3 +65,12 @@ Data you get for free (no need to re-derive):
 ## 6. Render — ONLY when the user says. User currently renders themselves.
 - If asked: `scripts/ic8_render2.py` (whole project, 60 fps) → ffmpeg mux N.mp3 → `E:\Video\N.mp4`. Check the raw file exists
   before muxing (part 3 script render returned without a file once).
+
+- Step 3b (after chained clips exist): run scripts/ic8_blend_clips.py so every chained face/body clip crossfades (no head snap).
+
+- Part 5/6 recipe (narration only): Save As previous -> N.iProject (confirm overwrite dialog: Yes), delete old Sound clip, set playhead 0 by script, Ctrl+I N.mp3, run scripts/ic8_partN_setup.py (SetProjectLength+SetEndTime), run scripts/ic8_partN_cams.py (stills -> contact sheet), pick Switch in the camera dropdown (menu is slow: click, wait 3 s, zoom, click Switch), Ctrl+S, check file time.
+
+- Part 7 added standing characters (นายอิ่ม, สีกาอ๋อย): scripts/ic8_part7_cast.py (STAND body, ONLY per job) + scripts/ic8_part7_cast_extras.py (nods + look-at monk head). Part 7 = 23 s audio, 28 s timeline.
+- **Dedicated multi-camera dialogue rule (2026-11-11):** สำหรับ dialogue/event coverage เช่น 3.1 ให้สร้าง custom camera object แยกตามหน้าที่ เช่น Mom CU, Dad CU, two-shot/depth, kids reaction, OTS/profile แล้วใช้ Project > Switcher / AddSwitchCameraKey ตัดระหว่างกล้อง. ห้ามใช้กล้องตัวเดียว teleport/hard-step ไปทุกมุมเป็นวิธีหลัก เพราะแก้ framing/DOF/continuity ยากและทำให้ coverage ดูซ้ำ/ง่อย. กล้องแต่ละตัวควรมีชื่อสื่อหน้าที่, transform/focal/DOF ของตัวเอง; ใช้กล้องเดิมซ้ำได้เมื่อกลับมาที่มุมเดิม. เปลี่ยนกล้องไม่ใช่ event boundary. ก่อน Save ต้องตรวจ camera count, switch-key sequence และ still framing ทุก beat; moving playback QA ยังต้องทำแยกต่างหาก.
+- **Gaze-first camera and moving occlusion rule (2026-11-11):** ใน dialogue scene ให้ตั้ง eyeline ก่อนออกแบบกล้อง: ใช้ iClone Look At ผูกตัวละครกับ Head bone ของคู่สนทนาจริง เพื่อให้สายตายังถูกต้องเมื่อเปลี่ยนหรือแพนกล้อง. อย่าจัดกล้องโดยสมมติว่าตัวละครมองถูกอยู่แล้ว. หากใช้ OTS หรือ foreground shoulder/shirt ต้องตรวจทั้งช่วงโมชั่นหลายเฟรม อย่างน้อย start/mid/end และเพิ่มจุดเมื่อ motion มาก; ห้ามอนุมัติจาก still เฟรมเดียว. ถ้ามีโอกาส foreground/แขน/เสื้อบังหน้า subject ให้ย้ายกล้อง ลด foreground ให้เหลือ sliver ที่ปลอดภัย หรือเปลี่ยนเป็น clean 3/4/profile/dirty single. Face visibility สำคัญกว่า forcing OTS. หลังตั้ง Look At ต้อง re-QA ทุก dedicated camera เพราะ head orientation เปลี่ยน framing ได้.
+- **Part 3 original-audio continuity + every-frame review (2026-11-11):** คลิปย่อย 3.1/3.2/3.3/3.4 เป็น visual event เท่านั้น; master ต้องยาว 67.40s = 2,022 frames ที่ 30fps และใช้ WAV ท่อน3.wav ฉบับเต็ม 3,235,200 sample frames @48kHz โดยไม่ตัด/ซ้ำ/ยืด/บีบ/กระโดดเสียง. ตอนประกอบตัดเสียงของ MP4 ย่อยทิ้งทั้งหมด แล้วใส่ original WAV เป็น audio track เดียว. ตรวจ EDL ให้ครบ [0,2022) ไม่มี hole/overlap; 3.1.mp4 ปัจจุบันยาว 72.433s จึงเลือก VIDEO เพียง 1290 เฟรมแรกและห้ามทับต้นฉบับ. 3.2 ต้องไม่ข้ามช่วง 43–52.94; ต้องมีภาพตามบทตลอดช่วง. QA ช็อตเสี่ยงที่ 30fps ทุกเฟรม (contact sheet 30 เฟรม/แผ่น), เช็กก่อน/หลังทุกคัต; re-QA ทุกเฟรมของช็อตหลังแก้. ห้ามเรนเดอร์คลิปใหม่ก่อนผู้ใช้ตรวจอนุมัติ. เอกสาร docs/part3_audio_continuity.md; EDL data/part3_frame_edl.json.
