@@ -3,6 +3,11 @@
 กฎข้อที่ผู้ใช้ย้ำ 2026-11-11: **ทุกวิธี/แนวทางใหม่ที่ทำให้ทำงานเร็วขึ้นหรือเก่งขึ้น ต้องเขียนลง project ทันที**
 เพื่อให้ AI รอบถัดไปเริ่มจากจุดที่ถูก ไม่ทำซ้ำข้อผิดพลาดเดิม.
 
+## Part 7 checks (2026-11-12)
+- RScene.Hide alone can leave IsVisible(T(0)) True. Also set avatar.SetVisible(T(0),False) and at tail, then verify IsVisible(time); Part7 Sunee verified False.
+- Inspect existing hand world-z before lowering arms. Priya local avatar already has a still natural pose (hands z95.31/95.41cm); test rotations raised the hands, so restore zero arm Layer rotations and preserve the existing pose. No body-motion asset was loaded.
+- Dense camera stills revealed foreground heads/shoulders at the edges of nominal singles; start/mid/end contact sheets catch this. A clean central face alone does not meet the single-person rule.
+
 ## 1. ห้ามอ้างอิงเวลา/โครงบทจากไฟล์เสียงผิดเรื่อง (สาเหตุงานเสียทั้งรอบ)
 - `%LOCALAPPDATA%\Tidmunz Studio\snapgen_data\ic8_jobs\3.wav` (72.8s) = เสียงท่อน 3 ของเรื่องเก่า "มหาอกหัก" ตกค้างจาก 11/7
   **ห้ามใช้เป็นตัวอ้างอิง** ชื่อไฟล์ชนกับเสียงจริง.

@@ -46,8 +46,8 @@ try:
     SHOTS = [  # part 4 (46.1 s): narration 0-23, monk speaks 23.3-35.8, narration 35.9-41
         (0.0, 5.95, front('monk', -15, 330), front('monk', -13, 275), (hm[0], hm[1], hm[2] - 6), (hm[0], hm[1], hm[2] - 6), 100, 30),
         (5.95, 17.19, (hm[0] - 30, hm[1] + 60, hm[2] + 5), (hm[0] - 25, hm[1] + 45, hm[2] + 5), (hw[0], hw[1], hw[2] - 5), (hw[0], hw[1], hw[2] - 5), 80, 30),
-        (17.19, 23.43, front('monk', 12, 280), front('monk', 10, 320), (hm[0], hm[1], hm[2] - 6), (hm[0], hm[1], hm[2] - 6), 100, 30),
-        (23.43, 30.23, front('monk', 0, 300), front('monk', 0, 250), (hm[0], hm[1], hm[2] - 4), (hm[0], hm[1], hm[2] - 4), 100, 30),
+        (17.19, 23.43, front('monk', 40, 310), front('monk', 38, 340), (hm[0], hm[1], hm[2] - 6), (hm[0], hm[1], hm[2] - 6), 100, 30),  # chest-up, angled 40 deg (anti jump-cut; never wider: shows lower robe)
+        (23.43, 30.23, front('monk', 0, 190), front('monk', 0, 160), (hm[0], hm[1], hm[2] - 3), (hm[0], hm[1], hm[2] - 3), 100, 30),  # speech: close-up
         (30.23, 35.91, (hw[0] + 35, hw[1] - 70, hw[2] + 22), (hw[0] + 32, hw[1] - 55, hw[2] + 22), (hm[0], hm[1], hm[2] - 8), (hm[0], hm[1], hm[2] - 8), 80, 30),
         (35.91, END, (1420, -600, H['commf'][2] - 2), (1390, -590, H['commf'][2] - 2), mid('old', 'commf'), mid('old', 'commf'), 80, 300),
     ]
