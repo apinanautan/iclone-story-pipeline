@@ -1,6 +1,6 @@
 # CURRENT STORY (one neutral file: OVERWRITE it when the story changes, never make a per-story copy)
 
-**Story: รักลำเอียง (นิทาน 3D)** — started 2026-11-14. **User range: 0:00–08:21** (script start → สมหวัง "ไม่เป็นไรลูก" + narration "…อดเสียดายเงินล้านที่จ่ายออกไปไม่ได้"; user pasted 2026-11-14). Status: audio not cut yet, nothing built.
+**Story: รักลำเอียง (นิทาน 3D)** — started 2026-11-14. **User range: 0:00–08:21** (script start → สมหวัง "ไม่เป็นไรลูก" + narration "…อดเสียดายเงินล้านที่จ่ายออกไปไม่ได้"; user pasted 2026-11-14). Status: **audio cut 2026-11-14, nothing built in iClone yet.**
 
 ## Source (read-only, never write into G:)
 - Folder: `G:\ไดรฟ์ของฉัน\รักลำเอียง (นิทาน 3D)\`
@@ -36,3 +36,19 @@
 ## Open questions for the user
 1. Which minutes of the 25:29 audio are yours?
 2. Save folder/file names — `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\` already holds ดวงเมียน้อย 1–9 (`1.iProject`…); a new story must not overwrite them (suggest sub-folder `รักลำเอียง\`).
+
+## Audio parts (cut by Claude with ffmpeg + whisper large-v3, one-time user OK 2026-11-14)
+Folder: C:\Users\Apinan\Desktop\รักลำเอียง\เสียงที่ตัดแล้ว\ท่อนN.wav (+ transcript json). Cut at real pauses; times = source-file seconds.
+| ท่อน | src start-end | len | content |
+|---|---|---|---|
+| 1 | 0-36.8 | 36.8 | narration: sisters compared |
+| 2 | 36.8-99.1 | 62.3 | villager praises Suda, สมหวัง replies, Wari listens |
+| 3 | 99.1-139.9 | 40.8 | Suda's boyfriend introduced, father whispers, Suda replies |
+| 4 | 139.9-188.0 | 48.1 | father compares Wari's boyfriend |
+| 5 | 188.0-255.8 | 67.8 | Suda asks about money, father splits land money, Suda displeased |
+| 6 | 255.8-285.7 | 29.9 | Suda's wedding, gifts from parents |
+| 7 | 285.7-347.0 | 61.3 | Suda disappointed in in-laws, urges husband to split off |
+| 8 | 347.0-383.0 | 36.0 | Wari marries Manop, small house |
+| 9 | 383.0-447.8 | 64.8 | gold bought, father ill, Suda pushes private hospital, Wari nurses |
+| 10 | 447.8-501.0 | 53.2 | Suda's กงสี excuse, father "ไม่เป็นไรลูก" |
+Whisper text is rough (use the docx for wording). Lip-sync windows still to be measured per part.
