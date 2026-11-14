@@ -1,6 +1,6 @@
 # CURRENT STORY (one neutral file: OVERWRITE it when the story changes, never make a per-story copy)
 
-**Story: รักลำเอียง (นิทาน 3D)** — started 2026-11-14. Status: NOT STARTED, waiting for the user to say which minutes are theirs (never guess). Nothing cut, nothing built.
+**Story: รักลำเอียง (นิทาน 3D)** — started 2026-11-14. **User range: 0:00–08:21** (script start → สมหวัง "ไม่เป็นไรลูก" + narration "…อดเสียดายเงินล้านที่จ่ายออกไปไม่ได้"; user pasted 2026-11-14). Status: audio not cut yet, nothing built.
 
 ## Source (read-only, never write into G:)
 - Folder: `G:\ไดรฟ์ของฉัน\รักลำเอียง (นิทาน 3D)\`
