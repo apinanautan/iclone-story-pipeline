@@ -83,3 +83,5 @@
 - คลิปเล่นแค่ช่วงต้น (ความเร็ว x ความยาวส่วน) ไม่ต้องยืดจนครบคลิป; ห้ามเลือกความเร็วด้วยการเดา/ใช้ raw/ความยาวหาร
 
 - **User (2026-11-14, no per-story junk files):** the team does several stories per week (hundreds in total). Do NOT create a new doc/data/script file per story or per part (no `partN_event_plan.md`, `<story>_story.md`, `ic8_pN_*.py`, per-part status json). Keep ONE neutral set that is overwritten when the story/part changes: `docs/CURRENT_STORY.md` (story sheet + current part plan/log) and generic reusable scripts driven by parameters. Only lessons/rules that help EVERY story are kept permanently (rules.md, rlpy_lessons.md, skill). Contact sheets/QA images go to the scratch/jobs folder, not `deliverables/`.
+
+- **User (2026-11-14, no heavy planning):** do not write long plans/shot plans before building; planning wastes time because the real work is choosing camera angles and staging inside iClone. Keep at most a few lines in docs/CURRENT_STORY.md (range, scene, cast, speakers), then go straight to building and pick angles in the scene.
