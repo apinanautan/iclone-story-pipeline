@@ -55,3 +55,6 @@ Whisper text is rough (use the docx for wording). Lip-sync windows still to be m
 
 ## Progress
 - ท่อน1: DONE (saved, no render). `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\รักลำเอียง\ท่อน1.iProject`, scene ภายในบ้าน, สุดา+วารี, Cam_A/Cam_B 4 shots (0/10/20/31 s), end 41.8 s, audio on Project Sound at 0 (verified by RenderAudio: sound 0.25-36.3 s).
+- ท่อน1: rendered `E:\Video\รักลำเอียง\1.mp4` (1080p60, 41.82 s). User has not yet reviewed it.
+- ท่อน2: `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\รักลำเอียง\ท่อน2_v2.iProject` (GUI-saved, reopen test OK). Scene บ้านนายสมหวัง, 5 avatars (ชาวบ้าน/สมหวัง/จีไล/สุดา/วารี) standing in a row at x3120-3480,y4300 facing +y, Cam_A/Cam_B 6 shots (0/9/21/29/36/52 s), end 67.3 s, ท่อน2.wav imported (not verified by RenderAudio: it hung iClone). NOT rendered. `ท่อน2.iProject` and `ท่อน2_เสีย_เปิดไม่ได้.iProject` are script-saved and fail to open; `_test_*.iProject` are junk — delete only if user agrees.
+- Next: ท่อน3 in a NEW chat (rule: 2 clips per chat). Scene ฉาก for ท่อน3 = ? (father whispers, Suda's boyfriend) — pick in iClone. Save ONLY via File > Save Project As (never RFileIO.SaveProject).
