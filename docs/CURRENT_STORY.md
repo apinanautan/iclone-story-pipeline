@@ -52,3 +52,6 @@ Folder: C:\Users\Apinan\Desktop\รักลำเอียง\เสียง�
 | 9 | 383.0-447.8 | 64.8 | gold bought, father ill, Suda pushes private hospital, Wari nurses |
 | 10 | 447.8-501.0 | 53.2 | Suda's กงสี excuse, father "ไม่เป็นไรลูก" |
 Whisper text is rough (use the docx for wording). Lip-sync windows still to be measured per part.
+
+## Progress
+- ท่อน1: DONE (saved, no render). `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\รักลำเอียง\ท่อน1.iProject`, scene ภายในบ้าน, สุดา+วารี, Cam_A/Cam_B 4 shots (0/10/20/31 s), end 41.8 s, audio on Project Sound at 0 (verified by RenderAudio: sound 0.25-36.3 s).
