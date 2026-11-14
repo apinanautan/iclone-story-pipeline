@@ -71,3 +71,15 @@
 - Latest user rule for 3.4 comfort: FAKE EMBRACE by camera composition; characters grouped and almost still, only very small head/breathing motion. NO exaggerated Hug Kid mocap, no required literal arm contact, no forced transitions, and NO Look At on 3.4. Existing 3.4 is NOT verified updated to this direction.
 - Do not render 4.1/4.2 before user approval; contact-sheet QA is not a finished MP4. Story WAV must be continuous across 4.1+4.2 to 4.3.
 - Live iClone 4.1 has two Cam41_A/B cameras, six switches, 28 props. Read-only QA checked 18 source frames during 15.3-30.2s: visible red-clad Sunee, mixing bowl and restrained work. See docs/part4_2_qa_20261111.md.
+
+## E+ กล้อง — ต้องอ่านสกิล iclone-key ส่วนกล้องก่อนตั้งกล้องทุกครั้ง (ผู้ใช้โกรธ 2026-11-11 ที่ทำกล้องไกลซ้ำ)
+- ครึ่งตัว/MCU เท่านั้น ห้ามเต็มตัว: ระยะกล้อง 180–250 ซม. (ช็อตเดี่ยว 80/100 มม.); ช็อตคู่ 2 คนต้องชิดกันไม่เกิน ~110 ซม. กล้อง ~480 ซม. ที่ 80 มม. เล็งกึ่งกลางความสูงหัวของสองคน
+- เห็นหน้าชัด คนอยู่กลางเฟรม ห้ามมีไม้/เสาพาดหน้าเฟรม; ฉากหลัง (บ้าน) เห็นพอเป็นฉากหลัง
+- ตรวจ still ทุกช็อตก่อนส่ง และ "ไกลเกินไป" = ผิด ให้แก้เองทันที
+
+## B+ ความเร็วโมชั่น — ต้อง "วัด" ไม่ใช่เดา (ผู้ใช้สั่ง 2026-11-12)
+- วัดความเร็วเฉลี่ยของหัว+สองมือ (ซม./วินาที) ของคลิปที่ความเร็ว 100% ด้วยการ settle() แล้วอ่าน WorldTransform ของกระดูกทุก 0.25 วินาที (สคริปต์ scripts\ic8_motion_speed.py)
+- เป้า "ช้า" = เฉลี่ย <= 4 ซม./วินาที; ความเร็วคลิป = เป้า / ค่าที่วัด จำกัด 0.15–0.30 (ตัวอย่าง Stand_Depressed วัดได้ 10.94 ซม./วินาที → 0.30 ได้ ~3.3 ซม./วินาที)
+- คลิปเล่นแค่ช่วงต้น (ความเร็ว x ความยาวส่วน) ไม่ต้องยืดจนครบคลิป; ห้ามเลือกความเร็วด้วยการเดา/ใช้ raw/ความยาวหาร
+
+- **User (2026-11-14, no per-story junk files):** the team does several stories per week (hundreds in total). Do NOT create a new doc/data/script file per story or per part (no `partN_event_plan.md`, `<story>_story.md`, `ic8_pN_*.py`, per-part status json). Keep ONE neutral set that is overwritten when the story/part changes: `docs/CURRENT_STORY.md` (story sheet + current part plan/log) and generic reusable scripts driven by parameters. Only lessons/rules that help EVERY story are kept permanently (rules.md, rlpy_lessons.md, skill). Contact sheets/QA images go to the scratch/jobs folder, not `deliverables/`.
