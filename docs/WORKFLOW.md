@@ -1,5 +1,7 @@
 # Workflow for one audio part (any AI: follow in order, report to the user after each step)
 
+ดู [คู่มือคีย์ลัด iClone 8](iclone8_keyboard_shortcuts.md) สำหรับรายการคีย์ลัดครบตามคู่มือทางการ บริบทโฟกัส และทางเลือกเมนูคลิก
+
 ## CURRENT OVERRIDE — Event-clip render-first workflow (2026-11-11)
 
 For action-heavy story parts such as ดวงเมียน้อย Part 3, this section OVERRIDES the legacy one-audio-part = one-long-project/timeline procedure below.

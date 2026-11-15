@@ -5,6 +5,9 @@
 import os, glob, traceback, builtins
 from PySide2 import QtCore
 
+# Tells iClone the script targets iClone 8, so Script > Load Python stops showing "not compatible with the current version".
+rl_plugin_info = {"ap": "iClone", "ap_version": "8.0"}
+
 RUN = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "ic8_jobs", "run")
 os.makedirs(RUN, exist_ok=True)
 

@@ -1,0 +1,8 @@
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+graft/
+
+# caches, logs, QA media (not source)
+__pycache__/
+*.pyc
+debug.log
+deliverables/

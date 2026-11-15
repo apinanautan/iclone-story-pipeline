@@ -5,6 +5,9 @@ The work: turn Thai folk-tale audio, one part at a time, into an animated 3D vid
 The user speaks Thai; answer in Thai. They want work done one step at a time as they say, with every new rule they give
 **written into this project immediately** (`docs/rules.md`) so they never have to repeat it.
 
+## Codex / GPT: do NOT use GPT-side tools (user 2026-11-15)
+Dino Tunnel = "MyComp Bot for Windows" (OpenAI Tunnel over Tailscale) is the user's tool for ChatGPT (their Minecraft bot / PC control for GPT), NOT for Codex. Codex must not call Dino Tunnel or other ChatGPT-side tools (connectors, Computer Use, Agent Desktop, subagents) to drive iClone. Use only the local watcher (`ic8_jobs/run/*.py`) + `scripts/` + PowerShell. First message of every part: read docs/rules.md and docs/DELIVERY_CHECKLIST.md in full and make the checklist the task list.
+
 ## Mandatory lip-sync audio workflow (user update 2026-11-07)
 For any speaking character, import the **full N.mp3** directly to that avatar through iClone's Voice/AccuLips process, then **split/trim/remove unused speech sections within the iClone Timeline** to leave only that character's dialogue at the original timestamps. Repeat with the original full audio for every speaker. **Do not pre-cut short WAVs externally to import as lip-sync source.** Leave full original audio on Project Sound track; prevent doubled playback. Verify actual Viseme clips, mouth animation and speaker timing, not just Look front.iTalk or successful audio import. Preserve AccuPOSE. See docs/iclone-key-SKILL.md and docs/rules.md. Last survey showed 0 Viseme clips for all 6 Part 2 avatars.
 
@@ -39,6 +42,8 @@ After poses and after every camera pass: render stills and combine them with `sc
 | ic8_survey2.py | lists props/avatars/cameras with positions → `ic8_jobs\survey.txt` |
 | ic8_solo.py + solo.json | one character standing, one slowed motion, one camera, stills / video |
 | ic8_part2_build.py | multi-character seated scene: load cast, face clip, blink, lip-sync segments, face lights |
+| ic8_pose_place.py + pose_place.json | generic: body clips back to back (slowed), root pos/yaw/tilt, Look front, Look At, face keys, visibility |
+| ic8_cams.py + cams.json | generic: deletes all cameras, Cam_A/Cam_B alternate, 2 keys per shot, switcher, start/mid/end stills, play range 0..end |
 | ic8_render2.py + render.json | render video by script (export type 1 = Video). Renders whole project → trim with ffmpeg |
 | ic8_stage.py / ic8_key_shot.py | older multi-shot staging scripts (from an earlier story) |
 | ic8_ui.ps1 / ic8_open.ps1 | click iClone buttons / fill file dialogs without the mouse |

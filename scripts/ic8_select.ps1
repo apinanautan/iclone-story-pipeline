@@ -6,5 +6,5 @@ import RLPy
 RLPy.RScene.ClearSelectObjects()
 RLPy.RScene.SelectObject([a for a in RLPy.RScene.GetAvatars() if a.GetName() == '$name'][0])
 RLPy.RGlobal.SetTime(RLPy.RTime.FromValue(0))
-"@ | Set-Content "$D\run\sel.py" -Encoding utf8
+"@ | ForEach-Object { [IO.File]::WriteAllText("$D\run\sel.py", $_, (New-Object Text.UTF8Encoding $false)) }  # no BOM (a BOM broke the watcher: SyntaxError)
 for ($i = 0; $i -lt 20 -and (Test-Path "$D\run\sel.py"); $i++) { Start-Sleep -Milliseconds 500 }
