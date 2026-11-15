@@ -42,6 +42,7 @@ After poses and after every camera pass: render stills and combine them with `sc
 | ic8_survey2.py | lists props/avatars/cameras with positions → `ic8_jobs\survey.txt` |
 | ic8_solo.py + solo.json | one character standing, one slowed motion, one camera, stills / video |
 | ic8_part2_build.py | multi-character seated scene: load cast, face clip, blink, lip-sync segments, face lights |
+| **ic8_gui.ps1** | **GUI chores in one command each (use instead of screenshot+click):** `save`, `saveas <path>`, `open <path> [-Discard]`, `reopen`, `switch`, `tozero`, `sound <wav> [-Replace]`, `lip <avatar> <wav> <s> <e>`, `render <out.mp4> <end> <wav> [-Shots ..] [-Publish dir]`, `press <button>`, `shot`, `job <py>`. Saves only via GUI, backs up first, verifies disk + reload. |
 | ic8_pose_place.py + pose_place.json | generic: body clips back to back (slowed), root pos/yaw/tilt, Look front, Look At, face keys, visibility |
 | ic8_cams.py + cams.json | generic: deletes all cameras, Cam_A/Cam_B alternate, 2 keys per shot, switcher, start/mid/end stills, play range 0..end |
 | ic8_render2.py + render.json | render video by script (export type 1 = Video). Renders whole project → trim with ffmpeg |
