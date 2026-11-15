@@ -9,10 +9,11 @@ for a in RLPy.RScene.GetAvatars():
     n = a.GetName(); v = a.GetVisemeComponent()
     kv = v.GetVisemeKeys(); ks = [kv[i] for i in range(len(kv))]; rm = 0
     if n in WIN:
-        s, e = WIN[n]
+        w = WIN[n]   # [s, e] or [[s, e], ...]; [] = mouth closed all part
+        w = [w] if w and not isinstance(w[0], (list, tuple)) else w
         for k in ks:
             t = k.GetTime().ToFloat() / 6000.0
-            if t < s - 0.1 or t > e + 0.15:
+            if not any(s - 0.1 <= t <= e + 0.15 for s, e in w):
                 v.RemoveVisemesKey(k); rm += 1
     kv = v.GetVisemeKeys(); left = [kv[i].GetTime().ToFloat() / 6000.0 for i in range(len(kv))]
     out.append('%s clips %d keys %d removed %d left %d range %s' % (n, v.GetClipCount(), len(ks), rm, len(left),

@@ -1,0 +1,353 @@
+{
+ "name": "รักลำเอียง",
+ "folder": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)",
+ "script_docx": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/บท - รักลำเอียง.docx",
+ "script_split": "(AD.)",
+ "master_audio": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง _mixdown.wav",
+ "audio_dir": "C:/Users/Apinan/Desktop/รักลำเอียง/เสียงที่ตัดแล้ว",
+ "save_dir": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/รักลำเอียง",
+ "video_dir": "E:/Video/รักลำเอียง",
+ "publish_dir": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/วีดีโอ/บีม",
+ "teacher_range": [
+  0,
+  501.0
+ ],
+ "reference_clips": {
+  "9": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/วีดีโอ/เว่น/1 เงินทองเป็นของนอกกายนะพ่อ.mp4"
+ },
+ "characters": {
+  "สุดา": {
+   "role": "พี่สาว ขาว สวย",
+   "voice": "หญิง",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/1.สุดา/สุดา.iAvatar"
+  },
+  "วารี": {
+   "role": "น้องสาว ผิวเข้มกว่า",
+   "voice": "หญิง",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/2.วารี/วารี.iAvatar"
+  },
+  "นายสมหวัง": {
+   "role": "พ่อ",
+   "voice": "ชาย",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/3.นายสมหวัง/นายสมหวัง.iAvatar"
+  },
+  "นางจีไล": {
+   "role": "แม่ (บทเขียน วิไล)",
+   "voice": "หญิง",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/3.1.นางจีไล/นางจีไล.iAvatar"
+  },
+  "ชาวบ้านหญิง": {
+   "role": "ชาวบ้านคนแรก (ผู้หญิง)",
+   "voice": "หญิง",
+   "avatar": null
+  },
+  "พิชัย": {
+   "role": "สามีสุดา",
+   "voice": "ชาย",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/5.พิชัย/พิชัย.iAvatar"
+  },
+  "มานพ": {
+   "role": "สามีวารี",
+   "voice": "ชาย",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/6.มานพ/มานพ.iAvatar"
+  },
+  "ลูกชายสุดา": {
+   "role": "ลูกชายสุดา 7 ขวบ",
+   "voice": "ชาย",
+   "avatar": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/รักลำเอียง/7.ลูกชาย7ขวบ/ลูกชายสุดาและพิชัย — 7 ขวบ.iAvatar"
+  }
+ },
+ "scenes": {
+  "งานเลี้ยงเปิดกิจการ": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/งานเลี้ยงเปิดกิจการ.iProject",
+   "type": "indoor"
+  },
+  "บ้านนายสมหวัง": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/บ้านนายสมหวัง.iProject",
+   "type": "indoor"
+  },
+  "บ้านพิชัยที่กรุงเทพ(ภายใน)": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/บ้านพิชัยที่กรุงเทพ(ภายใน).iProject",
+   "type": "indoor"
+  },
+  "ภายในบ้าน": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/ภายในบ้าน.iProject",
+   "type": "indoor"
+  },
+  "ร้านอาหาร": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/ร้านอาหาร.iProject",
+   "type": "indoor"
+  },
+  "หมู่บ้าน": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/หมู่บ้าน.iProject",
+   "type": "outdoor"
+  },
+  "ออฟฟิศที่ทำงานในบริษัท": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/ออฟฟิศที่ทำงานในบริษัท.iProject",
+   "type": "indoor"
+  },
+  "โรงพยาบาล": {
+   "file": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/ฉาก/โรงพยาบาล.iProject",
+   "room": [
+    -712,
+    465,
+    -69,
+    1005
+   ],
+   "notes_list": [
+    "ห้ามเห็นฟูก/ขอบเตียง (พ่อดูจมเตียง): ถ่ายพ่อระดับอกขึ้นไป เลนส์ยาว 85-135mm",
+    "พ่อนั่งพิงหัวเตียงชิดกำแพง ตามคลิปครู (วีดีโอ/เว่น/1 เงินทองเป็นของนอกกายนะพ่อ.mp4)",
+    "two-shot สุดากับแม่ต้องยืนใกล้กัน ไม่ห่างจนมีช่องว่างกลางเฟรม",
+    "เตียง x -346..-78, หัวเตียงที่กำแพง x≈-78"
+   ],
+   "spots": {
+    "เตียง_นั่งพิงหัวเตียง": {
+     "pos": [
+      -118,
+      915,
+      25
+     ],
+     "yaw": -90,
+     "speed": 0.2,
+     "notes": "SitC04B_L_Agree01 -> Agree02 (motions path: set once)",
+     "approved": true
+    },
+    "ยืนข้างเตียง_ฝั่งประตู": {
+     "pos": [
+      -342,
+      733,
+      0
+     ],
+     "yaw": 140,
+     "speed": 0.25,
+     "notes": "สุดา ท่อน10, StandTKI_T_Explain01",
+     "approved": true
+    }
+   },
+   "cams": {
+    "two_สุดา_แม่": {
+     "pos": [
+      -175,
+      870,
+      165
+     ],
+     "target": [
+      -364,
+      754,
+      152
+     ],
+     "focal": 40,
+     "move": 15,
+     "approved": true
+    },
+    "close_ข้างเตียง_75": {
+     "pos": [
+      -215,
+      815,
+      162
+     ],
+     "target": [
+      -342,
+      733,
+      163
+     ],
+     "focal": 75,
+     "move": 12,
+     "approved": true
+    },
+    "พ่อ_85": {
+     "pos": [
+      -320,
+      905,
+      155
+     ],
+     "target": [
+      -110,
+      923,
+      148
+     ],
+     "focal": 85,
+     "move": -15,
+     "approved": true
+    },
+    "ots_ไปพ่อ_135": {
+     "pos": [
+      -440,
+      690,
+      170
+     ],
+     "target": [
+      -120,
+      915,
+      150
+     ],
+     "focal": 135,
+     "move": -15,
+     "approved": true
+    },
+    "close_พ่อ_95": {
+     "pos": [
+      -300,
+      905,
+      152
+     ],
+     "target": [
+      -110,
+      923,
+      148
+     ],
+     "focal": 95,
+     "move": 15,
+     "approved": true
+    }
+   },
+   "type": "indoor"
+  }
+ },
+ "parts": [
+  {
+   "n": "1",
+   "master": [
+    0,
+    36.8
+   ],
+   "content": "narration: sisters compared",
+   "scenes": [
+    "ภายในบ้าน"
+   ],
+   "script_block": 1,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "2",
+   "master": [
+    36.8,
+    99.1
+   ],
+   "content": "villager praises Suda, สมหวัง replies, Wari listens",
+   "scenes": [
+    "บ้านนายสมหวัง"
+   ],
+   "script_block": 1,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "3",
+   "master": [
+    99.1,
+    139.9
+   ],
+   "content": "Suda's boyfriend introduced, father whispers, Suda replies",
+   "scenes": [
+    "ออฟฟิศที่ทำงานในบริษัท",
+    "บ้านนายสมหวัง"
+   ],
+   "script_block": 2,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "4",
+   "master": [
+    139.9,
+    188.0
+   ],
+   "content": "father compares Wari's boyfriend",
+   "scenes": [
+    "บ้านนายสมหวัง",
+    "ออฟฟิศที่ทำงานในบริษัท"
+   ],
+   "script_block": 2,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "5",
+   "master": [
+    188.0,
+    255.8
+   ],
+   "content": "Suda asks about money, father splits land money, Suda displeased",
+   "scenes": [],
+   "script_block": 2,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "6",
+   "master": [
+    255.8,
+    285.7
+   ],
+   "content": "Suda's wedding, gifts from parents",
+   "scenes": [],
+   "script_block": 3,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "7",
+   "master": [
+    285.7,
+    347.0
+   ],
+   "content": "Suda disappointed in in-laws, urges husband to split off",
+   "scenes": [],
+   "script_block": 3,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "8",
+   "master": [
+    347.0,
+    383.0
+   ],
+   "content": "Wari marries Manop, small house",
+   "scenes": [],
+   "script_block": 3,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "9",
+   "master": [
+    383.0,
+    447.8
+   ],
+   "content": "gold bought, father ill, Suda pushes private hospital, Wari nurses",
+   "scenes": [
+    "โรงพยาบาล"
+   ],
+   "script_block": 3,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  },
+  {
+   "n": "10",
+   "master": [
+    447.8,
+    501.0
+   ],
+   "content": "Suda's กงสี excuse, father 'ไม่เป็นไรลูก'",
+   "scenes": [
+    "โรงพยาบาล"
+   ],
+   "script_block": 3,
+   "plan": "",
+   "status": "done",
+   "cast": []
+  }
+ ]
+}
