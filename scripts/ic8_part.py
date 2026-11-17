@@ -193,6 +193,7 @@ def step_check(S, base):
         if sp is not None and not (0.15 <= sp <= 0.30): errs.append("%s speed %.2f not 0.15-0.30" % (n, sp))
         for m in c.get("motions", []) + ([c["motion"]] if c.get("motion") else []):
             if not os.path.exists(m): errs.append("%s motion not found: %s" % (n, m))
+        if isinstance(c.get("lookfront"), str) and not os.path.exists(c["lookfront"]): errs.append("%s face clip not found: %s" % (n, c["lookfront"]))
         if c.get("lookat") and c["lookat"] not in names: errs.append("%s looks at %s (not in cast)" % (n, c["lookat"]))
         speaks = any(L["who"] == n for L in S["lines"])
         if not speaks and not c.get("lookat"): warns.append("%s listens: no lookat (rule 6: listeners Look At someone)" % n)
@@ -321,7 +322,7 @@ def step_lip(S, base):
 
 def step_cams(S, base):
     end = duration(S["wav"])
-    wjson("cams.json", {"end": end, "per_sec": 1, "shots": S["shots"], "face_light_multiplier": S.get("face_light_multiplier", 0.04)})
+    wjson("cams.json", {"end": end, "per_sec": S.get("review_per_sec", 1), "shots": S["shots"], "face_light_multiplier": S.get("face_light_multiplier", 0.04)})
     job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
     log = rlog("cams.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("cams")

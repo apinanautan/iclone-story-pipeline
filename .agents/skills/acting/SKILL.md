@@ -4,6 +4,23 @@ description: Body motion placement and facial expression for iClone characters -
 ---
 # Acting = slow body motion + living face
 
+## Where the motions are (G: = read only). Body and face are SEPARATE files.
+Root `M = G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\`. Full list of 1570 body motions: `M\motions.csv` (Name,Type,Folder,FullPath) - search it by keyword instead of walking folders.
+- **Body (.iMotion / .rlMotion)** -> spec `cast.<name>.motion`:
+  - Standing idle: `M\โมชั่น\03_CC MixMove_Male\` and `04_CC MixMove_Female\` (Stand00-04).
+  - Talking / listening: `M\Studio Mocap - Conversation\`, `M\Motion_-_TalkListen\` (Listener_Agree/Curious/Apologize_F/M, Breathing_F/M .rlMotion - this folder also has face .iTalk: Amused, Comfortable_F...).
+  - Emotion gestures: `M\Studio Mocap-Emotes\`, `M\Scared Mocap Animations\`. Lovers/couples: `M\Lovers\Studio Mocap-Lovers\`, `M\คู่รัก\`.
+  - Sitting / lying / sleep: `M\SitC01.iMotion`, `SitC02`, `MSitC01`, `M\Have A Rest - Laying Down Animation Pack\`, `M\Sleep Anim Pack iC7.92\`.
+  - Thai: `ยืนไหว้`, `นั่งไหว้`, `นั่งไหว้พระ`, `นั่งสมาธิไหว้`, `ปฏิเสธ`, `อุ้มลูก` (.rlMotion in M), `ฟ้อนรำ.fbx`.
+  - Daily life: `M\Home_life_Clean_\`, `M\Park Life - MoCap Pack iC7.93\`, `M\Studio Mocap-City Life\`, `M\Shopping_Clean vfxmed\`, `M\ทำงาน\`, `M\ปลูกผัก\`, `M\ขับรถ\`, `M\ขี่ม้า\`, `M\วิ่งหนี\`, `M\ผี\`. Kids: `M\Kids At School vfxmed\`, `M\Baby Motions\`.
+  - Walk: `M\Walk.iMotion`, `M\Walk ชาย.iMotion` (root motion - one per shot).
+- **Face (.iTalk / .italk)** -> spec `cast.<name>.lookfront`: `true` = `Digital Soul 100+\1.Watch\Look front.iTalk`, or a full PATH to a face clip that fits the line:
+  - `M\Digital Soul 100+\<Emotion>\0N_<Emotion>_<Lo|Med|Hi|Max|Short>.italk` for Anger, Disgust, Fear, Happy, Neutral, Sad, Surprise (Lo = subtle - use Lo/Med for folk tales; Max is overacted).
+  - Looking: `1.Watch\` (Look front, Look around_Nervous/Pleased/Relax, Look up_Happy/Interested, Size up_...).
+  - Thinking: `2.Think\` (Considering_F, Day Dream_F, Planning, Scheming, Absent-minded). Reading: `3.Read\`.
+  - Feelings: `4.Feel_Like\1.Pleased`, `2.Excited`, `3.Tender`. Looping versions: `Expression_Loop\<Emotion>\`.
+  - Pick per character from the script: e.g. greedy daughter -> `Happy_Lo` while gifts are given, `Disgust_Lo` when disappointed; sad old parents -> `Sad_Lo`/`Sad_Med`.
+
 ## Body motion (set in the part spec `cast`, applied by `ic8_part.py pose`)
 - Library first: standing `Stand00.iMotion` (MixMove Male/Female); Female Stand01 (sometimes Stand00) has a raised-hand gesture, Stand02 = hand on hip, **Stand03/Stand04 are quiet**. Conversation mocap: MixMoves Communication / Studio Mocap Conversation.
 - **SLOW is mandatory:** ONE clip stretched over its segment, `speed` 0.15-0.30 (talkers <= 0.30, listeners ~0.15). Never loop short clips at 0.7-1.0.

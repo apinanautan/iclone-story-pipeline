@@ -3,7 +3,7 @@
 place.json = {"end": 64.8, "avatars": {"<name>": {
     "motion": "G:/.../X.iMotion", "speed": 0.2,      # optional: replace body clips with ONE clip stretched to end
     "pos": [x, y, z], "yaw": deg, "pitch": deg,       # optional root placement (pitch = tilt back, negative = lean back)
-    "lookfront": true,                                 # load Look front.iTalk (natural head motion)
+    "lookfront": true,                                 # load Look front.iTalk (natural head motion), or a path to another .iTalk (Happy/Sad/Think...)
     "lookat": "<other avatar name>",                   # head/eyes follow that avatar's head
     "face": {"Eye_Blink_L": 0.0, ...},                 # optional expression keys at 0 and end
     "visible": [[t, 0|1], ...]}}}
@@ -56,7 +56,8 @@ try:
             ctl.SetValue(T(0), tr)
         if s.get("lookfront"):
             RLPy.RScene.ClearSelectObjects(); RLPy.RScene.SelectObject(a)
-            LOG.append("%s lookfront %s" % (name, RLPy.RFileIO.LoadFile(LOOKFRONT)))
+            fc_file = s["lookfront"] if isinstance(s["lookfront"], str) else LOOKFRONT   # true = Look front, or a path to any .iTalk that fits the line
+            LOG.append("%s face clip %s %s" % (name, os.path.basename(fc_file), RLPy.RFileIO.LoadFile(fc_file)))
             RLPy.RScene.ClearSelectObjects()
         if s.get("lookat"):
             la = sk.GetLookAtComponent()
