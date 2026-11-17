@@ -365,7 +365,8 @@ The user has repeated every item below many times and is furious about repeating
 ## Motion AI (Toyxyz/Kimodo) trial — status 2026-11-17
 - Scripts: tools/motion_ai/ (drive_gen.py = generate in Blender 5.3; retarget.py = SOMA -> CC_Base FBX; ic_imp2.ps1 = iClone Import External Motion).
 - Prompts: "A person ..." + simple body posture (sits with legs stretched / stands with hands clasped). No scene objects (bed etc.).
-- Works end to end (generate -> FBX -> on the character in iClone). Open bug: every clip is hunched in iClone, even a pure rest pose -> export problem, not motion. Next test: put CC3_Base_Plus.fbxkey + .3dxProfile next to the FBX with the same base name (Reallusion's Blender tools do this).
+- Works end to end (generate -> FBX -> on the character in iClone). FIXED 2026-11-17: the FBX must have CC3_Base_Plus.fbxkey + .3dxProfile copied next to it with the same base name, otherwise iClone hunches the body. retarget.py does this automatically.
+- ic_imp2.ps1 runs the import with no mouse: it uses the keyboard only, and only while iClone is in front.
 - Motion quality is NOT the focus; test it later on real parts.
 - Never use screen coordinates or mouse clicks to drive iClone (other PCs have 1 or 2 monitors in any layout). Use keyboard (Alt+F menus) only when iClone is foreground, else abort; fill dialogs with window messages (WM_SETTEXT + BM_CLICK).
 - iClone may crash on repeated imports; save nothing, reopen, reload the test character.

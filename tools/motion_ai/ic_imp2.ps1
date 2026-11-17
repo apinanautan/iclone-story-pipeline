@@ -27,7 +27,7 @@ $k::SendWait('%f'); Start-Sleep -Milliseconds 700
 foreach ($x in @('{DOWN}')*5 + @('{RIGHT}') + @('{DOWN}')*3) { $pp=0; [IM.U]::GetWindowThreadProcessId2([IM.U]::GetForegroundWindow(),[ref]$pp)|Out-Null; if ($pp -ne 0 -and $pp -ne (Get-Process iClone).Id) { "ABORT lost focus pid $pp"; exit 1 }; $k::SendWait($x); Start-Sleep -Milliseconds 350 }
 $k::SendWait('{ENTER}')
 $d = 0; for ($i = 0; $i -lt 20 -and $d -eq 0; $i++) { Start-Sleep -Milliseconds 500; $d = [IM.U]::FindWindow('#32770', 'เปิด') }
-if ($d -eq 0) { "ABORT no dialog"; exit 1 }
+if ($d -eq 0) { "ABORT no dialog"; exit 1 }; Start-Sleep 2
 }
 $c = [IM.U]::GetDlgItem($d, 0x47C); $ed = [IM.U]::FindWindowEx($c, 0, 'Edit', $null); if ($ed -eq 0) { $ed = [IM.U]::FindWindowEx([IM.U]::FindWindowEx($c, 0, 'ComboBox', $null), 0, 'Edit', $null) }
 [IM.U]::SendMessage($ed, 0x0C, 0, $Fbx) | Out-Null; Start-Sleep -Milliseconds 300

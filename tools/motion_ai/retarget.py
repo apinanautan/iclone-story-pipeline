@@ -84,4 +84,7 @@ sc.frame_start, sc.frame_end = (f0 - 1 if os.environ.get("REST0", "1") == "1" el
 bpy.ops.export_scene.fbx(filepath=out, use_selection=True, bake_anim=True, bake_anim_use_nla_strips=False,
                          bake_anim_use_all_actions=False, add_leaf_bones=False, armature_nodetype="NULL")
 bpy.ops.wm.save_as_mainfile(filepath=out.replace(".fbx", "_retarget.blend"))
+import shutil   # iClone needs the CC profile files next to the FBX (same base name), else the body comes out hunched
+for ext in (".fbxkey", ".3dxProfile"):
+    shutil.copyfile(CC[:-4] + ext, out[:-4] + ext)
 print("EXPORTED", out)
