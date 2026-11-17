@@ -207,7 +207,9 @@ def step_check(S, base):
         a, b = s["t"]
         if b - a < 2.0: errs.append("shot %d shorter than 2 s" % (i + 1))
         if i and abs(sh[i - 1]["t"][1] - a) > 0.01: errs.append("gap/overlap before shot %d" % (i + 1))
-        if not 20 <= s["focal"] <= 200: errs.append("shot %d focal %s (20-200)" % (i + 1, s["focal"]))
+        if s.get("wide"):   # establishing/view shot: any lens, no DOF
+            if not 20 <= s["focal"] <= 200: errs.append("shot %d focal %s (20-200)" % (i + 1, s["focal"]))
+        elif s["focal"] not in (80, 100): errs.append("shot %d focal %s: character shots use 80 or 100 mm only (rules: Camera). Mark view shots \"wide\": true" % (i + 1, s["focal"]))
         mv = abs(s.get("move", 15))
         if not 8 <= mv <= 25: warns.append("shot %d move %d cm (guide: 12-20)" % (i + 1, mv))
         if math.dist(s["pos"], s["target"]) < 60: errs.append("shot %d camera closer than 60 cm to target" % (i + 1))

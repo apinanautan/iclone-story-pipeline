@@ -6,8 +6,13 @@ cause bouncing zoom). Sets the switcher, renders ONE still at every shot's middl
 "edges": true), then restores the play range 0..end.
 
 cams.json = {"end": 64.8, "edges": true, "shots": [
-   {"t": [0, 7], "pos": [x,y,z], "target": [x,y,z], "focal": 95, "move": 15},   # move>0 push in, <0 pull out
+   {"t": [0, 7], "pos": [x,y,z], "target": [x,y,z], "focal": 80, "move": 15},   # move>0 push in, <0 pull out
+   {"t": [7, 12], ..., "wide": true},   # view/establishing shot: any lens, DOF off
    ...]}
+Rules enforced here (docs/rules.md Look + Camera), so every AI gets the same result:
+ - character shots: lens 80 or 100 only (else the job stops with ERROR), DOF on, focus on the target.
+ - face light: one soft light per avatar, front-left above the face (FaceLight_<name>), made before the cameras.
+   Needs a light in the scene to clone; if none, the log says WARNING NO FACE LIGHT.
 Stills: ic8_jobs/cam_NN_mid.png (+ _a/_b). Log: ic8_jobs/cams.log.txt
 """
 import RLPy, os, math, json, time, traceback
@@ -37,9 +42,41 @@ def key(cam, s, pos, tgt, focal):
     cam.SetFocalLength(T(s), focal)
 
 
+def dof(cam, s, pos, tgt, on):
+    d = RLPy.RCameraDofData(); d.SetEnable(on)
+    if on:
+        d.SetFocus(math.dist(pos, tgt)); d.SetRange(55); d.SetFarTransitionRegion(100); d.SetNearTransitionRegion(70)
+        d.SetFarBlurScale(1); d.SetNearBlurScale(1)
+    k = RLPy.RKey(); k.SetTime(T(s)); cam.AddDofKey(k, d)
+
+
+def face_lights():
+    lights = list(RLPy.RScene.FindObjects(RLPy.EObjectType_Light))
+    src = next((l for l in lights if l.GetName() == "Point light"), None) or next((l for l in lights if not l.GetName().startswith("FaceLight_")), None)
+    for l in lights:
+        if l.GetName().startswith("FaceLight_"): RLPy.RScene.RemoveObject(l)
+    if not src:
+        LOG.append("WARNING NO FACE LIGHT: scene has no light to clone; faces may be dark"); return
+    for a in RLPy.RScene.GetAvatars():
+        if not a.GetVisible(): continue
+        tr = a.WorldTransform(); p = tr.T(); q = tr.R()
+        yaw = 2 * math.atan2(q.z, q.w)
+        fx, fy = math.sin(yaw), -math.cos(yaw)          # facing (rules: yaw = atan2(dx,-dy))
+        lx, ly = -fy, fx                                 # character's left
+        pos = (p.x + fx * 120 + lx * 60, p.y + fy * 120 + ly * 60, p.z + 200)
+        lt = src.Clone(); lt.SetName("FaceLight_" + a.GetName())
+        c = lt.GetControl("Transform"); t = RLPy.RTransform(); c.GetValue(T(0), t)
+        t.T().x, t.T().y, t.T().z = pos; c.SetValue(T(0), t)
+        lt.SetColor(T(0), RLPy.RRgb(255, 236, 214)); lt.SetMultiplier(T(0), 0.04); lt.SetRange(T(0), 700); lt.SetCastShadow(False)
+        LOG.append("face light %s at %s" % (a.GetName(), tuple(round(v) for v in pos)))
+
+
 try:
     p = json.load(open(os.path.join(J, "cams.json"), encoding="utf-8"))
     END = p["end"]
+    bad = [i + 1 for i, s in enumerate(p["shots"]) if not s.get("wide") and s["focal"] not in (80, 100)]
+    if bad: raise ValueError("shots %s: character shots must use 80 or 100 mm (or mark \"wide\": true)" % bad)
+    face_lights()
     RLPy.RGlobal.Stop(); RLPy.RScene.ClearSelectObjects()
     for _ in range(50):   # some old cameras report no Transform control: delete them all, by name loop
         old = RLPy.RScene.GetCameras()
@@ -59,6 +96,7 @@ try:
         c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = s.get("move", 15)
         c1 = [c0[k] + (tg[k] - c0[k]) * m / d for k in range(3)]
         key(cam, a, c0, tg, s["focal"]); key(cam, stop, c1, tg, s["focal"])
+        dof(cam, a, c0, tg, not s.get("wide")); dof(cam, stop, c1, tg, not s.get("wide"))
         RLPy.RScene.AddSwitchCameraKey(T(a), cam)
         LOG.append("shot %d %s %.1f-%.1f focal %d move %+d" % (i + 1, cam.GetName(), a, b, s["focal"], m))
     for i, s in enumerate(p["shots"]):

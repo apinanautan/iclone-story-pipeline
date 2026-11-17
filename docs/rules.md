@@ -70,8 +70,12 @@
 - คงท่า AccuPOSE และ Body Motion เดิมทุกครั้ง ห้าม RemoveAllAnimations หรือโหลด .rlDikPreset ทางสคริปต์เพื่อแก้ปาก. ข้อกำหนดละเอียดอยู่ที่ docs/iclone-key-SKILL.md หัวข้อ บทพูดและลิปซิงก์.
 
 ## Look
-- Faces must not be dark: one soft spot light per character, front-left a bit above the face, warm white
-  `RRgb(255,236,214)`, **multiplier 0.04**, range 700, no shadow.
+- Faces must not be dark: one soft light per character, front-left a bit above the face, warm white
+  `RRgb(255,236,214)`, **multiplier 0.04**, range 700, no shadow (cloned from the scene's light, as in parts 7 and 10).
+  **scripts/ic8_cams.py now adds these lights automatically (FaceLight_<name>)**; do not skip the cams step. Judge
+  darkness with the viewport Auxiliary Light OFF (see 2026-11-15 note). The 2.0/1500 values below were for a
+  separate camera fill light (FillCam), not the per-character face light.
+- Lens 80/100 mm and DOF on are enforced by ic8_part.py check + ic8_cams.py; view shots must say "wide": true.
 
 ## Camera
 - Lens **80 or 100 mm only** (keep framing: distance = 270 cm × focal/50 for a half body).
