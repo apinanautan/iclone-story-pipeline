@@ -361,3 +361,11 @@ The user has repeated every item below many times and is furious about repeating
 - **User 2026-11-16 (system, not per-chat thinking):** every story has `stories/<story>.json` (story name, folders, script docx, master audio, teacher range, characters + avatar files, scenes + files, parts with master time range/content/scenes/script block/cast/plan/status). Every part starts with `ic8_story.py <story> brief <N>`, then `new <N>`, then fill the spec and run `ic8_part.py` step by step. New facts go into the story file, not only into chat. Tooling/planning requests: do not open or drive iClone to test unless the user asks.
 - **User 2026-11-16:** a finished story is finished: run `ic8_story.py <story> close` (story + part files → Recycle Bin). Keep only the central templates (`stories/_template.json`, `parts/_example.json`) and the generic scripts.
 - **User 2026-11-16 (placement system):** never invent positions per part. Each scene is measured once (ic8_scene_scan.py + `ic8_story.py <story> scan <scene>`), named spots/cams live in the story file, the user approves each once (still image), parts use the names. User comments about a scene go into that scene's `notes_list`.
+
+## Motion AI (Toyxyz/Kimodo) trial — status 2026-11-17
+- Scripts: tools/motion_ai/ (drive_gen.py = generate in Blender 5.3; retarget.py = SOMA -> CC_Base FBX; ic_imp2.ps1 = iClone Import External Motion).
+- Prompts: "A person ..." + simple body posture (sits with legs stretched / stands with hands clasped). No scene objects (bed etc.).
+- Works end to end (generate -> FBX -> on the character in iClone). Open bug: every clip is hunched in iClone, even a pure rest pose -> export problem, not motion. Next test: put CC3_Base_Plus.fbxkey + .3dxProfile next to the FBX with the same base name (Reallusion's Blender tools do this).
+- Motion quality is NOT the focus; test it later on real parts.
+- Never use screen coordinates or mouse clicks to drive iClone (other PCs have 1 or 2 monitors in any layout). Use keyboard (Alt+F menus) only when iClone is foreground, else abort; fill dialogs with window messages (WM_SETTEXT + BM_CLICK).
+- iClone may crash on repeated imports; save nothing, reopen, reload the test character.
