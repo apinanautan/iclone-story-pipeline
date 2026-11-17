@@ -1,5 +1,10 @@
 # iClone Story Pipeline: instructions for any AI that picks this up
 
+## Skills first (2026-11-17)
+Step-by-step skills live in `.agents/skills/*/SKILL.md` (Codex loads them; any other AI: read them). For a story part
+start with **story-part** (master flow): cut-audio -> plan-part -> build-part -> review-stills (STOP for user) -> lip-sync -> save-render.
+Helpers: iclone-control (driving iClone without mouse), motion-ai (only after the user says yes).
+
 The work: turn Thai folk-tale audio, one part at a time, into an animated 3D video in **iClone 8**
 (characters built in Character Creator 5), driven by **Python scripts instead of mouse clicks** so it costs fewer credits.
 The user speaks Thai; answer in Thai. They want work done one step at a time as they say, with every new rule they give
