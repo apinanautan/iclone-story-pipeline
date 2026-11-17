@@ -2,7 +2,7 @@
 
 Follows docs/CAMERA_GUIDE.md recipe: two cameras Cam_A/Cam_B alternate every shot, 2 linear keys per shot,
 one axis (toward/away from the fixed target), 12-20 cm. Deletes ALL old cameras first (leftover focal keys
-cause bouncing zoom). Sets the switcher, renders ONE still at every shot's middle (+ start/end if
+cause bouncing zoom). Sets the switcher, renders stills: "per_sec": 1 = ~1 per second (3-8 per shot, the standard), else middle (+ start/end if
 "edges": true), then restores the play range 0..end.
 
 cams.json = {"end": 64.8, "edges": true, "shots": [
@@ -71,7 +71,7 @@ def face_lights():
         lt = src.Clone(); lt.SetName("FaceLight_" + a.GetName())
         c = lt.GetControl("Transform"); t = RLPy.RTransform(); c.GetValue(T(0), t)
         t.T().x, t.T().y, t.T().z = pos; c.SetValue(T(0), t)
-        lt.SetColor(T(0), RLPy.RRgb(255, 236, 214)); lt.SetMultiplier(T(0), 0.04); lt.SetRange(T(0), 700); lt.SetCastShadow(False)
+        lt.SetColor(T(0), RLPy.RRgb(255, 236, 214)); lt.SetMultiplier(T(0), p.get('face_light_multiplier', 0.04)); lt.SetRange(T(0), 700); lt.SetCastShadow(False)
         LOG.append("face light %s at %s" % (a.GetName(), tuple(round(v) for v in pos)))
 
 
@@ -103,9 +103,16 @@ try:
         dof(cam, a, c0, tg, not s.get("wide")); dof(cam, stop, c1, tg, not s.get("wide"))
         RLPy.RScene.AddSwitchCameraKey(T(a), cam)
         LOG.append("shot %d %s %.1f-%.1f focal %d move %+d" % (i + 1, cam.GetName(), a, b, s["focal"], m))
+    import glob as _g
+    for f in _g.glob(os.path.join(J, "cam_*.png")): os.remove(f)   # no stale stills from an older pass
     for i, s in enumerate(p["shots"]):
         cam = cams[i % 2]; a, b = s["t"]
-        times = [("mid", (a + b) / 2)] + ([("a", a + 0.2), ("b", b - 0.2)] if p.get("edges") else [])
+        if p.get("per_sec"):   # standard: ~1 still per second, 3..8 per shot, evenly from start to end
+            n = max(3, min(8, int(round((b - a) * p["per_sec"])) + 1))
+            times = [("%02d_%05.1fs" % (k + 1, t), t) for k, t in
+                     enumerate(a + 0.2 + (b - a - 0.4) * k / (n - 1) for k in range(n))]
+        else:
+            times = [("mid", (a + b) / 2)] + ([("a", a + 0.2), ("b", b - 0.2)] if p.get("edges") else [])
         RLPy.RScene.SetCurrentCamera(cam)
         for tag, t in times:
             RLPy.RGlobal.SetTime(T(t)); RLPy.RGlobal.ForceViewportUpdate()

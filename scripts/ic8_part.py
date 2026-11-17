@@ -258,15 +258,28 @@ def step_open(S, base):
 
 
 def step_cast(S, base):
+    """Load missing story avatars in iClone via watcher, one avatar per job, then verify names."""
+    st = os.path.join(ROOT, "stories", S["story"] + ".json")
+    story = json.load(open(st, encoding="utf-8"))
     job(pyjob("open(os.path.join(J,'part_cast.txt'),'w',encoding='utf-8').write('\\n'.join(a.GetName() for a in RLPy.RScene.GetAvatars()))"), "zz_part_cast")
     have = set(open(os.path.join(J, "part_cast.txt"), encoding="utf-8").read().split("\n"))
     need = set(S["cast"]) | set(S.get("hide", []))
-    say("scene avatars: " + ", ".join(sorted(have)))
-    miss = need - have
-    if miss: fail("not in scene: %s (load them: Tidmunz / ic8_cast.py, name them exactly)" % ", ".join(miss))
+    for n in sorted(need - have):
+        path = story.get("characters", {}).get(n, {}).get("avatar")
+        if not path or not os.path.exists(path): fail("avatar source missing for " + n)
+        body = ("RLPy.RScene.ClearSelectObjects()\n"
+                "before={a.GetID() for a in RLPy.RScene.GetAvatars()}\n"
+                "res=RLPy.RFileIO.LoadFile(%r)\n" % path +
+                "new=[a for a in RLPy.RScene.GetAvatars() if a.GetID() not in before]\n"
+                "assert len(new)==1, 'load avatar count='+str(len(new))\n"
+                "new[0].SetName(%r)\n" % n +
+                "open(os.path.join(J,'cast_loaded.txt'),'w',encoding='utf-8').write(new[0].GetName())")
+        job(pyjob(body), "zz_cast_load")
+        if rlog("cast_loaded.txt") != n: fail("cast load not verified for " + n)
+        have.add(n); say("OK loaded " + n)
     extra = have - need
-    if extra: say("WARN: in scene but not in spec (visible? add to hide): " + ", ".join(sorted(extra)))
-    say("OK cast")
+    if extra: say("WARN unexpected avatars: " + ", ".join(sorted(extra)))
+    say("OK cast " + ", ".join(sorted(need)))
 
 
 def step_pose(S, base):
@@ -308,13 +321,11 @@ def step_lip(S, base):
 
 def step_cams(S, base):
     end = duration(S["wav"])
-    wjson("cams.json", {"end": end, "edges": True, "shots": S["shots"]})
+    wjson("cams.json", {"end": end, "per_sec": 1, "shots": S["shots"], "face_light_multiplier": S.get("face_light_multiplier", 0.04)})
     job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
     log = rlog("cams.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("cams")
-    n = len(S["shots"]); cols = min(n, 4); rows = (n + cols - 1) // cols
-    subprocess.run([FF, "-v", "error", "-y", "-start_number", "1", "-i", os.path.join(J, "cam_%02d_mid.png"), "-frames:v", "1",
-                    "-vf", "scale=480:-1,tile=%dx%d" % (cols, rows), os.path.join(J, "part_cams.jpg")])
+    subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), os.path.join(J, "part_cams.jpg")])
     say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % os.path.join(J, "part_cams.jpg"))
 
 
