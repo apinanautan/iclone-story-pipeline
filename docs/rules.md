@@ -367,6 +367,7 @@ The user has repeated every item below many times and is furious about repeating
 - **User 2026-11-16 (placement system):** never invent positions per part. Each scene is measured once (ic8_scene_scan.py + `ic8_story.py <story> scan <scene>`), named spots/cams live in the story file, the user approves each once (still image), parts use the names. User comments about a scene go into that scene's `notes_list`.
 
 ## Motion AI (Toyxyz/Kimodo) trial — status 2026-11-17
+- **DEFAULT = library motions (G: โมชั่น folders, already good). Do NOT generate new motions with Motion AI unless the user asks for it or no library motion fits; it is slow. Never redo existing motions with it.**
 - Scripts: tools/motion_ai/ (drive_gen.py = generate in Blender 5.3; retarget.py = SOMA -> CC_Base FBX; ic_imp2.ps1 = iClone Import External Motion).
 - Prompts: "A person ..." + simple body posture (sits with legs stretched / stands with hands clasped). No scene objects (bed etc.).
 - Works end to end (generate -> FBX -> on the character in iClone). FIXED 2026-11-17: the FBX must have CC3_Base_Plus.fbxkey + .3dxProfile copied next to it with the same base name, otherwise iClone hunches the body. retarget.py does this automatically.
@@ -374,3 +375,8 @@ The user has repeated every item below many times and is furious about repeating
 - Motion quality is NOT the focus; test it later on real parts.
 - Never use screen coordinates or mouse clicks to drive iClone (other PCs have 1 or 2 monitors in any layout). Use keyboard (Alt+F menus) only when iClone is foreground, else abort; fill dialogs with window messages (WM_SETTEXT + BM_CLICK).
 - iClone may crash on repeated imports; save nothing, reopen, reload the test character.
+
+## กรงกตัญญู ท่อน 1 (2026-11-17)
+- User request: ทำเฉพาะนาทีแรก (0–60 วินาที) ใช้ตัวละครสมจิตและอุไร ในฉากบ้าน จัดกล้องให้สวย แล้วส่งภาพนิ่งให้ผู้ใช้ตรวจดูก่อน ห้ามเรนเดอร์วิดีโอจนกว่าผู้ใช้สั่งภายหลัง.
+- ภาพที่ส่งต้องเป็น contact sheet จากภาพนิ่งกลางช็อตของทุกกล้อง/ทุก beat ที่จัดจริง; แก้เฟรมที่บังหน้า/หลุดเฟรมก่อนส่ง.
+
