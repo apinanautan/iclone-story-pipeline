@@ -4,8 +4,8 @@ description: Body motion placement and facial expression for iClone characters -
 ---
 # Acting = slow body motion + living face
 
-## Where the motions are (G: = read only). Body and face are SEPARATE files.
-Root `M = G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\`. Full list of 1570 body motions: `M\motions.csv` (Name,Type,Folder,FullPath) - search it by keyword instead of walking folders.
+## Where the motions are ({MOTION} is read only). Body and face are SEPARATE files.
+Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Full list of 1570 body motions: `M\motions.csv` (Name,Type,Folder,FullPath) - search it by keyword instead of walking folders.
 - **Body (.iMotion / .rlMotion)** -> spec `cast.<name>.motion`:
   - Standing idle: `M\โมชั่น\03_CC MixMove_Male\` and `04_CC MixMove_Female\` (Stand00-04).
   - Talking / listening: `M\Studio Mocap - Conversation\`, `M\Motion_-_TalkListen\` (Listener_Agree/Curious/Apologize_F/M, Breathing_F/M .rlMotion - this folder also has face .iTalk: Amused, Comfortable_F...).

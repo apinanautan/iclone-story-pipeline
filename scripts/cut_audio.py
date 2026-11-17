@@ -63,7 +63,9 @@ def transcribe(wav):
 def main():
     a = sys.argv[1:]
     if len(a) < 4: print(__doc__); sys.exit(1)
-    src, t0, t1, out = a[0], sec(a[1]), sec(a[2]), a[3]
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+    from paths import expand   # accepts {DRIVE} / {DESKTOP} placeholders
+    src, t0, t1, out = expand(a[0]), sec(a[1]), sec(a[2]), expand(a[3])
     t0 = 0 if t0 < 0.5 else snap(src, t0)
     t1 = snap(src, t1)
     os.makedirs(os.path.dirname(os.path.abspath(out)), exist_ok=True)

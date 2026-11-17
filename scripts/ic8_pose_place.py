@@ -1,7 +1,7 @@
 """Generic avatar staging, driven by ic8_jobs/pose_place.json (any story/part). Never saves.
 
 place.json = {"end": 64.8, "avatars": {"<name>": {
-    "motion": "G:/.../X.iMotion", "speed": 0.2,      # optional: replace body clips with ONE clip stretched to end
+    "motion": "<motion root>/.../X.iMotion", "speed": 0.2,      # optional: replace body clips with ONE clip stretched to end
     "pos": [x, y, z], "yaw": deg, "pitch": deg,       # optional root placement (pitch = tilt back, negative = lean back)
     "lookfront": true,                                 # load Look front.iTalk (natural head motion), or a path to another .iTalk (Happy/Sad/Think...)
     "lookat": "<other avatar name>",                   # head/eyes follow that avatar's head
@@ -11,7 +11,7 @@ Log: ic8_jobs/pose_place.log.txt
 """
 import RLPy, os, math, json, traceback
 J = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "ic8_jobs")
-LOOKFRONT = r"G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\Digital Soul 100+\1.Watch\Look front.iTalk"
+LOOKFRONT = None   # ic8_part.py passes the real path (found by scripts/paths.py); no drive letter here
 T = lambda s: RLPy.RTime.FromValue(int(round(s * 6000)))
 LOG = []
 
@@ -56,8 +56,9 @@ try:
             ctl.SetValue(T(0), tr)
         if s.get("lookfront"):
             RLPy.RScene.ClearSelectObjects(); RLPy.RScene.SelectObject(a)
-            fc_file = s["lookfront"] if isinstance(s["lookfront"], str) else LOOKFRONT   # true = Look front, or a path to any .iTalk that fits the line
-            LOG.append("%s face clip %s %s" % (name, os.path.basename(fc_file), RLPy.RFileIO.LoadFile(fc_file)))
+            fc_file = s["lookfront"] if isinstance(s["lookfront"], str) else LOOKFRONT
+            if not fc_file: LOG.append("%s lookfront: no path (run through ic8_part.py)" % name)   # true = Look front, or a path to any .iTalk
+            else: LOG.append("%s face clip %s %s" % (name, os.path.basename(fc_file), RLPy.RFileIO.LoadFile(fc_file)))
             RLPy.RScene.ClearSelectObjects()
         if s.get("lookat"):
             la = sk.GetLookAtComponent()

@@ -22,12 +22,12 @@ Spec (parts/<story>_<N>.json):
  "from": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/รักลำเอียง/ท่อน10.iProject",   # scene to continue from
  "project": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/รักลำเอียง/ท่อน11.iProject",
  "video": "E:/Video/รักลำเอียง/11.mp4",
- "publish": "G:/ไดรฟ์ของฉัน/รักลำเอียง (นิทาน 3D)/วีดีโอ/บีม",         # optional
+ "publish": "{DRIVE}/รักลำเอียง (นิทาน 3D)/วีดีโอ/บีม",         # optional
  "scene": "โรงพยาบาล",                                                # name in the story file -> spots/cams/room
  "lines": [ {"who": "สุดา", "t": [0.53, 19.18], "text": "..."},        # who = avatar name or "บรรยาย"
             {"who": "บรรยาย", "t": [19.6, 30.0]} ],
  "cast": { "นายสมหวัง": {"spot": "เตียง_นั่งพิงหัวเตียง", "lookfront": true},   # spot = numbers from the story file
-           "สุดา": {"pos": [-342,733,0], "yaw": 140, "motions": ["G:/.../X.iMotion"], "speed": 0.25,
+           "สุดา": {"pos": [-342,733,0], "yaw": 140, "motions": ["{MOTION}/.../X.iMotion"], "speed": 0.25,
                     "lookfront": true, "lookat": "นายสมหวัง", "face": {"Mouth_Smile_L": 0.3}} },
  "hide": ["วารี"],
  "shots": [ {"t": [0, 9.0], "cam": "two_สุดา_แม่"},                     # cam = numbers from the story file
@@ -35,6 +35,8 @@ Spec (parts/<story>_<N>.json):
 }
 """
 import json, os, re, subprocess, sys, math
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import expand, root   # {MOTION} / {DRIVE} placeholders: never hardcode a drive letter
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCR = os.path.join(ROOT, "scripts")
@@ -111,7 +113,7 @@ def resolve(S, spec):
     S["_scene"] = {}; S["_prev_cams"] = set()
     st = os.path.join(ROOT, "stories", "%s.json" % S.get("story", ""))
     if not os.path.exists(st) or not S.get("scene"): return
-    story = json.load(open(st, encoding="utf-8"))
+    story = expand(json.load(open(st, encoding="utf-8")))
     sc = story.get("scenes", {}).get(S["scene"])
     if sc is None: fail("scene %s not in %s" % (S["scene"], st))
     S["_scene"] = sc
@@ -177,7 +179,8 @@ def step_check(S, base):
     if errs: fail("; ".join(errs))
     if not os.path.exists(S["wav"]): errs.append("wav not found: " + S["wav"])
     for k in ("project", "video"):
-        if re.match(r"^[Gg]:", S[k]): errs.append("%s on G: (never write to G: except publish)" % k)
+        if os.path.normcase(os.path.abspath(S[k])).startswith(os.path.normcase(root("DRIVE"))):
+            errs.append("%s inside the shared Drive {DRIVE} (never write there except publish)" % k)
     if not os.path.exists(S["project"]) and not os.path.exists(S["from"]): errs.append("neither project nor from exists")
     if errs: fail("; ".join(errs))
     end = duration(S["wav"]); sil = silences(S["wav"])
@@ -261,7 +264,7 @@ def step_open(S, base):
 def step_cast(S, base):
     """Load missing story avatars in iClone via watcher, one avatar per job, then verify names."""
     st = os.path.join(ROOT, "stories", S["story"] + ".json")
-    story = json.load(open(st, encoding="utf-8"))
+    story = expand(json.load(open(st, encoding="utf-8")))
     job(pyjob("open(os.path.join(J,'part_cast.txt'),'w',encoding='utf-8').write('\\n'.join(a.GetName() for a in RLPy.RScene.GetAvatars()))"), "zz_part_cast")
     have = set(open(os.path.join(J, "part_cast.txt"), encoding="utf-8").read().split("\n"))
     need = set(S["cast"]) | set(S.get("hide", []))
@@ -287,6 +290,7 @@ def step_pose(S, base):
     end = duration(S["wav"]); av = {}
     for n, c in S["cast"].items():
         av[n] = dict(c); av[n].setdefault("visible", [[0, 1]])
+        if av[n].get("lookfront") is True: av[n]["lookfront"] = expand(os.path.join("{MOTION}", "Digital Soul 100+", "1.Watch", "Look front.iTalk"))
     for n in S.get("hide", []): av[n] = {"visible": [[0, 0]]}
     wjson("pose_place.json", {"end": end, "avatars": av})
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
@@ -349,7 +353,7 @@ STEPS = {"audio": step_audio, "check": step_check, "open": step_open, "cast": st
 if __name__ == "__main__":
     if len(sys.argv) < 3: print(__doc__); sys.exit(1)
     spec, step = sys.argv[1], sys.argv[2]
-    S = json.load(open(spec, encoding="utf-8")); base = os.path.splitext(spec)[0]
+    S = expand(json.load(open(spec, encoding="utf-8"))); base = os.path.splitext(spec)[0]
     resolve(S, spec)
     if step == "render": step_render(S, base, "--approved" in sys.argv); sys.exit(0)
     if step == "all": run = ORDER

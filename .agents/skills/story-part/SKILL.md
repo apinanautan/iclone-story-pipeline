@@ -15,7 +15,7 @@ Answer the user in simple Thai. Show the plan in Thai before touching iClone.
 7. **Render only when the user says ผ่าน / เรนเดอร์** -> skill `save-render`.
 
 Hard rules (break none):
-- Never write to G: (read only), except copying the finished video to the publish folder.
+- Never write into {DRIVE} (the shared Google Drive, read only), except copying the finished video to the publish folder.
 - Never save with RFileIO.SaveProject; save only through the GUI (`ic8_gui.ps1 save/saveas`), then prove it reopens.
 - Never call RGlobal.RenderAudio or RAudio.LoadAudioToObject (hang/crash).
 - Never use the mouse or screen coordinates; never delete iCloneStoryBridge.

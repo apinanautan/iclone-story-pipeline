@@ -1,13 +1,13 @@
 {
  "name": "ชื่อเรื่อง (ตรงกับชื่อไฟล์นี้)",
- "folder": "G:/ไดรฟ์ของฉัน/<เรื่อง>",
- "script_docx": "G:/ไดรฟ์ของฉัน/<เรื่อง>/บท - <เรื่อง>.docx",
+ "folder": "{DRIVE}/<เรื่อง>",
+ "script_docx": "{DRIVE}/<เรื่อง>/บท - <เรื่อง>.docx",
  "script_split": "(AD.)",
- "master_audio": "G:/ไดรฟ์ของฉัน/<เรื่อง>/<เรื่อง>_mixdown.wav",
- "audio_dir": "C:/Users/Apinan/Desktop/<เรื่อง>/เสียงที่ตัดแล้ว",
- "save_dir": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/<เรื่อง>",
- "video_dir": "E:/Video/<เรื่อง>",
- "publish_dir": "G:/ไดรฟ์ของฉัน/<เรื่อง>/วีดีโอ/<คนรับงาน>",
+ "master_audio": "{DRIVE}/<เรื่อง>/<เรื่อง>_mixdown.wav",
+ "audio_dir": "{DESKTOP}/<เรื่อง>/เสียงที่ตัดแล้ว",
+ "save_dir": "{SAVE}/<เรื่อง>",
+ "video_dir": "{VIDEO}/<เรื่อง>",
+ "publish_dir": "{DRIVE}/<เรื่อง>/วีดีโอ/<คนรับงาน>",
  "teacher_range": [
   0,
   0
@@ -17,7 +17,7 @@
   "<ชื่อ avatar ใน iClone>": {
    "role": "พ่อ/แม่/...",
    "voice": "ชาย/หญิง",
-   "avatar": "G:/.../<ชื่อ>.iAvatar"
+   "avatar": "{DRIVE}/.../<ชื่อ>.iAvatar"
   }
  },
  "scenes": {
@@ -29,7 +29,7 @@
     0,
     0
    ],
-   "file": "G:/ไดรฟ์ของฉัน/<เรื่อง>/ฉาก/<ชื่อฉาก>.iProject",
+   "file": "{DRIVE}/<เรื่อง>/ฉาก/<ชื่อฉาก>.iProject",
    "notes_list": [
     "คำติของผู้ใช้ที่ผูกกับฉากนี้"
    ],
@@ -68,7 +68,7 @@
   },
   "<ฉากภายนอก เช่น หมู่บ้าน>": {
    "type": "outdoor",
-   "file": "G:/ไดรฟ์ของฉัน/<เรื่อง>/ฉาก/<ชื่อฉาก>.iProject",
+   "file": "{DRIVE}/<เรื่อง>/ฉาก/<ชื่อฉาก>.iProject",
    "area": [
     0,
     0,
