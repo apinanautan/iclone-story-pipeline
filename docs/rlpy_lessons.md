@@ -52,3 +52,11 @@
 - reaction แม่ 28.9–31.4 (CU, ใช้ transform เดียวกับช็อต 45.0), เด็ก 36.6–38.3 (cam -4230,-3300,205 → look -4270,-3175,190, f=80).
 - คลังโมชั่นสำหรับ 3.2–3.4: ดู docs/motion_catalog.md ท้ายหัวข้อ "คลังโมชั่นที่ค้นพบและจะใช้กับท่อน 3".
 - สำรอง master: `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3_master_full_20261111.iProject`.
+
+## 2026-11-17 — Avatar visibility API
+RIAvatar.GetVisible() ไม่มีใน iClone 8 ที่ใช้; ใช้ vatar.IsVisible(T(0)) เพื่อเช็กสถานะ ณ เวลา 0. พบจากกล้องทั่วไปหยุดก่อนสร้างกล้อง; ปรับ scripts/ic8_cams.py แล้ว.
+
+
+## 2026-11-17 — Light type capability
+RIDirectionalLight ไม่มี SetRange(); ตรวจ hasattr(light, 'SetRange') ก่อนใช้ API point/spot. ถ้าไม่มีไฟที่รองรับ ให้ข้าม FaceLight และบันทึกคำเตือน ไม่ให้กล้องพาสหยุด.
+

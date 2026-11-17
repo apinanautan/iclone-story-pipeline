@@ -218,3 +218,11 @@ glb → iClone: Blender `scratchpad/glb2fbx.py -- <glb> <out.fbx> <height_m> [ro
 **Scene survey:** `prop.GetBounds(max,center,min)` lists tables/chairs; top-down still from a camera 700–900cm above a point maps the layout fast. Seats around a round table: angle a, radius 100 → yaw = a+270.
 **Calm standing idle:** MographMotion `02_Female/Stand03.iMotion`, `01_Male/StandTKI.iMotion` (the *_Happy ones wave arms). Copy motions to scratchpad/mo first (Drive paths load as zero length).
 **Save:** QAction "Save Project As" via QTimer, then click the filename box, End+Backspace×40, type with SendInput KEYEVENTF_UNICODE, Enter. File time/size on disk is the proof.
+
+## 2026-11-17 — Avatar visibility API
+RLPy RIAvatar ไม่มี GetVisible(); ใช้ IsVisible(RTime) เช่น vatar.IsVisible(T(0)). กล้องทั่วไป scripts/ic8_cams.py ใช้ตรวจสถานะที่เวลา 0.
+
+
+## 2026-11-17 — Light type capability
+ไฟ RIDirectionalLight ไม่มี SetRange(); ตรวจว่ามีเมธอดก่อนใช้ point/spot light API. scripts/ic8_cams.py ข้าม FaceLight เมื่อไม่มีไฟที่รองรับ.
+

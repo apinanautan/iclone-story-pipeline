@@ -52,13 +52,17 @@ def dof(cam, s, pos, tgt, on):
 
 def face_lights():
     lights = list(RLPy.RScene.FindObjects(RLPy.EObjectType_Light))
-    src = next((l for l in lights if l.GetName() == "Point light"), None) or next((l for l in lights if not l.GetName().startswith("FaceLight_")), None)
+    # Directional lights (RIDirectionalLight) do not implement SetRange; only
+    # clone a range-capable point/spot light for per-avatar fill lights.
+    src = next((l for l in lights if l.GetName() == "Point light" and hasattr(l, "SetRange")), None) or next(
+        (l for l in lights if not l.GetName().startswith("FaceLight_") and hasattr(l, "SetRange")), None)
     for l in lights:
         if l.GetName().startswith("FaceLight_"): RLPy.RScene.RemoveObject(l)
     if not src:
-        LOG.append("WARNING NO FACE LIGHT: scene has no light to clone; faces may be dark"); return
+        LOG.append("WARNING NO FACE LIGHT: scene has no range-capable point/spot light; faces may be dark")
+        return
     for a in RLPy.RScene.GetAvatars():
-        if not a.GetVisible(): continue
+        if not a.IsVisible(T(0)): continue
         tr = a.WorldTransform(); p = tr.T(); q = tr.R()
         yaw = 2 * math.atan2(q.z, q.w)
         fx, fy = math.sin(yaw), -math.cos(yaw)          # facing (rules: yaw = atan2(dx,-dy))
