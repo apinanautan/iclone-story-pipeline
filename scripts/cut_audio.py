@@ -3,7 +3,7 @@
   python scripts/cut_audio.py <master.wav|mp3> <start> <end> <out.wav> [--no-text]
   start/end: seconds or m:ss (e.g. 4:15 5:15). Each edge snaps to the nearest silence within +-3 s.
   Writes out.wav (48 kHz, same channels) and out.json {src, start, end, len, segments:[{t:[a,b], text}]}
-  (times in the json are LOCAL to out.wav). Transcript = faster-whisper large-v3 (same model as Tidmunz), Thai.
+  (times in the json are LOCAL to out.wav). Transcript = the large-v3 already on the PC (Tidmunz's whisper.cpp first), Thai. Never downloads a model.
 Read-only on the master (G: is fine to read). Allowed for every AI without asking (user 2026-11-17).
 """
 import json, os, re, subprocess, sys
@@ -33,6 +33,33 @@ def snap(src, t):
     s, e = min(sil, key=lambda x: abs((x[0] + x[1]) / 2 - t))
     return round((s + e) / 2, 2)
 
+def transcribe(wav):
+    """Use the large-v3 model ALREADY on this PC - never download a second copy.
+    1st: Tidmunz Studio's whisper.cpp (Vulkan) + ggml-large-v3.bin (Tidmunz need not be open).
+    2nd: faster-whisper large-v3 only if it is already in the HuggingFace cache (local_files_only)."""
+    W = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "tools", "whisper_vulkan")
+    cli, mdl = os.path.join(W, "bin", "whisper-cli.exe"), os.path.join(W, "ggml-large-v3.bin")
+    if os.path.exists(cli) and os.path.exists(mdl):
+        import tempfile
+        tmp = tempfile.mkdtemp()
+        w16 = os.path.join(tmp, "a.wav")
+        subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", w16], check=True)
+        subprocess.run([cli, "-m", mdl, "-l", "th", "-oj", "-of", os.path.join(tmp, "a"), "-f", w16],
+                       capture_output=True, check=True)
+        j = json.load(open(os.path.join(tmp, "a.json"), encoding="utf8", errors="replace"))
+        return [{"t": [x["offsets"]["from"] / 1000, x["offsets"]["to"] / 1000], "text": x["text"].strip()} for x in j["transcription"]]
+    from faster_whisper import WhisperModel
+    import numpy as np   # decode with ffmpeg ourselves (faster-whisper's PyAV path breaks on some av versions)
+    try: m = WhisperModel("large-v3", device="cuda", compute_type="float16", local_files_only=True)
+    except Exception as e:
+        if "local" in str(e).lower() or "find" in str(e).lower():
+            sys.exit("No large-v3 model on this PC. Install Tidmunz Studio (has ggml-large-v3.bin), or allow a 3 GB download.")
+        m = WhisperModel("large-v3", device="cpu", compute_type="int8", local_files_only=True)
+    pcm = subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
+                         capture_output=True, check=True).stdout
+    segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True)
+    return [{"t": [round(x.start, 2), round(x.end, 2)], "text": x.text.strip()} for x in segs]
+
 def main():
     a = sys.argv[1:]
     if len(a) < 4: print(__doc__); sys.exit(1)
@@ -45,16 +72,8 @@ def main():
     info = {"src": src, "start": t0, "end": t1, "len": round(t1 - t0, 2), "segments": []}
     print("CUT %s  %.2f-%.2f (%.2f s)" % (out, t0, t1, t1 - t0))
     if "--no-text" not in a:
-        from faster_whisper import WhisperModel
-        try: m = WhisperModel("large-v3", device="cuda", compute_type="float16")
-        except Exception: m = WhisperModel("large-v3", device="cpu", compute_type="int8")
-        import numpy as np   # decode with ffmpeg ourselves (faster-whisper's PyAV path breaks on some av versions)
-        pcm = subprocess.run([ffmpeg(), "-loglevel", "error", "-i", out, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
-                             capture_output=True, check=True).stdout
-        segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True)
-        for s in segs:
-            info["segments"].append({"t": [round(s.start, 2), round(s.end, 2)], "text": s.text.strip()})
-            print("  %6.2f-%6.2f %s" % (s.start, s.end, s.text.strip()))
+        info["segments"] = transcribe(out)
+        for g in info["segments"]: print("  %6.2f-%6.2f %s" % (g["t"][0], g["t"][1], g["text"]))
     json.dump(info, open(out[:-4] + ".json", "w", encoding="utf8"), ensure_ascii=False, indent=1)
 
 if __name__ == "__main__":
