@@ -9,7 +9,7 @@ Answer the user in simple Thai. Show the plan in Thai before touching iClone.
 1. **Plan in Thai first.** Read `docs/CURRENT_STORY.md` (overwrite it for a new story) and `stories/<story>.json` (scenes, spots, approved cams). Tell the user: scene, cast, time range, and the save path (a NEW file - never overwrite an existing .iProject).
 2. **Cut the audio** -> skill `cut-audio`.
 3. **Write + check the part spec** -> skill `plan-part`. `ic8_part.py check` must print OK.
-4. **Build in iClone** -> skill `build-part` (open, cast, pose, sound, cams).
+4. **Build in iClone** -> skill `build-part` (open, cast, pose, sound, cams). Motion + expressions -> skill `acting`; adjusting a pose / lean / arms -> skill `pose-bones`.
 5. **Review stills** -> skill `review-stills`. Send the contact sheet. **STOP and wait** for the user.
 6. After the user approves: lip-sync -> skill `lip-sync`, then `ic8_part.py <spec> ready`.
 7. **Render only when the user says ผ่าน / เรนเดอร์** -> skill `save-render`.

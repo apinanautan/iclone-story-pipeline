@@ -3,7 +3,7 @@
 ## Skills first (2026-11-17)
 Step-by-step skills live in `.agents/skills/*/SKILL.md` (Codex loads them; any other AI: read them). For a story part
 start with **story-part** (master flow): cut-audio -> plan-part -> build-part -> review-stills (STOP for user) -> lip-sync -> save-render.
-Helpers: iclone-control (driving iClone without mouse), motion-ai (only after the user says yes).
+Helpers: acting (slow motion, face expressions), pose-bones (bone posing by Python), iclone-control (driving iClone without mouse), motion-ai (only after the user says yes).
 
 The work: turn Thai folk-tale audio, one part at a time, into an animated 3D video in **iClone 8**
 (characters built in Character Creator 5), driven by **Python scripts instead of mouse clicks** so it costs fewer credits.
