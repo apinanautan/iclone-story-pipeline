@@ -1,17 +1,17 @@
-# Contact sheet: big stills joined into 4K pages so faces/motion can be zoomed and read (user 2026-11-17).
+# Contact sheet: big stills joined into 1080p pages so faces/motion can be zoomed and read (user 2026-11-17).
 # Usage:  python scripts/contact_sheet.py "<glob of PNGs>" <out.jpg>
 # Stills named cam_NN_KK_TTT.Ts.png (ic8_cams "per_sec": 1 = ~1 still per second, 3-8 per shot).
-# Layout: 4K page 3840x2160 = 4 x 4 tiles of 960x540 (each tile = half of a 1080p frame, sharp).
+# Layout: page 1920x1080 = 3 x 3 tiles of 640x360. Bigger pages (4K) get shrunk by AI image readers, so tiles end up smaller.
 #   Each shot starts on a new row; every tile has a yellow border and a big label "S03-02  12.4s"
 #   (shot 3, frame 2, at 12.4 s on the timeline). More tiles -> out_p2.jpg, out_p3.jpg ...
 # Other file names: same tiles, label = file name.
 import glob, os, re, sys
 from PIL import Image, ImageDraw, ImageFont
 
-COLS, ROWS, W, H, B = 4, 4, 960, 540, 6          # B = border px
+COLS, ROWS, W, H, B = 3, 3, 640, 360, 4          # page 1920x1080: AI viewers shrink anything bigger, so this keeps tiles sharp
 files = sorted(glob.glob(os.path.expandvars(sys.argv[1])))
 out = sys.argv[2]
-try: font = ImageFont.truetype("arialbd.ttf", 44)
+try: font = ImageFont.truetype("arialbd.ttf", 30)
 except OSError: font = ImageFont.load_default()
 
 def label(f):
