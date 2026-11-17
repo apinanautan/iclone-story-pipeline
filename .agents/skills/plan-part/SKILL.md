@@ -12,6 +12,7 @@ description: Write the part spec parts/<story>_<N>.json (lines, cast, shots) and
    - Character shots: focal **80 or 100** only, chest-up: visible height = distance x 24 / focal <= **100 cm** (<= 333 cm away at 80 mm, <= 416 cm at 100 mm). **No full bodies, no knees.**
    - At most ONE `"wide": true` view shot per part, and it must NOT aim at the cast (scenery / house only).
    - About 5 s per shot, cut in pauses, alternate angles. Two people -> OTS or single close-ups, not side-by-side two-shots.
+   - Aim so the BACKGROUND has trees / houses / props - never open empty ground, bare sky or the unbuilt edge of the scene.
    - Same person twice in a row -> change size AND angle.
 6. `python scripts/ic8_part.py parts/<spec>.json audio` gives silences for cut points.
 7. `python scripts/ic8_part.py parts/<spec>.json check` - fix every FAIL. WARN "not approved" means: show the user stills first.
