@@ -1,8 +1,8 @@
 # Blender 5.3 GUI driver: install add-on, start companion, generate one Kimodo motion, export FBX, log, quit.
-import bpy, os, sys, json, time, traceback
+import bpy, os, sys, json, time, traceback, glob
 ROOT = r"C:\MotionAI"
-APP = ROOT + r"\MotionAI_Windows_Companion-0.46.4"
-ZIP = ROOT + r"\_dl\toyxyz_motion_ai_tool-0.46.5-blender-addon.zip"
+APP = sorted(glob.glob(ROOT + r"\MotionAI_Windows_Companion-*"))[-1]   # set up by install.ps1
+ZIP = sorted(glob.glob(ROOT + r"_dl	oyxyz_motion_ai_tool-*-blender-addon.zip"))[-1]   # downloaded by install.ps1
 CFG = json.load(open(ROOT + r"\gen.json", encoding="utf-8"))   # {"prompt":..., "seconds":..., "out":...}
 LOG = ROOT + r"\gen_log.txt"
 def log(s):
