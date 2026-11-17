@@ -210,12 +210,25 @@ def step_check(S, base):
         if s.get("wide"):   # establishing/view shot: any lens, no DOF
             if not 20 <= s["focal"] <= 200: errs.append("shot %d focal %s (20-200)" % (i + 1, s["focal"]))
         elif s["focal"] not in (80, 100): errs.append("shot %d focal %s: character shots use 80 or 100 mm only (rules: Camera). Mark view shots \"wide\": true" % (i + 1, s["focal"]))
+        d = math.dist(s["pos"], s["target"]); h = d * 24 / s["focal"]   # cm of body visible top-to-bottom
+        if s.get("wide"):   # user hates full bodies: a view shot must not frame any cast member
+            hx = math.atan(18 / s["focal"])
+            for n, c in S["cast"].items():
+                if not c.get("pos"): continue
+                v = [c["pos"][k] + (150 if k == 2 else 0) - s["pos"][k] for k in range(3)]
+                f = [s["target"][k] - s["pos"][k] for k in range(3)]
+                cos = sum(a * b for a, b in zip(v, f)) / (math.hypot(*v) * math.hypot(*f) or 1)
+                if cos > math.cos(hx * 1.1):
+                    errs.append("shot %d is wide and shows %s full body: aim view shots away from the cast (rules: no full body)" % (i + 1, n)); break
+        elif h > 100:
+            errs.append("shot %d frames %d cm of body (> 100 = knees/full body). Chest-up: distance <= %d cm at %d mm" % (i + 1, h, 100 * s["focal"] / 24, s["focal"]))
         mv = abs(s.get("move", 15))
         if not 8 <= mv <= 25: warns.append("shot %d move %d cm (guide: 12-20)" % (i + 1, mv))
         if math.dist(s["pos"], s["target"]) < 60: errs.append("shot %d camera closer than 60 cm to target" % (i + 1))
         talk = [L["who"] for L in S["lines"] if L["who"] not in NARR and L["t"][0] + 0.2 < a < L["t"][1] - 0.2]
         if i and talk and not any(x - 0.3 <= a <= (y or end) + 0.3 for x, y in sil):
             warns.append("shot %d cut at %.2f is in the middle of %s's line (rule 9: cut in pauses)" % (i + 1, a, talk[0]))
+    if sum(1 for s in sh if s.get("wide")) > 1: errs.append("more than 1 wide shot in a part")
     for i in range(1, len(sh)):
         if sh[i]["pos"] == sh[i - 1]["pos"] and sh[i]["target"] == sh[i - 1]["target"]:
             errs.append("shot %d repeats shot %d" % (i + 1, i))

@@ -387,3 +387,8 @@ The user has repeated every item below many times and is furious about repeating
 
 - (2026-11-17, RLPy lighting) RIDirectionalLight ไม่มี SetRange(); scripts/ic8_cams.py จะสร้าง FaceLight เฉพาะเมื่อพบไฟ Point/Spot ที่รองรับ SetRange() และจะแจ้งเตือนเมื่อไม่มี. ห้ามเรียก point-light API กับ Directional Light.
 
+
+- (2026-11-17, lighting) การตั้ง RRgb(255,236,214) บน RIDirectionalLight ในฉากทดสอบทำให้ภาพล้นขาว; สำหรับ Directional Light ในฉากนี้ใช้ค่าสี normalized RRgb(1.0,0.92,0.84) และตรวจ still ก่อนบันทึก. ไฟ point/spot ตามกฎ FaceLight เดิมยังใช้ค่าตามคู่มือเดิม.
+
+
+- **(2026-11-17, user) ห้ามเห็นเต็มตัว — บังคับในสคริปต์แล้ว:** `ic8_part.py check` จะ FAIL ถ้าช็อตตัวละครเห็นตัวเกิน 100 ซม. (ระยะกล้อง <= 333 ซม. ที่ 80 มม., <= 416 ซม. ที่ 100 มม.) ถ้าช็อต `"wide"` เล็งไปโดนตัวละคร หรือถ้ามีช็อต wide เกิน 1 ช็อตต่อท่อน ช็อตคู่ยืนข้างกันให้ใช้ OTS แทน ห้ามเขียนสคริปต์จัดฉากหรือกล้องเอง (เช่น `ic8_trial_*_stage.py`) เพื่อเลี่ยง `ic8_part.py` ต้องรัน `check` ให้ผ่านก่อนส่งภาพให้ผู้ใช้ ถ้าทำแค่บางช่วงของเสียง ให้ตัด wav ให้ยาวเท่าช่วงนั้นก่อน
