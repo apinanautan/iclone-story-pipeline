@@ -53,7 +53,10 @@ def WINS(s, end):   # user 2026-11-22: clips only where the character is ON SCRE
             a0, a1 = max(0.0, t0 - 0.5), min(end, t1 + 0.5)
             if w and a0 - w[-1][1] < 3.0: w[-1] = (w[-1][0], a1)
             else: w.append((a0, a1))
-    return w or [(0.0, end)]
+    w = w or [(0.0, end)]
+    if s.get("motion_from") is not None:   # spec: start the first body clip earlier (pick a calmer phase of the motion)
+        w[0] = (min(w[0][0], float(s["motion_from"])), w[0][1])
+    return w
 
 
 def head(avatar):
