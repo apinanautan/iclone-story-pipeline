@@ -37,8 +37,8 @@ STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ต�
 # stories/<story>.json; nothing per part here.
 STORY_STEPS = [("sheet", "ใบงานกลาง + สำรอง git"),
                ("source", "รู้เรื่อง (บท + เสียงเต็ม)"),
-               ("range", "ช่วงที่ครูสั่ง (ผู้ใช้บอก)"),
-               ("split", "แบ่งท่อนตามช่วงครู"),
+               ("range", "เวลาที่ทำงาน (ผู้ใช้บอก)"),
+               ("split", "แบ่งท่อนตามเวลาที่ทำงาน"),
                ("chars", "ตัวละคร + โมเดล"),
                ("scenes", "ฉาก + ไฟล์"),
                ("partplans", "แผนเนื้อหาทุกท่อน"),
@@ -78,7 +78,7 @@ def story_states(story):
         end = max(p["master"][1] for p in inr) if inr else 0
         gap = any(abs(a["master"][1] - b["master"][0]) > 0.5 for a, b in zip(inr, inr[1:]))
         avg = (end - tr[0]) / max(1, len(inr))
-        if over: out["split"] = ("bad", f"{len(over)} ท่อนเกินช่วงครู")
+        if over: out["split"] = ("bad", f"{len(over)} ท่อนเกินเวลาที่ทำงาน")
         elif gap or abs(end - tr[1]) > 1.0: out["split"] = ("warn", f"{len(inr)} ท่อน ถึง {mm(end)} ≠ {mm(tr[1])}")
         else: out["split"] = ("done", f"{len(inr)} ท่อน ~{mm(avg)}/ท่อน")
     ch = st.get("characters", {}); miss = [n for n, c in ch.items() if not ok(c.get("avatar"))]
@@ -243,14 +243,14 @@ class App(tk.Tk):
         if k == "range":   # the user types the teacher's range; never guessed (rules.md)
             from tkinter import simpledialog, messagebox
             tr = st.get("teacher_range") or [0, 0]
-            v = simpledialog.askstring("ช่วงที่ครูสั่ง", "เรื่องนี้ครูสั่งให้ทำช่วงไหน (นาที:วินาที)\nเช่น 0:00-5:10",
+            v = simpledialog.askstring("เวลาที่ทำงาน", "เรื่องนี้ทำงานช่วงเวลาไหนของเสียงเต็ม (นาที:วินาที)\nเช่น 0:00-5:10",
                                        initialvalue=f"{mm(tr[0])}-{mm(tr[1])}", parent=self)
             if not v: return
             try:
                 a, b = (parse_mmss(x) for x in v.replace("–", "-").split("-", 1))
                 assert 0 <= a < b
             except Exception:
-                messagebox.showerror("ช่วงที่ครูสั่ง", "อ่านไม่ออก: " + v, parent=self); return
+                messagebox.showerror("เวลาที่ทำงาน", "อ่านไม่ออก: " + v, parent=self); return
             st["teacher_range"] = [round(a, 2), round(b, 2)]; st["teacher_range_confirmed"] = time.strftime("%Y-%m-%d %H:%M user")
         else:
             st["story_plan_ok"] = time.strftime("%Y-%m-%d %H:%M user")
@@ -273,9 +273,9 @@ class App(tk.Tk):
         st = load(ROOT / "stories" / f"{story}.json", {})   # user 2026-11-22: real numbers from the central sheet (story.json teacher_range)
         tr = st.get("teacher_range") or [0, 0]; mm = lambda x: f"{int(x // 60)}:{int(x % 60):02d}"
         inr = [p for p in st.get("parts", []) if p.get("master") and p["master"][0] < tr[1] - 0.5]
-        txt = f"ท่อน {n} จาก {len(inr)}   ครูสั่ง {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่ช่วงที่ครูสั่ง)"
+        txt = f"ท่อน {n} จาก {len(inr)}   ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
         cur = next((p for p in st.get("parts", []) if str(p.get("n")) == str(n)), None)
-        if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินช่วงที่ครูสั่ง"
+        if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินเวลาที่ทำงาน"
         self.head.configure(text=txt)
         ss = story_states(story); sdone = sum(1 for s, _ in ss.values() if s == "done")
         allok = sdone == len(STORY_STEPS)

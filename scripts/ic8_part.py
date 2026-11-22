@@ -365,6 +365,34 @@ def step_cast(S, base):
     extra = have - need
     if extra: say("WARN unexpected avatars: " + ", ".join(sorted(extra)))
     say("OK cast " + ", ".join(sorted(need)))
+    step_props(S)
+
+
+def step_props(S):
+    """spec "props": {name: {"fbx": path (glb2fbx.py output), "pos": [x,y,z], "yaw": deg}} (user 2026-11-22, TV in
+    part 4). Loads a prop once (Import Settings -> watcher presses Convert All), then always re-keys its place."""
+    P = S.get("props") or {}
+    if not P: return
+    for n, c in P.items():
+        if not os.path.exists(c["fbx"]): fail("prop file missing: " + c["fbx"])
+        x, y, z = c["pos"]; yaw = float(c.get("yaw", 0))
+        body = ("import math\nhave=[p for p in RLPy.RScene.GetProps() if p.GetName()==%r]\n" % n +
+                "if not have:\n"
+                " before={p.GetID() for p in RLPy.RScene.GetProps()}\n"
+                " RLPy.RFileIO.LoadFile(%r)\n" % c["fbx"] +
+                " new=[p for p in RLPy.RScene.GetProps() if p.GetID() not in before]\n"
+                " assert new, 'prop load gave nothing'\n"
+                " for i,p in enumerate(new): p.SetName(%r if i==0 else %r+'_'+str(i))\n" % (n, n) +
+                " have=new\n"
+                "for p in have:\n"
+                " ctl=p.GetControl('Transform'); ctl.ClearKeys(); tr=RLPy.RTransform(); ctl.GetValue(T(0),tr)\n"
+                " tr.T().x=%r; tr.T().y=%r; tr.T().z=%r\n" % (float(x), float(y), float(z)) +
+                " tr.R().FromAxisAngle(RLPy.RVector3(0,0,1), math.radians(%r)); ctl.SetValue(T(0),tr)\n" % yaw +
+                "open(os.path.join(J,'prop_loaded.txt'),'w',encoding='utf-8').write(','.join(p.GetName() for p in have))")
+        job(pyjob(body), "zz_prop_" + str(abs(hash(n)) % 10000))
+        got = rlog("prop_loaded.txt")
+        if n not in got.split(","): fail("prop not verified: %s (%s)" % (n, got))
+        say("OK prop %s at %s yaw %s" % (got, c["pos"], yaw))
 
 
 def live(step, pct, text):   # same live.json the iClone jobs write; the Preview shows % + text

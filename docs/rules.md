@@ -489,3 +489,4 @@ The user has repeated every item below many times and is furious about repeating
 
 - (2026-11-22) HARD GATE: stage 1 (story setup, Preview tab ①, all 8 rows green) must be finished before ANY step of ANY part. `ic8_part.py` calls `story_gate()` before every step (check, pose, cams, render, ...) and FAILs with the list of unfinished rows. Rows: central sheet committed in git, script + master audio found, teacher range confirmed by the USER, parts cover exactly that range, characters, scenes, every part planned, user approved the story plan (story_plan_ok). Do not bypass it; finish the setup row instead.
 - (2026-11-22) Keep git up to date: commit the central sheet, parts, scripts and docs after each finished piece of work (user asked "อัปเดตทุกอย่างลงกิต"). progress/ is runtime state and stays out of git.
+- (2026-11-22) Wording: in Preview and messages to the user say "เวลาที่ทำงาน" (working time range), not "ช่วงที่ครูสั่ง". The sheet field stays `teacher_range`.
