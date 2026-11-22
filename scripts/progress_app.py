@@ -35,10 +35,11 @@ STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ต�
          ("ready", "เซฟผ่านโปรแกรม (Ctrl+S)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
 # Story setup: done ONCE per story, before any part (user 2026-11-22). All read from the central sheet
 # stories/<story>.json; nothing per part here.
-STORY_STEPS = [("sheet", "ใบงานกลาง + สำรอง git"),
+STORY_STEPS = [("sheet", "ใบงานกลาง"),
                ("source", "รู้เรื่อง (บท + เสียงเต็ม)"),
                ("range", "เวลาที่ทำงาน (ผู้ใช้บอก)"),
                ("split", "แบ่งท่อนตามเวลาที่ทำงาน"),
+               ("transcript", "ถอดเสียง + ตัดเสียงทุกท่อน (เวลาเป๊ะ)"),
                ("chars", "ตัวละคร + โมเดล"),
                ("scenes", "ฉาก + ไฟล์"),
                ("partplans", "แผนเนื้อหาทุกท่อน"),
@@ -56,14 +57,8 @@ def parse_mmss(t):
 def story_states(story):
     """(state, info) per STORY_STEPS key. state: done / todo / warn / bad."""
     f = ROOT / "stories" / f"{story}.json"; st = load(f, {}); out = {}
-    tracked = False
-    try:
-        import subprocess
-        tracked = bool(subprocess.run(["git", "ls-files", "--error-unmatch", str(f)], cwd=ROOT, capture_output=True,
-                                      creationflags=0x08000000).returncode == 0)
-    except Exception:
-        pass
-    out["sheet"] = ("done", "✓") if st and tracked else (("warn", "ยังไม่สำรอง") if st else ("bad", "ไม่มีไฟล์"))
+    # user 2026-11-22: the sheet is work data, NOT backed up in git (git = the program only)
+    out["sheet"] = ("done", "✓") if st else ("bad", "ไม่มีไฟล์")
     ok = lambda p: bool(p) and Path(expand(p)).exists()
     src = [ok(st.get("script_docx")), ok(st.get("master_audio"))]
     out["source"] = ("done", f"เสียงเต็ม {mm(st.get('master_len', 0))}") if all(src) else ("bad", "ไม่พบ " + " ".join(n for n, x in zip(("บท", "เสียง"), src) if not x))
@@ -81,6 +76,19 @@ def story_states(story):
         if over: out["split"] = ("bad", f"{len(over)} ท่อนเกินเวลาที่ทำงาน")
         elif gap or abs(end - tr[1]) > 1.0: out["split"] = ("warn", f"{len(inr)} ท่อน ถึง {mm(end)} ≠ {mm(tr[1])}")
         else: out["split"] = ("done", f"{len(inr)} ท่อน ~{mm(avg)}/ท่อน")
+    # user 2026-11-22: every part's audio is cut + transcribed, times exactly = the part's range in the master,
+    # and every line says who speaks (narrator / which character -> lip sync)
+    ad = expand(st.get("audio_dir", "")); good = []; why = ""
+    inr = [p for p in parts if tr[1] > 0 and p["master"][0] < tr[1] - 0.5]
+    for p in inr:
+        n = p["n"]; jf = Path(ad) / f"ท่อน{n}.json"; j = load(jf, {})
+        if not (Path(ad) / f"ท่อน{n}.wav").exists() or not j.get("segments"): why = why or f"ท่อน {n} ยังไม่ถอด"; continue
+        if abs(j.get("start", -9) - p["master"][0]) > 0.05 or abs(j.get("end", -9) - p["master"][1]) > 0.05:
+            why = why or f"ท่อน {n} เวลาไม่ตรง"; continue
+        if not p.get("transcript") or not all(l.get("who") for l in p["transcript"]): why = why or f"ท่อน {n} ไม่ระบุใครพูด"; continue
+        good.append(n)
+    if not inr: out["transcript"] = ("todo", "")
+    else: out["transcript"] = ("done", f"{len(good)}/{len(inr)} ท่อน") if len(good) == len(inr) else ("warn", f"{len(good)}/{len(inr)} {why}")
     ch = st.get("characters", {}); miss = [n for n, c in ch.items() if not ok(c.get("avatar"))]
     out["chars"] = ("done", f"{len(ch)} ตัว") if ch and not miss else (("bad", "ไม่พบ: " + ", ".join(miss)[:30]) if ch else ("todo", ""))
     sc = st.get("scenes", {}); miss = [n for n, c in sc.items() if not ok(c.get("file"))]

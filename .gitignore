@@ -8,3 +8,9 @@ debug.log
 deliverables/
 paths.local.json
 progress/
+
+# story work data is not program code (user 2026-11-22)
+stories/*
+!stories/_template.json
+parts/*
+!parts/_example.json
