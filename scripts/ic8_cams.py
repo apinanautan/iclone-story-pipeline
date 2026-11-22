@@ -38,6 +38,15 @@ def look(c, t):
     return qmul((0, 0, math.sin(yaw/2), math.cos(yaw/2)), qmul((math.sin(pitch/2), 0, 0, math.cos(pitch/2)), (r, 0, 0, r)))
 
 
+MOVE_RATE = 0.015   # user 2026-11-22: camera move is TIME based - 1.5% of the camera->face distance per second,
+MOVE_MIN, MOVE_MAX = 0.06, 0.20   # same steady speed in every shot (subtle but visible); total 6-20% of the distance
+def move_cm(s, d):   # signed cm: spec "move" sign = direction (+ push in, - pull out); "move_fixed": true keeps old cm
+    m = s.get("move", 15)
+    if s.get("move_fixed"): return m
+    pct = min(MOVE_MAX, max(MOVE_MIN, s.get("move_rate", MOVE_RATE) * (s["t"][1] - s["t"][0])))
+    return (1 if m >= 0 else -1) * d * pct
+
+
 def key(cam, s, pos, tgt, focal):
     c = cam.GetControl("Transform"); tr = RLPy.RTransform(); c.GetValue(T(s), tr)
     tr.T().x, tr.T().y, tr.T().z = pos
@@ -191,7 +200,7 @@ try:
     for i, s in enumerate(p["shots"]):
         cam = cams[i % 2]; a, b = s["t"]; stop = b - fr if i < len(p["shots"]) - 1 else b
         LIVE(20 + 10.0 * i / len(p["shots"]), "คีย์กล้อง ช็อต %d/%d" % (i + 1, len(p["shots"])))
-        c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = s.get("move", 15)
+        c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = move_cm(s, d)
         c1 = [c0[k] + (tg[k] - c0[k]) * m / d for k in range(3)]
         key(cam, a, c0, tg, s["focal"]); key(cam, stop, c1, tg, s["focal"])
         dof(cam, a, c0, tg, not (s.get("wide") or s.get("no_dof"))); dof(cam, stop, c1, tg, not (s.get("wide") or s.get("no_dof")))
@@ -213,7 +222,7 @@ try:
         else:
             times = [("mid", (a + b) / 2)] + ([("a", a + 0.2), ("b", b - 0.2)] if p.get("edges") else [])
         stop = b - fr if i < len(p["shots"]) - 1 else b
-        c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = s.get("move", 15)
+        c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = move_cm(s, d)
         c1 = [c0[k] + (tg[k] - c0[k]) * m / d for k in range(3)]
         for tag, t in times:
             # Settle BEFORE every still (user 2026-11-20: stills flip-flopped between frames because RenderImage

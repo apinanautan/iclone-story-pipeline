@@ -305,9 +305,12 @@ def step_check(S, base):
         elif h > 100:
             errs.append("shot %d frames %d cm of body (> 100 = knees/full body). Chest-up: distance <= %d cm at %d mm" % (i + 1, h, 100 * s["focal"] / 24, s["focal"]))
         # user 2026-11-21: every shot drifts slowly start->end (in or out), never static, never a fast whoosh
-        pct = 100.0 * abs(s.get("move", 15)) / max(1.0, math.dist(s["pos"], s["target"]))
-        if pct < 5: errs.append("shot %d move %.1f%% of distance looks static (need 6-10%%)" % (i + 1, pct))
-        elif pct > 12: warns.append("shot %d move %.1f%% of distance may look fast (guide 6-10%%)" % (i + 1, pct))
+        # user 2026-11-22: move is TIME based (ic8_cams.move_cm): rate %/s of distance, total 6-20%
+        rate = 100.0 * s.get("move_rate", 0.015)
+        if s.get("move_fixed"):
+            rate = 100.0 * abs(s.get("move", 15)) / max(1.0, math.dist(s["pos"], s["target"])) / max(0.1, b - a)
+        if rate < 1.0: errs.append("shot %d camera moves %.2f%%/s of distance: looks static (want ~1.5%%/s)" % (i + 1, rate))
+        elif rate > 2.5: warns.append("shot %d camera moves %.2f%%/s of distance: may look fast (want ~1.5%%/s)" % (i + 1, rate))
         if math.dist(s["pos"], s["target"]) < 60: errs.append("shot %d camera closer than 60 cm to target" % (i + 1))
         talk = [L["who"] for L in S["lines"] if L["who"] not in NARR and L["t"][0] + 0.2 < a < L["t"][1] - 0.2]
         if i and talk and not any(x - 0.3 <= a <= (y or end) + 0.3 for x, y in sil):
