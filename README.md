@@ -34,53 +34,22 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 
 ---
 
-# (เก่า) iClone Story Pipeline MCP Server
+# ChatGPT / MCP: ปุ่มเดียวกับ Ai-iclone (ทำใหม่ 2026-11-22)
 
-Runs on the existing Windows machine alongside iClone 8; reuses `scripts/ic8_watch.py` and its job queue. No iClone UI changes and no API keys required for **local stdio**.
+`mcp_server/server.py` คือตัวเชื่อมให้ ChatGPT (ผ่าน Dino Tunnel) หรือโปรแกรม AI ที่รองรับ MCP สั่งงาน Ai-iclone ได้
+มี 10 ปุ่ม แต่ละปุ่มเรียกคำสั่ง Ai-iclone หนึ่งคำสั่ง และใช้ได้ทุกท่อน (ของเก่ามีประมาณ 20 ปุ่มตายตัว และหลายปุ่มใช้ได้แค่ท่อน 2):
+`status`, `steps`, `rules`, `do_next_step`, `use_part`, `new_story`, `set_range`, `approve`, `clean_temp_files`, `version`
 
-## One command (Dino Tunnel / PowerShell)
+วิธีที่ AI ใช้: เรียก `status` แล้วเรียก `do_next_step` ซ้ำไปเรื่อยๆ ถ้าเจอ STOP ให้บอกผู้ใช้แล้วรอ ปุ่ม `approve` ต้องใส่คำที่ผู้ใช้พิมพ์มาจริงเท่านั้น
+
+สั่งผ่าน Dino Tunnel หรือ PowerShell (ครั้งละปุ่ม):
 
 ```powershell
-py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli get_project_status
-py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli inspect_scene
-py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli get_job_result mcp_xxxxxxxxxxxxxxxx
+py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli status
+py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli do_next_step "{\"dry\": true}"
 ```
 
-## MCP client configuration (local desktop clients)
-
-```json
-{
-  "mcpServers": {
-    "iclone-story": {
-      "command": "C:\\Windows\\py.exe",
-      "args": ["-3", "C:\\Users\\Apinan\\Documents\\iClone Story Pipeline\\mcp_server\\server.py"]
-    }
-  }
-}
-```
-
-This uses Python's installed `mcp` library (`from mcp.server.fastmcp import FastMCP`).
-
-For debugging, `--http` starts **localhost only** on `127.0.0.1:8766/mcp`, **without network authentication**. Do not expose/port-forward this endpoint publicly. On ChatGPT web, a local stdio MCP server is not directly reachable; use the existing authorized Dino Tunnel shell path and `--cli` until a secure, authenticated MCP tunnel endpoint is provisioned. Never claim the local package alone is a cloud connection.
-
-## Safety
-
-- `get_project_status`, `list_project_files`, `read_project_file`, `get_rules`, `list_jobs`, `get_job_result`, `verify_part_output` are read-only.
-- `inspect_scene`, `inspect_timeline` queue non-scene-changing probes. Results appear through `get_job_result` only **after watcher execution**; a stale `watcher.alive` file does not prove watcher health.
-- `place_existing_avatar`, `set_auto_blink`, `set_existing_camera`, `set_project_duration` require `confirm_change=true` after the user requests the change.
-- `render_part` requires `confirm_render=true` after explicit user instruction, targets `E:\Video\N.mp4` only, and refuses to overwrite. Rendering may take time and may produce full project length regardless of requested range; verify output after completion.
-- No script upload or arbitrary code execution API is exposed. No G: writes, no Save As, no deleting scene objects. Saving projects still requires the verified GUI workflow.
-- Loading `scripts/ic8_watch.py` **once after each iClone restart** is still required. `watcher.alive` alone is a startup marker, not a continuous heartbeat.
-
-## Source map
-
-`mcp_server/server.py` — typed MCP tools and Dino Tunnel command-line adapter.
-
-`mcp_server/iclone_job.py` — fixed RLPy job payload copied atomically to watcher queue.
-
-`tests/test_mcp_server.py` — read-only and fake-queue safety tests (does not require iClone running).
-
-`mcp_server/STATE.md` — implementation/test status.
+ถ้าใช้ MCP client แบบ stdio ให้ดูการตั้งค่าที่ `mcp_server/mcp.local.json` ส่วน `--http` เปิดได้แค่ที่ 127.0.0.1:8766 และไม่มีรหัสผ่าน ห้ามเปิดให้เข้าจากอินเทอร์เน็ต
 
 ## Optional automatic watcher startup
 
@@ -88,6 +57,6 @@ For debugging, `--http` starts **localhost only** on `127.0.0.1:8766/mcp`, **wit
 
 1. **Double-click** `mcp_server/install_openplugin.cmd` and approve the Windows administrator/UAC prompt. This copies the bridge to `C:\Program Files\Reallusion\iClone 8\Bin64\OpenPlugin\iCloneStoryBridge\main.py`. If Windows elevation is denied, leave the file staged and start watcher manually.
 2. **Do not restart iClone just to test** if the current scene is unsaved. On the *next normal launch*, iClone attempts to initialize the plugin, which starts the existing watcher only when the watcher run directory has no pending `.py` jobs.
-3. After launch, inspect `%LOCALAPPDATA%\Tidmunz Studio\snapgen_data\ic8_jobs\mcp_autostart_status.txt` and run a harmless `inspect_scene` with `get_job_result` to verify actual execution. Installation alone doesn't prove startup worked.
+3. After launch, inspect `%LOCALAPPDATA%\Tidmunz Studio\snapgen_data\ic8_jobs\mcp_autostart_status.txt` and run `Ai-iclone status` to check. Installation alone doesn't prove startup worked.
 
 If a pending `.py` job exists at startup, the auto-loader **refuses to start** until the queue is manually reviewed; it does not silently run old jobs. A dangerous stale `clr.py` containing the known `.rlDikPreset` crash-inducing call was preserved under `.unsafe-hold-20261107` during this installation. Do not run it. The read-only scene probe subsequently completed successfully, confirming the watcher and RLPy bridge were operational. The auto-loader installer still needs user-approved UAC because the current remote shell cannot write to Program Files.

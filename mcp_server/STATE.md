@@ -1,13 +1,9 @@
-# MCP implementation state (2026-11-07)
+# MCP state (2026-11-22)
 
-Objective: Add iClone Story Pipeline MCP and Dino Tunnel CLI, plus an optional safe OpenPlugin auto-start.
+Rebuilt as a thin wrapper over Ai-iclone (`scripts/ai_iclone.py`): 10 tools, one Ai-iclone command each, same step
+1..N flow for every part. The old ~20 fixed tools (many hard-coded for part 2) and `iclone_job.py` were removed.
 
-Verified on DESKTOP-F1PJT4S: Windows Python 3.13 with installed MCP SDK; 14 MCP tools discovered via real stdio `initialize` and `tools/list`; real MCP tool call `get_project_status` succeeded; offline tests 5/5 pass; CLI status/job inspection works. Read-only scene probe `mcp_adc3027d25962a5f` completed with watcher `.done`, inner result `ok: true`, 6 avatars, 7 props, 2 cameras, 13 lights. No scene-modifying MCP calls or render have been executed.
+Verified 2026-11-22: real MCP stdio initialize + tools/list (10 tools) + call `status` OK; empty `approve` refused;
+`--cli status` / `--cli do_next_step {"dry": true}` OK; `tests/test_mcp_server.py` 4/4. No iClone was driven.
 
-Safety incident: existing stale watcher job `clr.py` would attempt direct `.rlDikPreset` load and was preserved as `clr.py.unsafe-hold-20261107` in the watcher run folder. Do not run it.
-
-OpenPlugin startup: source staged under `mcp_server/openplugin/main.py` and one-click UAC installer staged as `mcp_server/install_openplugin.cmd`; Program Files install attempt from current unprivileged remote session failed (Access Denied); tool admin execution also unavailable. User approval of Windows UAC is required to finish optional auto-start. Do not restart current iClone if unsaved work is present. Verify `mcp_autostart_status.txt` and an actual completed read-only job on next normal launch.
-
-No audio import, scene modifications, project saves, video rendering, forced app restarts, public network exposure, or G: writes by this MCP implementation.
-
-Remaining: optional user-approved UAC installer, auto-start verification after next normal iClone launch, tests for scene mutations/render only when requested. ChatGPT web reaches these tools through existing Dino Tunnel CLI, not a direct network MCP endpoint.
+Optional OpenPlugin auto-start of the watcher (`openplugin/main.py`, `install_openplugin.cmd`) is unchanged.

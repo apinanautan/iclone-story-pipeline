@@ -530,3 +530,8 @@ The user has repeated every item below many times and is furious about repeating
 - Ai-iclone.exe (user 2026-11-22): the program is an exe next to scripts/ (launcher/AiIclone.cs, build launcher/build.ps1). Terminal = text for AI; double-click = the window. Ai-iclone.cmd still works.
 - Ai-iclone.exe self-installs and self-updates (user 2026-11-22): one exe, no unzip; downloads the latest GitHub Release to %LOCALAPPDATA%\Ai-iclone and copies newer releases over it (work data + paths.local.json kept). New version = bump VERSION + GitHub Release vX.Y.Z with Ai-iclone.exe attached.
 - No hidden junk (user 2026-11-22, after deleting 90+ GB): never keep timestamped copies anywhere. Save backup = ONE <name>.backup.iProject next to the project in the save folder (overwritten each save). Raw renders are deleted (not Recycle Bin) once the final mp4 passes. Temp size of ic8_jobs is shown in Ai-iclone status and the window; files older than 2 days are deleted automatically after each part (video_check OK) or with `Ai-iclone clean`.
+
+## Ai-iclone MCP for ChatGPT (user 2026-11-22)
+- `mcp_server/server.py` is a thin wrapper: each tool runs ONE Ai-iclone command (status, steps, rules, do_next_step, use_part, new_story, set_range, approve, clean_temp_files, version). No part-specific tools, no free Python. New features go into Ai-iclone, never as new MCP tools.
+- Child processes get stdin=DEVNULL (sharing the MCP stdio pipe hangs the call).
+- Explain things to the user in plain everyday Thai: they are a normal user, not a programmer (user 2026-11-22).

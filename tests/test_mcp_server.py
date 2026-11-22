@@ -1,75 +1,44 @@
-"""Offline tests; no iClone API invocation or scene mutation."""
+"""Offline tests for the Ai-iclone MCP server (no iClone, no real step runs)."""
 import importlib.util
-import json
-import os
-import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
 
 SCRIPT = Path(__file__).resolve().parents[1] / "mcp_server" / "server.py"
+spec = importlib.util.spec_from_file_location("icmcp", SCRIPT)
+m = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(m)
 
 
 class McpTests(unittest.TestCase):
-    def setUp(self):
-        self.temp = tempfile.TemporaryDirectory()
-        self.addCleanup(self.temp.cleanup)
-        self.root = Path(self.temp.name) / "repo"
-        self.root.mkdir()
-        (self.root / "docs").mkdir()
-        (self.root / "docs" / "rules.md").write_text("rules", encoding="utf-8")
-        self.job = Path(self.temp.name) / "jobs"
-        self.run = self.job / "run"
-        self.run.mkdir(parents=True)
-        spec = importlib.util.spec_from_file_location("icmcp", SCRIPT)
-        self.m = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(self.m)
-        self.m.ROOT = self.root
-        self.m.DATA = self.job
-        self.m.RUN = self.run
+    def call(self, fn, *a, **k):
+        with patch.object(m, "_run", side_effect=lambda *x: list(x)) as r:
+            return fn(*a, **k)
 
-    def test_read_scope(self):
-        self.assertEqual(self.m.read_project_file("docs/rules.md")["text"], "rules")
-        with self.assertRaises(ValueError): self.m.read_project_file("../escape.txt")
-        with self.assertRaises(ValueError): self.m.read_project_file("/etc/passwd")
+    def test_tools_map_to_ai_iclone(self):
+        self.assertEqual(self.call(m.status), ["status"])
+        self.assertEqual(self.call(m.do_next_step), ["do"])
+        self.assertEqual(self.call(m.do_next_step, dry=True), ["do", "--dry"])
+        self.assertEqual(self.call(m.do_next_step, retry=True), ["do", "--force"])
+        self.assertEqual(self.call(m.use_part, "เรื่อง", "3"), ["use", "เรื่อง", "3"])
+        self.assertEqual(self.call(m.use_part, "เรื่อง"), ["use", "เรื่อง"])
+        self.assertEqual(self.call(m.set_range, "1:05-2:10"), ["range", "1:05-2:10"])
+        self.assertEqual(self.call(m.approve, "ผ่าน"), ["approve", "--said", "ผ่าน"])
 
-    def test_stage_atomic_and_result(self):
-        with patch.object(self.m, "_iclone_running", return_value=True):
-            result = self.m.inspect_scene()
-        job_id = result["job_id"]
-        self.assertTrue((self.run / (job_id + ".py")).exists())
-        self.assertEqual(json.loads((self.run / (job_id + ".json")).read_text())["action"], "inspect_scene")
-        self.assertEqual(self.m.get_job_result(job_id)["watcher_state"], "queued")
-        (self.run / (job_id + ".py")).rename(self.run / (job_id + ".done"))
-        (self.run / (job_id + ".result.json")).write_text('{"ok":true,"data":{}}')
-        self.assertTrue(self.m.get_job_result(job_id)["success"])
+    def test_approve_needs_user_words(self):
+        for bad in ("", "   "):
+            with self.assertRaises(ValueError):
+                self.call(m.approve, bad)
 
-    def test_refuse_preexisting_queue(self):
-        (self.run / "old.py").write_text("# unknown existing job")
-        with patch.object(self.m, "_iclone_running", return_value=True):
-            with self.assertRaises(RuntimeError):
-                self.m.inspect_scene()
+    def test_no_part_specific_or_code_tools(self):
+        names = [t.__name__ for t in m.TOOLS]
+        self.assertFalse([n for n in names if "part2" in n or "python" in n or "script" in n])
+        self.assertLessEqual(len(names), 12)
 
-    def test_guards(self):
-        with self.assertRaises(ValueError): self.m.place_existing_avatar("A",0,0,0,0)
-        with self.assertRaises(ValueError): self.m.set_project_duration(80)
-        with self.assertRaises(ValueError): self.m.render_part(1, 80)
-        with self.assertRaises(ValueError): self.m.set_existing_camera("Camera_0",1,1,1,2,2,2,50,True,True)
-        with self.assertRaises(ValueError): self.m.get_job_result("bad")
-        with self.assertRaises(ValueError): self.m.preview_camera_still("Other_Camera")
-        with self.assertRaises(ValueError): self.m.build_part2_camera_sequence()
-        with self.assertRaises(ValueError): self.m.retune_part2_shot(7,33,200,25950,33,600,25860)
-        with self.assertRaises(ValueError): self.m.retune_part2_group_shot(7,33,120,26000,33,700,25850)
-        with self.assertRaises(RuntimeError): self.m.apply_part2_face_lips("p2_monk")
-        with self.assertRaises(RuntimeError): self.m.apply_part2_face_lips("unknown", True)
-        with self.assertRaises(RuntimeError):
-            self.m.apply_part2_face_lips("p2_old", True)
-
-    def test_list_ignores_git(self):
-        (self.root / ".git").mkdir()
-        (self.root / ".git" / "config").write_text("private")
-        ls = self.m.list_project_files()
-        self.assertEqual([x["path"] for x in ls["files"]], ["docs/rules.md"])
+    def test_real_status_runs(self):   # read-only: really runs scripts/ai_iclone.py status
+        out = m.status()
+        self.assertIn("[Ai-iclone exit", out)
+        self.assertNotIn("Traceback", out)
 
 
 if __name__ == "__main__":
