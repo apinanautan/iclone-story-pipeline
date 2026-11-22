@@ -83,7 +83,9 @@ def face_lights():
     lights = list(RLPy.RScene.FindObjects(RLPy.EObjectType_Light))
     # Directional lights (RIDirectionalLight) do not implement SetRange; only
     # clone a range-capable point/spot light for per-avatar fill lights.
-    src = next((l for l in lights if not l.GetName().startswith("FaceLight_") and hasattr(l, "SetSpotLightBeam")), None) or next(
+    preferred = p.get("face_light_source")
+    src = next((l for l in lights if l.GetName() == preferred and hasattr(l, "SetRange")), None) or next(
+        (l for l in lights if not l.GetName().startswith("FaceLight_") and hasattr(l, "SetSpotLightBeam")), None) or next(
         (l for l in lights if l.GetName() == "Spot Light" and hasattr(l, "SetRange")), None) or next(
         (l for l in lights if l.GetName() == "Point light" and hasattr(l, "SetRange")), None) or next(
         (l for l in lights if not l.GetName().startswith("FaceLight_") and hasattr(l, "SetRange")), None)
@@ -113,10 +115,12 @@ def face_lights():
     # each face, short range + soft wide falloff so it lights the face only, LINKED to the head so it follows moves.
     # RLPy cannot create lights, so clone a scene spotlight (point light as last resort).
     LOG.append("fill source=%s class=%s" % (src.GetName(), type(src).__name__))
+    samples = [time for shot in p["shots"] for time in (shot["t"][0], sum(shot["t"]) / 2)]
     for a in RLPy.RScene.GetAvatars():
-        seen = [x * END / 8 for x in range(9) if a.IsVisible(T(x * END / 8))]
-        if not seen: continue   # cast often hidden at 0 (wide opening shot)
-        RLPy.RGlobal.SetTime(T(seen[0]))   # measure where the avatar really is when visible
+        visible_at = next((time for time in samples if a.IsVisible(T(time))), None)
+        if visible_at is None: continue   # cast often hidden at 0 (wide opening shot)
+        anchor = T(visible_at)
+        RLPy.RGlobal.SetTime(anchor)   # measure and link while the avatar is actually visible
         tr = a.WorldTransform(); q = tr.R()
         yaw = 2 * math.atan2(q.z, q.w)
         fx, fy = math.sin(yaw), -math.cos(yaw)          # facing (rules: yaw = atan2(dx,-dy))
@@ -125,16 +129,21 @@ def face_lights():
         pos = (face[0] + fx * 110, face[1] + fy * 110, face[2] + 20)   # straight-on, slightly above eye line
         lt = src.Clone(); lt.SetName("FaceLight_" + a.GetName())
         if hasattr(RLPy.RScene, "Show"): RLPy.RScene.Show(lt)   # presets sometimes keep the source hidden
+        if hasattr(lt, "SetActive"):
+            lt.SetActive(T(0), True)  # A visible clone can still inherit a switched-off light source.
+            lt.SetActive(anchor, True)
         c = lt.GetControl("Transform"); t = RLPy.RTransform(); c.GetValue(T(0), t)
         t.T().x, t.T().y, t.T().z = pos
         t.R().x, t.R().y, t.R().z, t.R().w = look(pos, face)   # clones keep the source's direction otherwise
-        c.SetValue(T(0), t)
-        lt.SetColor(T(0), RLPy.RRgb(255, 224, 194))   # warm, not pure white (~4750 K, forum tip)
-        lt.SetMultiplier(T(0), globals().get('FACE_LIGHT_MULTIPLIER', 0.04))
+        c.SetValue(anchor, t)
+        lt.SetColor(T(0), RLPy.RRgb(1.0, 0.88, 0.76))  # RRgb takes normalized channel values.
+        multiplier = p.get("face_light_overrides", {}).get(a.GetName(), FACE_LIGHT_MULTIPLIER)
+        lt.SetMultiplier(T(0), multiplier)
         lt.SetRange(T(0), 220)                         # reaches the face (~110 cm), dies before the set behind
         lt.SetCastShadow(False)
         for fn, args in (("SetSpotLightBeam", (T(0), 45.0, 90.0, 1.0)),   # angle, soft falloff, gentle attenuation
                          ("SetTubeShape", (False,)), ("SetRectangleShape", (False,))):
+            if not hasattr(lt, fn): continue
             try: getattr(lt, fn)(*args)
             except Exception as e: LOG.append("  %s skipped: %s" % (fn, e))
         if hasattr(lt, 'SetVisible'): lt.SetVisible(T(0), True)
@@ -143,8 +152,10 @@ def face_lights():
         link = "none"
         for par in ([bone] if bone else []) + [a]:
             try:
-                r = lt.LinkTo(par, T(0))
-                link = "%s (%s)" % (par.GetName(), r); break
+                status = lt.LinkTo(par, RLPy.ELinkObjectAlignType__None, anchor)
+                if lt.GetLinkedObject(anchor) is not None:
+                    link = "%s (%s)" % (par.GetName(), status)
+                    break
             except Exception as e:
                 LOG.append("  LinkTo %s failed: %s" % (par.GetName(), e))
         LOG.append("face light %s at %s linked=%s" % (a.GetName(), tuple(round(v) for v in pos), link))

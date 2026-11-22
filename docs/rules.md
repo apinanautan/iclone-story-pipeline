@@ -519,3 +519,4 @@ The user has repeated every item below many times and is furious about repeating
 - **(2026-11-22, user)** Dialogue shots: keep the camera on whoever is SPEAKING. A short cut to the listener is OK, but never for long; most of the time is on the speaker.
 - (2026-11-22) Lip fixes: ic8_lip_trim adds a closed 'None' viseme key after the last key of every spoken line (AccuLips often ends on an open shape). Re-running `pose` after `lip` covers the mouths with face clips: always use `pose --from`; face_check fails if pose is newer than lip.
 - (2026-11-22) Speaker focus applied in part 5: Chaiyot reaction during Amphon's 24 s explanation cut to 3.4 s (32.0-35.4), rest on Amphon.
+- (2026-11-22, user) ชัยชนะของคนไม่ยอมแพ้ ท่อน 6 ช็อตจบ ให้อัมพรมองตรงแบบผ่อนคลาย ใช้ Set Free ใน iClone ถอดเป้า Look At และตรวจว่าช่องเป้าหมายว่าง ห้ามใช้การลดน้ำหนักแทนการถอดเป้า ฉากหลังเบลอโดยโฟกัสที่อัมพร ตรวจว่าไฟเติมเห็นรายละเอียดบนใบหน้าจากภาพจริง แม้ตัวตรวจแสงจะขึ้นผ่านแล้วก็ตาม

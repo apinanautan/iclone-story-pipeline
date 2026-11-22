@@ -530,7 +530,10 @@ def step_cams(S, base):
     end = duration(S["wav"])
     only, full = cams_args()
     rate = S.get("review_per_sec", 1) if full else 0
-    wjson("cams.json", {"end": end, "per_sec": rate, "only": only, "shots": S["shots"], "face_light_multiplier": S.get("face_light_multiplier", 0.04)})
+    wjson("cams.json", {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
+                        "face_light_multiplier": S.get("face_light_multiplier", 0.04),
+                        "face_light_overrides": S.get("face_light_overrides", {}),
+                        "face_light_source": S.get("face_light_source")})
     job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
     log = rlog("cams.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("cams")
