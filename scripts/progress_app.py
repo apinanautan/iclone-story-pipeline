@@ -35,14 +35,14 @@ STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ต�
          ("ready", "เซฟผ่านโปรแกรม (Ctrl+S)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
 # Story setup: done ONCE per story, before any part (user 2026-11-22). All read from the central sheet
 # stories/<story>.json; nothing per part here.
-STORY_STEPS = [("sheet", "ใบงานกลาง"),
-               ("source", "รู้เรื่อง (บท + เสียงเต็ม)"),
+STORY_STEPS = [("sheet", "ใบงานกลาง (เรื่องอะไร)"),          # user 2026-11-22: BIG picture only; details belong to each part
+               ("source", "บท + เสียงเต็ม"),
                ("range", "เวลาที่ทำงาน (ผู้ใช้บอก)"),
-               ("split", "แบ่งท่อนตามเวลาที่ทำงาน"),
-               ("transcript", "ถอดเสียง + ตัดเสียงทุกท่อน (เวลาเป๊ะ)"),
-               ("chars", "ตัวละคร + โมเดล"),
-               ("scenes", "ฉาก + ไฟล์"),
-               ("partplans", "แผนเนื้อหาทุกท่อน"),
+               ("split", "ถอดเสียง + แบ่งท่อน"),
+               ("chars", "ตัวละครทั้งเรื่อง"),
+               ("scenes", "ฉากทั้งเรื่อง"),
+               ("partplans", "เนื้อเรื่องแต่ละท่อน"),
+               ("output", "ที่เก็บงาน (เซฟ + วิดีโอ)"),
                ("story_ok", "ผู้ใช้อนุมัติแผนเรื่อง")]
 J = Path(os.environ.get("LOCALAPPDATA", "")) / "Tidmunz Studio" / "snapgen_data" / "ic8_jobs"
 mm = lambda x: f"{int(x // 60)}:{int(x % 60):02d}"
@@ -87,8 +87,10 @@ def story_states(story):
             why = why or f"ท่อน {n} เวลาไม่ตรง"; continue
         if not p.get("transcript") or not all(l.get("who") for l in p["transcript"]): why = why or f"ท่อน {n} ไม่ระบุใครพูด"; continue
         good.append(n)
-    if not inr: out["transcript"] = ("todo", "")
-    else: out["transcript"] = ("done", f"{len(good)}/{len(inr)} ท่อน") if len(good) == len(inr) else ("warn", f"{len(good)}/{len(inr)} {why}")
+    if out["split"][0] == "done" and inr and len(good) < len(inr):
+        out["split"] = ("warn", f"ถอดเสียง {len(good)}/{len(inr)} {why}")
+    outs = [st.get("save_dir"), st.get("video_dir")]
+    out["output"] = ("done", "✓") if all(ok(p) for p in outs) else ("todo", "ยังไม่ตั้ง/ไม่มีโฟลเดอร์")
     ch = st.get("characters", {}); miss = [n for n, c in ch.items() if not ok(c.get("avatar"))]
     out["chars"] = ("done", f"{len(ch)} ตัว") if ch and not miss else (("bad", "ไม่พบ: " + ", ".join(miss)[:30]) if ch else ("todo", ""))
     sc = st.get("scenes", {}); miss = [n for n, c in sc.items() if not ok(c.get("file"))]
