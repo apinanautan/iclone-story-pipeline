@@ -521,3 +521,9 @@ The user has repeated every item below many times and is furious about repeating
 - (2026-11-22) Speaker focus applied in part 5: Chaiyot reaction during Amphon's 24 s explanation cut to 3.4 s (32.0-35.4), rest on Amphon.
 - (2026-11-22, user) ชัยชนะของคนไม่ยอมแพ้ ท่อน 6 ช็อตจบ ให้อัมพรมองตรงแบบผ่อนคลาย ใช้ Set Free ใน iClone ถอดเป้า Look At และตรวจว่าช่องเป้าหมายว่าง ห้ามใช้การลดน้ำหนักแทนการถอดเป้า ฉากหลังเบลอโดยโฟกัสที่อัมพร ตรวจว่าไฟเติมเห็นรายละเอียดบนใบหน้าจากภาพจริง แม้ตัวตรวจแสงจะขึ้นผ่านแล้วก็ตาม
 - (2026-11-22, user) ไฟหน้าอัตโนมัติในขั้น `cams` ให้วัดพิกัดกระดูก Head ของแต่ละตัวจากเฟรมที่มองเห็น วางไฟเติมด้านหน้าห่างประมาณ 110 ซม. สูงกว่าจุดกระดูก 10 ซม. และผูกกับหัวให้ตามท่าทาง ใช้ `face_light_multiplier` กับ `face_light_overrides` ปรับความแรงจากภาพจริงโดยไม่ให้หน้าดำหรือขาวล้น
+
+## Ai-iclone program (user 2026-11-22)
+- The Preview window is now the **Ai-iclone** program. AI works ONLY through `Ai-iclone.cmd`: no arguments = manual + status + next; `do` = one step (script steps run by the program, AI steps give a rules card + a file to fill, user steps STOP).
+- The AI reads state as text from the same files as the window; no screenshots of the window.
+- User approvals typed in chat are recorded with `Ai-iclone approve --said "..."`; the working range with `Ai-iclone range m:ss-m:ss`. Never invent either.
+- A step that FAILs twice stops; tell the user in Thai.

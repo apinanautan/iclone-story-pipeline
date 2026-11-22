@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
-"""Preview program: small white window, one dot per step of the current part, live.
+"""Ai-iclone window (was "Preview"): the user's view of the same state `Ai-iclone.cmd` gives the AI as text
+(scripts/ai_iclone.py imports the state functions below). Small white window, one dot per step of the current part, live.
 Dots: green = done, blue spinning = running now, red = failed, grey = not yet.
 Data: progress/now.json (running step), progress/<story>_<part>.json steps_done (written by ic8_part.py),
 files on disk (spec, wav, project, video) and progress/now_log.txt (last lines the pipeline printed).
@@ -146,6 +147,13 @@ def current_part(story):
     return next((n for n in ps if not video_done(spec_of(story, n))), ps[-1] if ps else "1")
 
 
+def plan_complete(spec):
+    """The part plan is done only when the spec is filled: every line has a speaker and there are shots
+    (a fresh `ic8_story.py new` skeleton has who "?" and no shots)."""
+    return bool(spec and spec.get("shots") and spec.get("lines")
+                and all(L.get("who") and L.get("who") != "?" for L in spec["lines"]))
+
+
 def step_states(story, n):
     spec = spec_of(story, n)
     st = load(PROG / f"{story}_{n}.json", {})
@@ -156,7 +164,7 @@ def step_states(story, n):
     narr_only = bool(spec) and all(L.get("who") in ("บรรยาย", "narrator") for L in spec.get("lines", []))
     out = {}
     for k, _ in STEPS:
-        if k == "plan": s = "done" if spec else "todo"
+        if k == "plan": s = "done" if plan_complete(spec) else "todo"
         elif k == "audio": s = "done" if spec and Path(expand(spec.get("wav", ""))).exists() else "todo"
         elif k == "motion_plan": s = "done" if k in done else "todo"
         elif k == "user_ok": s = "done" if ok.get("step5") else "todo"
@@ -172,7 +180,7 @@ def step_states(story, n):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Preview นิทาน")
+        self.title("Ai-iclone")
         self.geometry("440x820+0+0")   # top-left of the screen (user 2026-11-21)
         self.minsize(220, 300)
         self.attributes("-topmost", True)

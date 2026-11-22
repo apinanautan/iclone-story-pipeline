@@ -1,6 +1,7 @@
 # iClone Story Pipeline: instructions for any AI that picks this up
 
-First message of any chat: follow docs/MASTER_PROMPT.md steps 0-9 in order.
+**START HERE (2026-11-22): run `Ai-iclone.cmd` (no arguments) in this folder and follow what it prints.** It is the program for this work: it shows the story/part status (same as the Ai-iclone window), the one next command (`Ai-iclone do`), and the rules card of that step. Do not read the rest of this file or docs/ unless it says so.
+Older notes below are history/reference.
 
 ## Skills first (2026-11-17)
 Step-by-step skills live in `.agents/skills/*/SKILL.md` (Codex loads them; any other AI: read them). For a story part
