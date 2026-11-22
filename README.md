@@ -1,4 +1,35 @@
-# iClone Story Pipeline MCP Server
+# Ai-iclone
+
+โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน ให้ AI (Claude, Codex, ...) คุมเป็นขั้นๆ 1 2 3 ...
+
+## ใช้กับ AI
+พิมพ์ในแชทของ AI แค่นี้:
+
+> ใช้โปรแกรม `<โฟลเดอร์นี้>\Ai-iclone.cmd` ทำเรื่อง <ชื่อ> ท่อน 1
+
+AI รัน `Ai-iclone.cmd` (ไม่ใส่อะไร) ครั้งแรกจะได้: โปรแกรมนี้คืออะไร, กฎเหล็ก, คำพูดในแชท -> คำสั่ง,
+สถานะทุกข้อ และคำสั่งถัดไป แล้วทำงานด้วย `Ai-iclone.cmd do` ทีละข้อจนเจอ STOP
+
+| คำสั่ง | ทำอะไร |
+|---|---|
+| `Ai-iclone.cmd` | คู่มือ + สถานะ + ข้อถัดไป |
+| `Ai-iclone.cmd do` | ทำข้อถัดไป (โปรแกรมทำ / การ์ดกฎให้ AI เติมไฟล์ / STOP รอผู้ใช้) |
+| `Ai-iclone.cmd use <เรื่อง> [ท่อน]` | เลือกเรื่อง/ท่อน |
+| `Ai-iclone.cmd new-story <เรื่อง>` | เรื่องใหม่ |
+| `Ai-iclone.cmd range 0:00-7:14` | เวลาที่ทำงาน (จากผู้ใช้เท่านั้น) |
+| `Ai-iclone.cmd approve --said "ผ่าน"` | บันทึกการอนุมัติที่ผู้ใช้พิมพ์ในแชท |
+| `Ai-iclone.cmd window` | เปิดหน้าต่าง Ai-iclone (สถานะเดียวกัน ให้คนดู/คลิกผ่าน) |
+| `Ai-iclone.cmd version` | เวอร์ชัน |
+
+## ติดตั้ง (เครื่องใหม่ / โหลดจาก Release)
+1. แตกไฟล์ zip ไว้ที่ไหนก็ได้ ต้องมี Python 3 (`py -3`) และ iClone 8
+2. ใส่ `paths.local.json` (ที่อยู่ไดรฟ์ของเครื่องนี้ ดู `.agents/skills/paths/SKILL.md`)
+3. ข้อมูลงาน (`stories/`, `parts/`, `progress/`) ไม่อยู่ใน release: คัดลอกมาจากเครื่องเดิม หรือเริ่มเรื่องใหม่ด้วย `new-story`
+4. ใน iClone: Script > Load Python > `scripts/ic8_watch.py` ครั้งเดียวต่อการเปิด iClone
+
+---
+
+# (เก่า) iClone Story Pipeline MCP Server
 
 Runs on the existing Windows machine alongside iClone 8; reuses `scripts/ic8_watch.py` and its job queue. No iClone UI changes and no API keys required for **local stdio**.
 

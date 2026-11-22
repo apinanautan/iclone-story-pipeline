@@ -111,6 +111,13 @@ def load(p, d):
         return d
 
 
+def load_text(p):
+    try:
+        return Path(p).read_text(encoding="utf-8").strip()
+    except Exception:
+        return ""
+
+
 def stories():
     return sorted(p.stem for p in (ROOT / "stories").glob("*.json") if not p.stem.startswith("_"))
 
@@ -180,7 +187,7 @@ def step_states(story, n):
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
-        self.title("Ai-iclone")
+        self.title("Ai-iclone " + load_text(ROOT / "VERSION"))
         self.geometry("440x820+0+0")   # top-left of the screen (user 2026-11-21)
         self.minsize(220, 300)
         self.attributes("-topmost", True)

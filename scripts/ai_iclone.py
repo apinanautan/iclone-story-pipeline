@@ -11,6 +11,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone rules <step>            the rules card of one step
   Ai-iclone approve --said "<text>" user approval typed in chat (story plan / part stills)
   Ai-iclone steps                   every step, numbered, with who does it
+  Ai-iclone version                 program version (file VERSION)
 
 State lives in files only (stories/, parts/, progress/), read by the same functions as the window
 (scripts/progress_app.py), so the AI and the window always agree. No screenshots needed.
@@ -33,6 +34,8 @@ SEL = P.PROG / "ai_iclone.json"
 PY = sys.executable
 CMD = "Ai-iclone"   # short name in the text; the full path is printed once in the manual
 FULL = str(ROOT / "Ai-iclone.cmd")
+try: VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
+except OSError: VERSION = "?"
 
 # who does each step: script = the program runs it; ai = the AI thinks and fills a file; user = STOP, the user decides
 PART_KIND = {"plan": "ai", "audio": "script", "check": "script", "motion_plan": "script", "open": "script",
@@ -242,7 +245,7 @@ def set_range(v):
 
 
 def manual():
-    out("Ai-iclone — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
+    out("Ai-iclone " + VERSION + " — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
     out("ทำงานเป็นข้อๆ ตามลำดับ: ① เตรียมเรื่อง 9 ข้อ (ครั้งเดียวต่อเรื่อง) -> ② ทำทีละท่อน 18 ข้อ")
     out("Ai-iclone = \"%s\"  (PowerShell: & \"%s\" do   /  bash: cmd //c \"%s\" do)" % (FULL, FULL, FULL))
     out("วิธีทำงาน: รัน %s do ทีละครั้ง ทำตามที่มันบอก จนเจอ STOP แล้วรายงานผู้ใช้\n" % CMD)
@@ -269,6 +272,7 @@ def main(a):
         except Exception: pass
     c = a[0] if a else ""
     if c in ("", "help", "-h", "--help"): manual(); return 0
+    if c in ("version", "--version"): out("Ai-iclone " + VERSION); return 0
     if c == "status": return 0 if show_status() else 1
     if c == "steps": steps(); return 0
     if c == "rules" and len(a) > 1: out(card(a[1])); return 0
