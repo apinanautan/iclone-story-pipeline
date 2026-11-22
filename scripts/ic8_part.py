@@ -47,7 +47,7 @@ FF = r"C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffm
 FFP = FF.replace("ffmpeg.exe", "ffprobe.exe")
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
-ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "motion_check", "light_check", "switch"]
+ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "motion_check", "light_check", "face_check", "switch"]
 
 
 def say(s):
@@ -265,8 +265,9 @@ def step_check(S, base):
         if c.get("lookat") and c["lookat"] not in names: errs.append("%s looks at %s (not in cast)" % (n, c["lookat"]))
         speaks = any(L["who"] == n for L in S["lines"])
         if not speaks and not c.get("lookat") and not c.get("work"): warns.append("%s listens: no lookat (rule 6: listeners Look At someone)" % n)
-        if not c.get("lookfront") and not c.get("work"): warns.append("%s: no lookfront (rule 6: head should move)" % n)
+        if not (c.get("faces") or c.get("lookfront")): warns.append("%s: no face motion - set \"faces\": [Digital Soul .iTalk ...] (user 2026-11-22: every character)" % n)
         if face_desc(c).startswith("⚠"): warns.append("%s: blank face - set smile (0-1) or an emotion .iTalk in lookfront (user 2026-11-21)" % n)
+        if str(c.get("blink", "Normal")) == "None": warns.append("%s: blink None - every character blinks (user 2026-11-22)" % n)
         if (c.get("motions") or c.get("motion")) and c.get("speed", 1.0) > 0.8: warns.append("%s: speed %.2f - folk tale = slow, use 0.65-0.7 (user 2026-11-21)" % (n, c.get("speed", 1.0)))
         if not (c.get("motions") or c.get("motion")): warns.append("%s: no motion (keeps the motion already in the scene)" % n)
     sh = S["shots"]
@@ -316,6 +317,7 @@ def step_check(S, base):
         if sh[i]["pos"] == sh[i - 1]["pos"] and sh[i]["target"] == sh[i - 1]["target"]:
             errs.append("shot %d repeats shot %d" % (i + 1, i))
     scene_checks(S, errs, warns)
+    warns += think_warns(S)
     for w in warns: say("WARN: " + w)
     if errs: fail("\n  ".join([""] + errs))
     say("OK check: %.2f s, %d lines, %d cast, %d shots" % (end, len(S["lines"]), len(names), len(sh)))
@@ -407,16 +409,17 @@ def live(step, pct, text):   # same live.json the iClone jobs write; the Preview
 
 
 def face_desc(c):
-    """User 2026-11-21: every character needs a clear expression (lovers smile at each other) and the
-    preview shows it. smile = 0-1 gentle smile keys; lookfront = .iTalk (emotion clip) or true."""
-    parts = []
-    if c.get("smile"): parts.append("ยิ้ม %d%%" % round(100 * c["smile"]))
-    lf = c.get("lookfront")
-    if isinstance(lf, str): parts.append(os.path.splitext(os.path.basename(lf))[0])
-    elif lf: parts.append("Look front")
-    if c.get("face"): parts.append("face keys")
-    emo = c.get("smile") or c.get("face") or (isinstance(lf, str) and not lf.lower().endswith("look front.italk"))
-    return ("" if emo else "⚠ หน้าเฉย ") + (" + ".join(parts) or "ไม่มี")
+    """Preview line "หน้า" (user 2026-11-22): the 3-part face flow of one character, in order:
+    1 auto blink, 2 face motion (.iTalk clips, chained, 65-75%), 3 feeling (smile / think / face keys)."""
+    fl = c.get("faces") or ([c["lookfront"]] if isinstance(c.get("lookfront"), str) else ["Look front"] if c.get("lookfront") else [])
+    mot = " → ".join(os.path.splitext(os.path.basename(f))[0] for f in fl)
+    feel = []
+    if c.get("smile"): feel.append("ยิ้มค่อยๆขึ้น 10→%d%%" % round(100 * min(0.8, c["smile"])))
+    if c.get("think"): feel.append("หน้าคิด" + ("" if c["think"] is True else " %.0f-%.0fs" % tuple(c["think"])))
+    if c.get("face"): feel.append("face keys")
+    warn = ("" if fl else "⚠ ไม่มีท่าหน้า ") + ("" if feel else "⚠ ไม่มีความรู้สึก ")
+    return "%s① กระพริบ %s ② ท่าหน้า %s (%.0f%%) ③ ความรู้สึก %s" % (
+        warn, c.get("blink", "Normal"), mot or "-", 100 * max(0.65, min(0.75, float(c.get("face_speed", 0.7)))), " + ".join(feel) or "-")
 
 
 WALKY = re.compile(r"walk|run|jog|chore|pick|weed|wander|turn|step|enter|exit|leave|approach", re.I)
@@ -471,6 +474,14 @@ def step_pose(S, base):
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
     log = rlog("pose_place.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("pose")
+    noblink = [n for n in S["cast"] if not re.search(r"^%s blink " % re.escape(n), log, re.M)]
+    if noblink: fail("pose: no auto blink for " + ", ".join(noblink))   # user 2026-11-22: blink went missing
+    # user 2026-11-22 (said many times): clips APART with a small gap, the transition fills the gap - never butted
+    bad_gap = [l for l in re.findall(r"^.* gap (-?[\d.]+).*$", log, re.M) if not 0.3 <= float(l) <= 2.0]
+    if bad_gap: fail("pose: clip gap not 0.3-2.0 s (clips touching/overlapping): " + ", ".join(bad_gap[:5]))
+    if not re.search(r" gap [\d.]+", log): fail("pose: no clip gap logged - clips are butted together")
+    noface = [n for n in S["cast"] if not re.search(r"^%s face .* speed 0\.(6[5-9]|7[0-5])" % re.escape(n), log, re.M)]
+    if noface: fail("pose: no face motion clips (65-75%) for " + ", ".join(noface))
     say("OK pose (look: gui shot)")
 
 
@@ -568,6 +579,95 @@ def step_motion_check(S, base):
     say("OK motion_check: everyone stays in place")
 
 
+THINKY = re.compile("คิด|เห็นว่า|สงสัย|ตัดสินใจ|ไตร่ตรอง|วางแผน|นึก")
+
+
+def think_warns(S):
+    """User 2026-11-22: a line about thinking must show a thinking face on the person in that shot."""
+    out = []
+    for ln in S.get("lines", []):
+        if not THINKY.search(ln.get("text", "")): continue
+        mid = (ln["t"][0] + ln["t"][1]) / 2
+        sh = next((s for s in S["shots"] if s["t"][0] <= mid < s["t"][1]), None)
+        who = sh and sh.get("subject")
+        c = S["cast"].get(who or "", {})
+        th = c.get("think")
+        ok = th is True or (isinstance(th, list) and th[0] <= mid <= th[1])
+        if who and not ok:
+            out.append("%.1fs \"%s\": %s needs \"think\" (thinking face)" % (ln["t"][0], ln["text"][:30], who))
+    return out
+
+
+FACE_JOB = r'''
+import RLPy, os, json
+J = os.path.join(os.environ['LOCALAPPDATA'], 'Tidmunz Studio', 'snapgen_data', 'ic8_jobs')
+T = lambda s: RLPy.RTime.FromValue(int(round(s * 6000)))
+P = json.load(open(os.path.join(J, 'face_check.json'), encoding='utf-8'))
+out = {}
+for a in RLPy.RScene.GetAvatars():
+    n = a.GetName()
+    if n not in P['cast']: continue
+    fc = a.GetFaceComponent(); q = P['cast'][n]
+    ends = []
+    for i in range(fc.GetClipCount()):
+        c = fc.GetClip(i); ends.append(c.ClipTimeToSceneTime(c.GetClipLength()).ToFloat() / 6000.0)
+    w = {}
+    for t, names in q['probe']:
+        w[str(t)] = [round(v, 3) for v in fc.GetExpressionWeights(T(t), names)]
+    out[n] = {'blink': fc.GetAutoBlinkName(), 'clips': fc.GetClipCount(), 'end': round(max(ends or [0]), 1), 'w': w}
+open(os.path.join(J, 'face_check.out.json'), 'w', encoding='utf-8').write(json.dumps(out, ensure_ascii=False))
+'''
+
+SMILE_K, THINK_K = "Mouth_Corner_Pull_L", "Brow_Raise_In_L"
+
+
+def vis_mids(c, end):
+    """middle of every visible window of a cast member"""
+    v = sorted(c.get("visible") or [[0, 1]]); out = []
+    for i, (t, on) in enumerate(v):
+        if on:
+            t1 = v[i + 1][0] if i + 1 < len(v) else end
+            if t1 - t > 0.5: out.append(round(t + 0.85 * (t1 - t), 2))   # late in the window: the smile ramps up
+    return out
+
+
+def step_face_check(S, base):
+    """Read back from iClone (not our own log) the 3-part face flow of EVERY cast member (user 2026-11-22):
+    1 auto blink on, 2 face motion clips present and covering the part, 3 feeling really visible
+    (smile / think weights at the middle of each visible window - a clip loaded after the keys erases them)."""
+    end = duration(S["wav"])
+    try: os.remove(os.path.join(J, "face_check.out.json"))
+    except OSError: pass
+    q = {}
+    for n, c in S["cast"].items():
+        pr = [[t, [SMILE_K]] for t in vis_mids(c, end)] if c.get("smile") else []
+        th = c.get("think"); tw = [0, end] if th is True else th
+        if tw: pr.append([round((tw[0] + tw[1]) / 2, 2), [THINK_K]])
+        q[n] = {"probe": pr}
+    wjson("face_check.json", {"cast": q})
+    job(FACE_JOB, "zz_face_check")
+    got = json.loads(rlog("face_check.out.json") or "{}")
+    bad = []
+    for n, c in S["cast"].items():
+        g = got.get(n)
+        if not g: bad.append("%s: not found in iClone" % n); continue
+        want = str(c.get("blink", "Normal"))
+        say("  %s: ① กระพริบ %s ② ท่าหน้า %d คลิป ถึง %.1fs ③ %s" % (n, g["blink"], g["clips"], g["end"],
+            ", ".join("%ss=%s" % (t, v) for t, v in g["w"].items()) or "-"))
+        if g["blink"] != want: bad.append("%s: blink %s (want %s)" % (n, g["blink"], want))
+        if g["clips"] < 1: bad.append("%s: no face motion clip" % n)
+        else:   # clips only cover the on-screen windows (user 2026-11-22) - must reach the last visible moment
+            vis = sorted(c.get("visible") or [[0, 1]]); last = end if vis[-1][1] else vis[-1][0]
+            if g["end"] < last - 0.5: bad.append("%s: face clips stop at %.1fs < %.1fs (last on screen)" % (n, g["end"], last))
+        if not (c.get("smile") or c.get("think") or c.get("face")): bad.append("%s: no feeling (smile/think/face)" % n)
+        for t, v in g["w"].items():
+            need = 0.25 * min(0.8, float(c["smile"])) if c.get("smile") and [t2 for t2, k in q[n]["probe"] if str(t2) == t and k == [SMILE_K]] else 0.25
+            if v and v[0] < need: bad.append("%s: feeling lost at %ss (%.2f < %.2f) - keys erased by a face clip?" % (n, t, v[0], need))
+    bad += ["thinking line without thinking face: " + w for w in think_warns(S)]
+    if bad: fail("face_check:" + "".join(chr(10) + "  - " + b for b in bad))
+    say("OK face_check: blink + face motion + feeling on all %d characters (read from iClone)" % len(got))
+
+
 def step_light_check(S, base):
     """No half white / half black faces on the stills (user 2026-11-21)."""
     r = subprocess.run([sys.executable, os.path.join(SCR, "light_check.py"), S["_spec"], J], capture_output=True, text=True)
@@ -616,7 +716,7 @@ def step_render(S, base, approved):
 
 STEPS = {"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
          "sound": step_sound, "lip": step_lip, "cams": step_cams, "motion_check": step_motion_check,
-         "light_check": step_light_check, "switch": step_switch, "ready": step_ready, "video_check": step_video_check}
+         "light_check": step_light_check, "face_check": step_face_check, "switch": step_switch, "ready": step_ready, "video_check": step_video_check}
 
 if __name__ == "__main__":
     if len(sys.argv) < 3: print(__doc__); sys.exit(1)

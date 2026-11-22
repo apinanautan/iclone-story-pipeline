@@ -31,6 +31,7 @@ STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ต�
          ("pose", "รอเท็กซ์เจอร์ แล้วใส่ท่าทาง"), ("sound", "ใส่เสียง (≤3 นาที)"), ("lip", "ลิปซิงก์"),
          ("cams", "ตั้งกล้อง 80/100 มม. + ไฟหน้า + ภาพนิ่ง"),
          ("motion_check", "ตรวจโมชั่น (ไม่เดินถอย/ไม่กระตุก)"), ("light_check", "ตรวจแสงหน้า (ไม่ขาว/ดำครึ่งซีก)"),
+         ("face_check", "ตรวจหน้าทุกตัว: ①กระพริบ ②ท่าหน้า 65-75% ③ความรู้สึก (อ่านจาก iClone)"),
          ("switch", "เปลี่ยนวิวเป็นกล้อง Switch"), ("user_ok", "ผู้ใช้ตรวจ (ผ่าน)"),
          ("ready", "เซฟผ่านโปรแกรม (Ctrl+S)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
 # Story setup: done ONCE per story, before any part (user 2026-11-22). All read from the central sheet
@@ -232,6 +233,9 @@ class App(tk.Tk):
             r = tk.Frame(self.list, bg=BG); r.pack(fill="x", pady=1)
             dot = tk.Label(r, text="●", bg=BG, fg=GREY, font=("Segoe UI Symbol", 10), width=2)
             dot.pack(side="left")
+            # +/- fold of the detail lines (user 2026-11-22: minimal screen; finished details stay folded)
+            tog = tk.Label(r, text="", bg=BG, fg=SUB, font=("Consolas", 9, "bold"), width=2, cursor="hand2")
+            tog.pack(side="left"); tog.bind("<Button-1>", lambda e, k=k: self.toggle(k))
             txt = tk.Label(r, text=label, bg=BG, fg=SUB, font=F, anchor="w")
             txt.pack(side="left", fill="x", expand=True)
             info = tk.Label(r, text="", bg=BG, fg=SUB, font=("Tahoma", 8))
@@ -241,8 +245,12 @@ class App(tk.Tk):
             # detail under the row: motion plan / live % bar + what the job is doing now
             sub = tk.Label(self.list, text="", bg=BG, fg=SUB, font=("Tahoma", 8), anchor="w", justify="left")
             self.rows[k] = (dot, txt, info)
-            self.subs[k] = (r, sub)
+            self.subs[k] = (r, sub, tog)
         self.refresh()
+
+    def toggle(self, k):
+        op = getattr(self, "opened", set())
+        op.symmetric_difference_update({k}); self.opened = op; self.refresh()
 
     def set_page(self, pg):
         self.page = pg; self.refresh()
@@ -332,7 +340,7 @@ class App(tk.Tk):
         # detail lines under rows
         lv = load(J / "live.json", {})
         plan = load(PROG / f"{story}_{n}_motions.json", [])
-        for k, (row, sub) in self.subs.items():
+        for k, (row, sub, tog) in self.subs.items():
             text, col = "", SUB
             if states[k] == "run" and lv.get("step") == k and time.time() - lv.get("time", 0) < 600:
                 p = max(0, min(100, int(lv.get("pct", 0))))
@@ -340,7 +348,10 @@ class App(tk.Tk):
             elif k == "motion_plan" and plan:
                 text = chr(10).join(("⚠ " if m.get("warn") or not m.get("ok") else "   ") + f"{m['who']} ← {m['motion']} ×{m['speed']}" + (f"  หน้า: {m['face']}" if m.get('face') else "") for m in plan)
                 col = AMBER if any(m.get("warn") or not m.get("ok") for m in plan) else SUB
-            if text:
+            running = states[k] == "run"
+            show = bool(text) and (running or k in getattr(self, "opened", set()))
+            tog.configure(text="" if not text or running else ("−" if show else "+"), fg=AMBER if col == AMBER else SUB)
+            if show:
                 sub.configure(text=text, fg=col); sub.pack(fill="x", padx=(26, 0), after=row)
             else:
                 sub.pack_forget()
