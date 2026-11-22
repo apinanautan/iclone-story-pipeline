@@ -514,3 +514,7 @@ The user has repeated every item below many times and is furious about repeating
 - **(2026-11-22, user angry: "เรื่องง่ายๆ ต้องบอกซ้ำ")** If `open` fails because iClone has unsaved changes in the PREVIOUS project: just save it through the normal GUI save flow (ic8_gui.ps1 save), then run the step again. Do not stop to ask.
 - (2026-11-22) Preview (topmost) covers iClone's top-left menu: ic8_gui.ps1 lip minimises it (PreviewWin) during menu clicks. Any new GUI menu click must do the same.
 - (2026-11-22) pose: stale visibility keys from the previous part are overwritten even when the spec has ONE visible key (part 5 ชัยยศ vanished in 2 shots because part 4 hide keys stayed).
+- **(2026-11-22, user, ท่อน 5 ชัยชนะฯ)** Lip sync: every spoken line must move the mouth, and the mouth must CLOSE when a line ends (no mouth left open after speaking). Read the viseme keys back before showing the user.
+- **(2026-11-22, user)** Dialogue shots: keep the camera on whoever is SPEAKING. A short cut to the listener is OK, but never for long; most of the time is on the speaker.
+- (2026-11-22) Lip fixes: ic8_lip_trim adds a closed 'None' viseme key after the last key of every spoken line (AccuLips often ends on an open shape). Re-running `pose` after `lip` covers the mouths with face clips: always use `pose --from`; face_check fails if pose is newer than lip.
+- (2026-11-22) Speaker focus applied in part 5: Chaiyot reaction during Amphon's 24 s explanation cut to 3.4 s (32.0-35.4), rest on Amphon.

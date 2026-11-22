@@ -475,6 +475,7 @@ def step_pose(S, base):
     for n in S.get("hide", []): av[n] = {"visible": [[0, 0]]}
     wjson("pose_place.json", {"end": end, "avatars": av})
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
+    open(os.path.join(J, "pose.done"), "w").write(time.strftime("%H:%M:%S"))   # lip must run AFTER this (face clips cover the mouth)
     log = rlog("pose_place.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("pose")
     noblink = [n for n in S["cast"] if not re.search(r"^%s blink " % re.escape(n), log, re.M)]
@@ -510,6 +511,7 @@ def step_lip(S, base):
     for n, ws in w.items():
         m = re.search(r"^%s visemes (\d+)" % re.escape(n), chk, re.M)
         if ws and (not m or int(m.group(1)) == 0): fail("%s speaks but has no visemes" % n)
+    open(os.path.join(J, "lip.done"), "w").write(time.strftime("%H:%M:%S"))
     gui("save"); say("OK lip")
 
 
@@ -688,6 +690,11 @@ def step_face_check(S, base):
         nj = len([j for j in g.get("joins", []) if j[2] <= 3.0])
         say("     รอยต่อคลิป %d จุด: ห่าง + ไขว้ X" % nj)
     bad += ["thinking line without thinking face: " + w for w in think_warns(S)]
+    # 2026-11-22 user: mouths did not move on some lines after pose was re-run AFTER lip (face .iTalk clips
+    # loaded later cover the AccuLips mouth). Re-running pose means lip must run again: use `pose --from`.
+    pd, ld = (os.path.join(J, x) for x in ("pose.done", "lip.done"))
+    if any(c.get("who") not in NARR for c in S.get("lines", [])) and os.path.exists(pd) and (not os.path.exists(ld) or os.path.getmtime(ld) < os.path.getmtime(pd)):
+        bad.append("pose ran after lip: run `pose --from` so lip sync is redone on top of the face clips")
     if bad: fail("face_check:" + "".join(chr(10) + "  - " + b for b in bad))
     say("OK face_check: blink + face motion + feeling on all %d characters (read from iClone)" % len(got))
 
