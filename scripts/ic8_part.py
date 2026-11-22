@@ -602,6 +602,7 @@ FACE_JOB = r'''
 import RLPy, os, json
 J = os.path.join(os.environ['LOCALAPPDATA'], 'Tidmunz Studio', 'snapgen_data', 'ic8_jobs')
 T = lambda s: RLPy.RTime.FromValue(int(round(s * 6000)))
+F = lambda x: x.ToFloat() / 6000.0
 P = json.load(open(os.path.join(J, 'face_check.json'), encoding='utf-8'))
 out = {}
 for a in RLPy.RScene.GetAvatars():
@@ -610,11 +611,18 @@ for a in RLPy.RScene.GetAvatars():
     fc = a.GetFaceComponent(); q = P['cast'][n]
     ends = []
     for i in range(fc.GetClipCount()):
-        c = fc.GetClip(i); ends.append(c.ClipTimeToSceneTime(c.GetClipLength()).ToFloat() / 6000.0)
+        c = fc.GetClip(i); ends.append(F(c.ClipTimeToSceneTime(T(0))) + F(c.GetClipLength()))   # GetClipLength = scene length already
+    joins = []   # user 2026-11-22: every join = gap + crossing X (back fade-in AND front fade-out), read from iClone
+    for comp, kind in ((a.GetSkeletonComponent(), 'body'), (fc, 'face')):
+        cl = sorted([comp.GetClip(i) for i in range(comp.GetClipCount())], key=lambda c: F(c.ClipTimeToSceneTime(T(0))))
+        for p, c in zip(cl, cl[1:]):
+            st = F(c.ClipTimeToSceneTime(T(0))); g = st - (F(p.ClipTimeToSceneTime(T(0))) + F(p.GetClipLength()))
+            d = [F(x) for x in p.GetTransitionData()]
+            joins.append([kind, round(st, 2), round(g, 2), round(F(c.GetTransitionRange()), 2), round(d[2], 2), round(d[3], 2)])
     w = {}
     for t, names in q['probe']:
         w[str(t)] = [round(v, 3) for v in fc.GetExpressionWeights(T(t), names)]
-    out[n] = {'blink': fc.GetAutoBlinkName(), 'clips': fc.GetClipCount(), 'end': round(max(ends or [0]), 1), 'w': w}
+    out[n] = {'blink': fc.GetAutoBlinkName(), 'clips': fc.GetClipCount(), 'end': round(max(ends or [0]), 1), 'w': w, 'joins': joins}
 open(os.path.join(J, 'face_check.out.json'), 'w', encoding='utf-8').write(json.dumps(out, ensure_ascii=False))
 '''
 
@@ -663,6 +671,13 @@ def step_face_check(S, base):
         for t, v in g["w"].items():
             need = 0.25 * min(0.8, float(c["smile"])) if c.get("smile") and [t2 for t2, k in q[n]["probe"] if str(t2) == t and k == [SMILE_K]] else 0.25
             if v and v[0] < need: bad.append("%s: feeling lost at %ss (%.2f < %.2f) - keys erased by a face clip?" % (n, t, v[0], need))
+        for kind, st, gp, fin, fout, foff in g.get("joins", []):   # joins: [kind, start, gap, fade-in, front fade-out, out offset]
+            if gp > 3.0: continue                                  # different on-screen windows: not a join
+            if not 0.3 <= gp <= 2.0: bad.append("%s %s join at %.1fs: gap %.2fs (want 0.3-2.0, never touching)" % (n, kind, st, gp))
+            elif fin < gp + 0.5 or fout < gp + 0.5 or foff >= -0.3:
+                bad.append("%s %s join at %.1fs: no crossing X (fade-in %.2f, front fade-out %.2f @ %.2f)" % (n, kind, st, fin, fout, foff))
+        nj = len([j for j in g.get("joins", []) if j[2] <= 3.0])
+        say("     รอยต่อคลิป %d จุด: ห่าง + ไขว้ X" % nj)
     bad += ["thinking line without thinking face: " + w for w in think_warns(S)]
     if bad: fail("face_check:" + "".join(chr(10) + "  - " + b for b in bad))
     say("OK face_check: blink + face motion + feeling on all %d characters (read from iClone)" % len(got))

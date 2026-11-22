@@ -30,6 +30,9 @@ GAP = 1.0         # user 2026-11-22 (picture 2): clips must sit APART with a sma
 FGAP = 0.6        # same rule for face (.iTalk) clips
 XOVER = 1.5       # body; face uses FXOVER. Value copied from the user's own drag (2.48 s on a 1.0 s gap).
 FXOVER = 1.0
+def REND(c, sp):   # real scene end of a clip; re-applies the face speed when iClone reset it after a late load
+    if sp and abs(c.GetSpeed() - sp) > 0.01: c.SetSpeed(sp)
+    return c.ClipTimeToSceneTime(T(0)).ToFloat() / 6000.0 + c.GetClipLength().ToFloat() / 6000.0
 def XOUT(front, gap, back):   # the FRONT clip fades out too, from `back` s before its end, across the gap into the
     d = front.GetTransitionData()   # next clip (TransitionData = [in range, in offset, out range, out offset]).
     d[2] = T(gap + back + 0.2); d[3] = T(-back); front.SetTransitionData(d)   # user's own drag: [.., 2.70, -1.48]
@@ -66,10 +69,13 @@ try:
         if motions:   # clips back to back, each slowed, until the part end
             while sk.GetClipCount():
                 sk.DeleteClip(sk.GetClip(0))
-            k = 0; ncl = 0
+            k = 0; ncl = 0; prevclip = None
             # speed 0.65-1.0 (user 2026-11-19): slower clips step at ~12 poses/s = visible judder.
             for (w0, w1) in WINS(s, END):
               cur = w0; kw = 0
+              if prevclip is not None:   # windows close together: one chain, the join gets gap + X (2026-11-22)
+                  pend = REND(prevclip, None)
+                  if w0 - pend < 3.0: cur = pend; kw = 1
               while cur < w1 - 0.1 and kw < 40:
                 path = motions[k % len(motions)]
                 LIVE(100.0 * (ai + min(0.8, cur / max(END, 1) * 0.8)) / NAV, "%s ← %s (คลิป %d)" % (name, os.path.basename(path), ncl + 1))
@@ -123,18 +129,26 @@ try:
             fc.DeleteClip(fc.GetClip(0))
         if faces:
             fsp = max(0.65, min(0.75, float(s.get("face_speed", 0.7))))
-            k = 0
+            k = 0; prevclip = None
             for (w0, w1) in WINS(s, END):
               cur = w0; kw = 0; prev_end = w0
+              if prevclip is not None:
+                  pend = REND(prevclip, fsp)
+                  if w0 - pend < 3.0: cur = prev_end = pend; kw = 1
               while cur < w1 - 0.1 and kw < 60:
                 path = faces[k % len(faces)]
+                if kw: cur = prev_end = REND(prevclip, fsp)   # REAL end: some .iTalk finish loading late and reset speed
                 if kw: cur += FGAP   # APART, gap filled by the transition (user 2026-11-22)
                 RLPy.RGlobal.SetTime(T(cur))
                 RLPy.RScene.ClearSelectObjects(); RLPy.RScene.SelectObject(a)
                 n0 = fc.GetClipCount(); RLPy.RFileIO.LoadFile(path); RLPy.RScene.ClearSelectObjects()
                 if fc.GetClipCount() <= n0:
                     raise RuntimeError("face clip did not load: %s on %s" % (path, name))
-                clip = fc.GetClip(fc.GetClipCount() - 1)
+                # the NEW clip is the one not slowed yet (it is not always the last index - 2026-11-22 two face
+                # clips stayed at 100% and their joins came out 0.2 s apart)
+                new = [fc.GetClip(i) for i in range(fc.GetClipCount()) if abs(fc.GetClip(i).GetSpeed() - fsp) > 0.01]
+                clip = new[-1] if new else fc.GetClip(fc.GetClipCount() - 1)
+                if len(new) > 1: LOG.append("WARNING %s: %d unslowed face clips after loading %s" % (name, len(new), os.path.basename(path)))
                 raw = clip.GetClipLength().ToFloat() / 6000.0
                 if raw <= 0: raise RuntimeError("face clip len 0: " + path)
                 clip.SetSpeed(fsp)
