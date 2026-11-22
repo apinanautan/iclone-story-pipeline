@@ -387,7 +387,8 @@ def step_props(S):
                 "for p in have:\n"
                 " ctl=p.GetControl('Transform'); ctl.ClearKeys(); tr=RLPy.RTransform(); ctl.GetValue(T(0),tr)\n"
                 " tr.T().x=%r; tr.T().y=%r; tr.T().z=%r\n" % (float(x), float(y), float(z)) +
-                " tr.R().FromAxisAngle(RLPy.RVector3(0,0,1), math.radians(%r)); ctl.SetValue(T(0),tr)\n" % yaw +
+                " q=RLPy.RQuaternion(); q.FromAxisAngle(RLPy.RVector3(0,0,1), math.radians(%r))\n" % yaw +
+                " tr.R().x,tr.R().y,tr.R().z,tr.R().w=q.x,q.y,q.z,q.w; ctl.SetValue(T(0),tr)\n" +
                 "open(os.path.join(J,'prop_loaded.txt'),'w',encoding='utf-8').write(','.join(p.GetName() for p in have))")
         job(pyjob(body), "zz_prop_" + str(abs(hash(n)) % 10000))
         got = rlog("prop_loaded.txt")
