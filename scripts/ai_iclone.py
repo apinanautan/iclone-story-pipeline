@@ -12,6 +12,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone approve --said "<text>" user approval typed in chat (story plan / part stills)
   Ai-iclone steps                   every step, numbered, with who does it
   Ai-iclone version                 program version (file VERSION)
+  Ai-iclone update                  (exe) get the newest release from GitHub now
 
 State lives in files only (stories/, parts/, progress/), read by the same functions as the window
 (scripts/progress_app.py), so the AI and the window always agree. No screenshots needed.
@@ -33,7 +34,7 @@ SKILLS = ROOT / ".agents" / "skills"
 SEL = P.PROG / "ai_iclone.json"
 PY = sys.executable
 CMD = "Ai-iclone"   # short name in the text; the full path is printed once in the manual
-FULL = str(ROOT / "Ai-iclone.exe") if (ROOT / "Ai-iclone.exe").exists() else str(ROOT / "Ai-iclone.cmd")
+FULL = os.environ.get("AI_ICLONE_EXE") or (str(ROOT / "Ai-iclone.exe") if (ROOT / "Ai-iclone.exe").exists() else str(ROOT / "Ai-iclone.cmd"))
 try: VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 except OSError: VERSION = "?"
 
@@ -248,7 +249,7 @@ def set_range(v):
 
 
 def manual():
-    out("Ai-iclone " + VERSION + " — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
+    out("Ai-iclone " + VERSION + " (" + str(ROOT) + ") — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
     out("ทำงานเป็นข้อๆ ตามลำดับ: ① เตรียมเรื่อง 9 ข้อ (ครั้งเดียวต่อเรื่อง) -> ② ทำทีละท่อน 18 ข้อ")
     out("Ai-iclone = \"%s\"   (PowerShell: & \"%s\" do   /  bash: \"%s\" do)" % (FULL, FULL, FULL.replace("\\", "/")))
     out("วิธีทำงาน: รัน %s do ทีละครั้ง ทำตามที่มันบอก จนเจอ STOP แล้วรายงานผู้ใช้\n" % CMD)

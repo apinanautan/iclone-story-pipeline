@@ -528,3 +528,4 @@ The user has repeated every item below many times and is furious about repeating
 - User approvals typed in chat are recorded with `Ai-iclone approve --said "..."`; the working range with `Ai-iclone range m:ss-m:ss`. Never invent either.
 - A step that FAILs twice stops; tell the user in Thai.
 - Ai-iclone.exe (user 2026-11-22): the program is an exe next to scripts/ (launcher/AiIclone.cs, build launcher/build.ps1). Terminal = text for AI; double-click = the window. Ai-iclone.cmd still works.
+- Ai-iclone.exe self-installs and self-updates (user 2026-11-22): one exe, no unzip; downloads the latest GitHub Release to %LOCALAPPDATA%\Ai-iclone and copies newer releases over it (work data + paths.local.json kept). New version = bump VERSION + GitHub Release vX.Y.Z with Ai-iclone.exe attached.

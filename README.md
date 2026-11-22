@@ -21,11 +21,16 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 | `Ai-iclone.exe window` | เปิดหน้าต่าง Ai-iclone (สถานะเดียวกัน ให้คนดู/คลิกผ่าน) |
 | `Ai-iclone.exe version` | เวอร์ชัน |
 
-## ติดตั้ง (เครื่องใหม่ / โหลดจาก Release)
-1. แตกไฟล์ zip ไว้ที่ไหนก็ได้ ต้องมี Python 3 (`py -3`) และ iClone 8. `Ai-iclone.exe` ต้องอยู่คู่กับโฟลเดอร์ `scripts/` (ดับเบิลคลิก = เปิดหน้าต่าง, `Ai-iclone.cmd` ยังใช้แทนได้, สร้าง exe ใหม่: `launcheruild.ps1`)
-2. ใส่ `paths.local.json` (ที่อยู่ไดรฟ์ของเครื่องนี้ ดู `.agents/skills/paths/SKILL.md`)
-3. ข้อมูลงาน (`stories/`, `parts/`, `progress/`) ไม่อยู่ใน release: คัดลอกมาจากเครื่องเดิม หรือเริ่มเรื่องใหม่ด้วย `new-story`
-4. ใน iClone: Script > Load Python > `scripts/ic8_watch.py` ครั้งเดียวต่อการเปิด iClone
+## ติดตั้ง = โหลดไฟล์เดียว
+1. โหลด `Ai-iclone.exe` จากหน้า Releases เอาไว้ที่ไหนก็ได้ ไม่ต้องแตกไฟล์ ไม่ต้องติดตั้ง ต้องมี Python 3 (`py`) และ iClone 8
+2. เปิดครั้งแรก exe โหลดตัวโปรแกรม (สคริปต์ .py, skills, docs) จาก GitHub เองไปไว้ที่ `%LOCALAPPDATA%\Ai-iclone`
+3. อัปเดตเอง: ทุกครั้งที่ใช้ (เช็กไม่เกินทุก 10 นาที) ถ้ามี Release ใหม่กว่า จะโหลดมาทับให้เอง หรือสั่ง `Ai-iclone.exe update`
+   ข้อมูลงาน (`stories/`, `parts/`, `progress/`) และ `paths.local.json` ไม่ถูกทับ ไม่มีเน็ต = ใช้ตัวที่มีอยู่
+4. ใส่ `paths.local.json` (ที่อยู่ไดรฟ์ของเครื่อง ดู `.agents/skills/paths/SKILL.md`) และคัดลอก `stories/` `parts/` จากเครื่องเดิม หรือเริ่มเรื่องใหม่ด้วย `new-story`
+5. ใน iClone: Script > Load Python > `scripts/ic8_watch.py` ครั้งเดียวต่อการเปิด iClone
+
+ถ้า exe อยู่ในโฟลเดอร์ที่มี `scripts/` อยู่แล้ว (เช่น git clone) จะใช้โฟลเดอร์นั้นแทน; ถ้าเป็น git clone จะไม่อัปเดตเอง (ใช้ `git pull`)
+ออกเวอร์ชันใหม่: แก้ `VERSION`, commit, push, แล้วสร้าง GitHub Release tag `vX.Y.Z` (แนบ `Ai-iclone.exe`; build ด้วย `launcheruild.ps1`)
 
 ---
 
