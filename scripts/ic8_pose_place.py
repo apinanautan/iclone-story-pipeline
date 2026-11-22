@@ -27,12 +27,17 @@ MIN_SPEED = 0.65   # never slower: judder (user 2026-11-19)
 XF = 2.0          # (old) transition inside the clip start - NOT used any more
 GAP = 1.0         # user 2026-11-22 (picture 2): clips must sit APART with a small empty gap, and the transition
                   # fills that gap (crossed lines between the clips) - never butted together like picture 1
-FGAP = 0.6        # same rule for face (.iTalk) clips
+FGAP = 1.0        # same rule for face (.iTalk) clips; 1.0 not 0.6 (user 2026-11-22): some .iTalk grow ~0.4 s after load
 XOVER = 1.5       # body; face uses FXOVER. Value copied from the user's own drag (2.48 s on a 1.0 s gap).
 FXOVER = 1.0
 def REND(c, sp):   # real scene end of a clip; re-applies the face speed when iClone reset it after a late load
     if sp and abs(c.GetSpeed() - sp) > 0.01: c.SetSpeed(sp)
     return c.ClipTimeToSceneTime(T(0)).ToFloat() / 6000.0 + c.GetClipLength().ToFloat() / 6000.0
+def KT(t):   # feeling-key time, moved OUT of any gap between face clips: a key in a gap makes iClone stretch the
+    for s0, e0, s1 in IVS:   # front clip up to the key and reset its speed to 100% (2026-11-22: joins came out 0.05 s)
+        if e0 - 0.02 < t < s1 + 0.02: return T(e0 - 0.08 if t - e0 < s1 - t else s1 + 0.08)
+    return T(t)
+IVS = []
 def XOUT(front, gap, back):   # the FRONT clip fades out too, from `back` s before its end, across the gap into the
     d = front.GetTransitionData()   # next clip (TransitionData = [in range, in offset, out range, out offset]).
     d[2] = T(gap + back + 0.2); d[3] = T(-back); front.SetTransitionData(d)   # user's own drag: [.., 2.70, -1.48]
@@ -160,6 +165,8 @@ try:
             RLPy.RGlobal.SetTime(T(0))
         else:
             LOG.append("%s face NONE" % name)
+        cl = sorted([(fc.GetClip(i).ClipTimeToSceneTime(T(0)).ToFloat() / 6000.0, fc.GetClip(i).GetClipLength().ToFloat() / 6000.0) for i in range(fc.GetClipCount())])
+        IVS[:] = [(s0, s0 + l0, s1) for (s0, l0), (s1, _) in zip(cl, cl[1:])]   # (front start, front end, back start)
         if s.get("lookat"):
             la = sk.GetLookAtComponent()
             la.AddLookAtKey(T(0), T(1), head(av[s["lookat"]]), s.get("lookat_strength", 1.0), 0.0)
@@ -175,14 +182,14 @@ try:
             for i, (t0, on) in enumerate(vis):
                 t1 = vis[i + 1][0] if i + 1 < len(vis) else END
                 if on and t1 - t0 > 0.3: wins.append((t0, t1))
-            fc.BeginKeyEditing(); fc.AddExpressionKeys(T(0), NM, WT(W0), T(0.1))
+            fc.BeginKeyEditing(); fc.AddExpressionKeys(KT(0), NM, WT(W0), T(0.1))
             for (t0, t1) in wins:
-                fc.AddExpressionKeys(T(t0), NM, WT(W0), T(0.05))   # every shot starts with a small smile
+                fc.AddExpressionKeys(KT(t0), NM, WT(W0), T(0.05))   # every shot starts with a small smile
                 t = t0 + 1.5
                 while t < t1 - 0.2:
                     f = (t - t0) / (t1 - t0); W = W0 + (PEAK - W0) * f
-                    fc.AddExpressionKeys(T(t), NM, [w * (0.93 + 0.07 * ((int(t) % 3) / 2.0)) for w in WT(W)], T(1.5)); t += 1.5
-                fc.AddExpressionKeys(T(t1), NM, WT(PEAK), T(0.8))
+                    fc.AddExpressionKeys(KT(t), NM, [w * (0.93 + 0.07 * ((int(t) % 3) / 2.0)) for w in WT(W)], T(1.5)); t += 1.5
+                fc.AddExpressionKeys(KT(t1), NM, WT(PEAK), T(0.8))
             fc.EndKeyEditing()
             LOG.append("%s smile ramp %.2f->%.2f in %d windows" % (name, W0, PEAK, len(wins)))
         if s.get("think"):   # user 2026-11-22: thinking moments need a visible thinking face, not a blank one
@@ -199,20 +206,20 @@ try:
             EYES = sorted({k for d in LOOK for k in d})
             NM = list(BASE) + EYES
             f.BeginKeyEditing()
-            f.AddExpressionKeys(T(max(0.0, t0 - 0.5)), NM, [0.0] * len(NM), T(0.1))
+            f.AddExpressionKeys(KT(max(0.0, t0 - 0.5)), NM, [0.0] * len(NM), T(0.1))
             t, i = t0, 0
             while t < t1 - 0.5:
                 look = LOOK[i % len(LOOK)]
-                f.AddExpressionKeys(T(t), NM, [BASE[k] for k in BASE] + [look.get(k, 0.0) for k in EYES], T(0.8))
+                f.AddExpressionKeys(KT(t), NM, [BASE[k] for k in BASE] + [look.get(k, 0.0) for k in EYES], T(0.8))
                 t += 3.0; i += 1
-            f.AddExpressionKeys(T(t1), NM, [0.0] * len(NM), T(0.6))
+            f.AddExpressionKeys(KT(t1), NM, [0.0] * len(NM), T(0.6))
             f.EndKeyEditing()
             LOG.append("%s think %.1f-%.1f (%d looks)" % (name, t0, t1, i))
         if s.get("face"):
             f = a.GetFaceComponent(); names = list(s["face"]); vals = [s["face"][k] for k in names]
             f.BeginKeyEditing()
             for t in (0.0, END):
-                f.AddExpressionKeys(T(t), names, vals, T(0.5))
+                f.AddExpressionKeys(KT(t), names, vals, T(0.5))
             f.EndKeyEditing()
         # "swing": {"bones": ["CC_Base_L_Calf", "CC_Base_R_Calf"], "axis": "X", "deg": 15, "period": 1.6, "t": [a, b]}
         # gentle alternating leg swing on the Edit Motion Layer (pose-bones skill), keyed every quarter period
