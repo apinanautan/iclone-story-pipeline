@@ -79,7 +79,9 @@ def gui(*a):
     # Hard time limit (user 2026-11-21: 13 min stuck behind a Yes/No/Cancel box). Save ~20 s, open of a 4 GB
     # project ~2 min: anything longer is a dialog nobody answered -> stop at once and say which one.
     # render runs as long as the video needs (the ps1 itself waits for the output file), so it gets 1 h
-    lim = 3600 if a[0] == "render" else 300 if a[0] in ("open", "reopen", "saveas", "sound", "lip") else 120
+    limits = {"render": 3600, "open": 300, "reopen": 300, "saveas": 300, "sound": 300, "lip": 300,
+              "job": 320}  # The PowerShell job helper waits up to 300 s for the iClone watcher.
+    lim = limits.get(a[0], 120)
     try:
         r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a], timeout=lim)
     except subprocess.TimeoutExpired:

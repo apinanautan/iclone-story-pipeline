@@ -67,6 +67,8 @@ try:
     p = json.load(open(os.path.join(J, "pose_place.json"), encoding="utf-8"))
     END = p["end"]
     RLPy.RGlobal.Stop()
+    if RLPy.RGlobal.GetProjectLength().ToFloat() < T(END).ToFloat():
+        RLPy.RGlobal.SetProjectLength(T(END))  # A short source timeline clamps animation and visibility keys.
     av = {a.GetName(): a for a in RLPy.RScene.GetAvatars()}
     NAV = len(p["avatars"])
     for ai, (name, s) in enumerate(p["avatars"].items()):
