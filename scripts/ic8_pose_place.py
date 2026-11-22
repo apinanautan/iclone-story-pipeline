@@ -59,6 +59,19 @@ def WINS(s, end):   # user 2026-11-22: clips only where the character is ON SCRE
     return w
 
 
+MINC, MAXC = 8.0, 20.0   # user 2026-11-22: one pose must not drag on (~1 min of folded arms); change it
+
+
+def clip_end(st, dur, cuts, minc=MINC, maxc=MAXC):
+    """Where this body clip should end (scene s). Prefer the first camera CUT at least `minc` s after the start
+    and at most `maxc` s: the next clip then starts on the cut, so the pose change hides in the edit. No cut in
+    range: stop at `maxc`. A clip shorter than that just ends by itself."""
+    for c in sorted(cuts):
+        if st + minc <= c <= st + min(dur, maxc) + 1e-6:
+            return min(st + dur, c - GAP)
+    return st + min(dur, maxc)
+
+
 def head(avatar):
     return next(b for b in avatar.GetSkeletonComponent().GetSkinBones() if b.GetName().endswith("Head"))
 
@@ -66,6 +79,7 @@ def head(avatar):
 try:
     p = json.load(open(os.path.join(J, "pose_place.json"), encoding="utf-8"))
     END = p["end"]
+    CUTS = p.get("cuts", [])   # camera cut times: pose changes land on them
     RLPy.RGlobal.Stop()
     if RLPy.RGlobal.GetProjectLength().ToFloat() < T(END).ToFloat():
         RLPy.RGlobal.SetProjectLength(T(END))  # A short source timeline clamps animation and visibility keys.
@@ -102,7 +116,11 @@ try:
                 st = clip.ClipTimeToSceneTime(T(0)).ToFloat() / 6000.0
                 if kw: LOG.append("%s gap %.2f transition %.2f" % (name, st - cur, GAP + XOVER))
                 LOG.append("%s %s at %.1f raw %.1fs speed %.2f -> %.1fs" % (name, os.path.basename(path), st, raw, speed, raw / speed))
-                cur = st + raw / speed; k += 1; kw += 1; ncl += 1; prevclip = clip
+                e = clip_end(st, raw / speed, CUTS, MINC, float(s.get("max_clip", MAXC)))
+                if e < st + raw / speed - 0.05:
+                    clip.SetLength(T((e - st) * speed))   # clip time = scene time x speed
+                    LOG.append("%s   cut to %.1fs (ends %.1f)" % (name, e - st, e))
+                cur = e; k += 1; kw += 1; ncl += 1; prevclip = clip
             LOG.append("%s body %d clips in windows %s" % (name, ncl, ["%.1f-%.1f" % w for w in WINS(s, END)]))
         if "pos" in s:
             ctl = a.GetControl("Transform"); tr = RLPy.RTransform(); ctl.GetValue(T(0), tr)

@@ -31,8 +31,8 @@ already in 2 other parts of the story, or when more than 1 person per part has f
 - Men, worried: `MographMotion\01_Male\Stand02_L_Fear01`.
 - Talking (small hand moves, check first): `Motion\MixMoves Communication 200_Female|Male\Stand\Idle_Talk\Talk01-03`.
 - Listening (.rlMotion, not in motions.csv): `Motion_-_TalkListen\Listener_Agree_F|M`, `Listener_Curious_F`, `Listener_Focus_F|M`, `Listener_Relax_F`, `Breathing_F|M`.
-- Folded arms / hands on hips = stubborn, angry, bossy ONLY, max 1 person per part: `MographMotion\02_Female\Stand03` (looked folded-armed on screen), `...Communication 200_*\Stand\Arms Crossed_Response\*`, `Hand(s) on Hips_Response\*`.
-- A person standing a long part: chain 2-3 DIFFERENT clips from their mood row in `motions` (they crossfade).
+- Folded arms / hands on hips = stubborn, angry, bossy ONLY, max 1 person per part: `MographMotion\02_Female\Stand03` and `StandTKI` (both folded-armed in the part 5 video), `...Communication 200_*\Stand\Arms Crossed_Response\*`, `Hand(s) on Hips_Response\*`.
+- Anyone on screen > 20 s: list 2-3 DIFFERENT clips in `motions` (check FAILs otherwise). `pose` switches to the next clip at the first camera cut 8-20 s into a clip (the change hides in the cut), max 20 s per clip; a person who leaves the screen and comes back starts on the next clip.
 Find exact paths: search `{MOTION}\motions.csv` by name.
 
 ## Body motion (set in the part spec `cast`, applied by `ic8_part.py pose`)

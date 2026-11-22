@@ -429,7 +429,7 @@ def face_desc(c):
 
 
 STANDY = re.compile(r"stand|idle|tki|breath|listen|response|talk", re.I)   # standing / idle clips (not work motions)
-CROSSED = re.compile(r"arms[ _]?crossed|mographmotion[\/]02_female[\/]stand03\.imotion$", re.I)   # arms folded
+CROSSED = re.compile(r"arms[ _]?crossed|mographmotion[\/]02_female[\/](stand03|standtki)\.imotion$", re.I)   # arms folded
 
 
 def clip_key(m):   # same clip whatever the drive / placeholder: last folder + file name
@@ -438,6 +438,13 @@ def clip_key(m):   # same clip whatever the drive / placeholder: last folder + f
 
 def motions_of(c):
     return c.get("motions", []) + ([c["motion"]] if c.get("motion") else [])
+
+
+def on_screen(c, end):   # seconds this character is visible in the part
+    vis = sorted(c.get("visible") or [[0, 1]]); tot = 0.0
+    for i, (t0, on) in enumerate(vis):
+        if on: tot += max(0.0, (vis[i + 1][0] if i + 1 < len(vis) else end) - t0)
+    return tot
 
 
 def motion_variety(S, errs, warns):
@@ -454,8 +461,8 @@ def motion_variety(S, errs, warns):
         st = [m for m in motions_of(c) if STANDY.search(os.path.basename(m))]
         for k in {clip_key(m) for m in st}:
             used.setdefault(k, []).append(n)
-        if len(st) == 1 and len(motions_of(c)) == 1 and end > 40:
-            warns.append("%s stands %.0f s on one clip (%s): list 2-3 different calm clips in motions (user 2026-11-22)" % (n, end, os.path.basename(st[0])))
+        if st and len({clip_key(m) for m in motions_of(c)}) < 2 and on_screen(c, end) > 20:
+            errs.append("%s is on screen %.0f s with one motion (%s): list 2-3 DIFFERENT clips - the pose changes at camera cuts, max 20 s each (user 2026-11-22)" % (n, on_screen(c, end), os.path.basename(st[0])))
     for k, who in used.items():
         if len(who) > 1: errs.append("%s share the standing clip %s: give each a different one (user 2026-11-22)" % (", ".join(who), k))
     crossed = [n for n, c in S["cast"].items() if any(CROSSED.search(m.replace("\\", "/")) for m in motions_of(c))]
@@ -522,7 +529,7 @@ def step_pose(S, base):
         av[n] = dict(c); av[n].setdefault("visible", [[0, 1]])
         if av[n].get("lookfront") is True: av[n]["lookfront"] = expand(os.path.join("{MOTION}", "Digital Soul 100+", "1.Watch", "Look front.iTalk"))
     for n in S.get("hide", []): av[n] = {"visible": [[0, 0]]}
-    wjson("pose_place.json", {"end": end, "avatars": av})
+    wjson("pose_place.json", {"end": end, "avatars": av, "cuts": [sh["t"][0] for sh in S["shots"][1:]]})
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
     open(os.path.join(J, "pose.done"), "w").write(time.strftime("%H:%M:%S"))   # lip must run AFTER this (face clips cover the mouth)
     log = rlog("pose_place.log.txt"); say(log)
