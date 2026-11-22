@@ -322,6 +322,7 @@ def step_check(S, base):
         if sh[i]["pos"] == sh[i - 1]["pos"] and sh[i]["target"] == sh[i - 1]["target"]:
             errs.append("shot %d repeats shot %d" % (i + 1, i))
     scene_checks(S, errs, warns)
+    motion_variety(S, errs, warns)
     warns += think_warns(S)
     for w in warns: say("WARN: " + w)
     if errs: fail("\n  ".join([""] + errs))
@@ -425,6 +426,52 @@ def face_desc(c):
     warn = ("" if fl else "⚠ ไม่มีท่าหน้า ") + ("" if feel else "⚠ ไม่มีความรู้สึก ")
     return "%s① กระพริบ %s ② ท่าหน้า %s (%.0f%%) ③ ความรู้สึก %s" % (
         warn, c.get("blink", "Normal"), mot or "-", 100 * max(0.65, min(0.75, float(c.get("face_speed", 0.7)))), " + ".join(feel) or "-")
+
+
+STANDY = re.compile(r"stand|idle|tki|breath|listen|response|talk", re.I)   # standing / idle clips (not work motions)
+CROSSED = re.compile(r"arms[ _]?crossed|mographmotion[\/]02_female[\/]stand03\.imotion$", re.I)   # arms folded
+
+
+def clip_key(m):   # same clip whatever the drive / placeholder: last folder + file name
+    return "/".join(m.replace("\\", "/").split("/")[-2:]).lower()
+
+
+def motions_of(c):
+    return c.get("motions", []) + ([c["motion"]] if c.get("motion") else [])
+
+
+def motion_variety(S, errs, warns):
+    """User 2026-11-22: "ยืนกอดอกเกือบทั้งเรื่อง น่าเบื่อ เหมือนคนไม่มีสมองทำ". The same calm standing clip
+    (MographMotion 02_Female/Stand03) was used 7 times over 4 parts. Standing clips must vary:
+    - 2 characters in one part never share a standing clip;
+    - one standing clip in at most 2 parts of the whole story (pick another from the acting skill's pool);
+    - arms folded: at most 1 character per part, only when the line calls for it;
+    - a character standing the whole part (> 40 s) on 1 clip gets a WARN: chain 2-3 different calm clips."""
+    import glob
+    end = S["lines"][-1]["t"][1] if S.get("lines") else 0
+    used = {}
+    for n, c in S["cast"].items():
+        st = [m for m in motions_of(c) if STANDY.search(os.path.basename(m))]
+        for k in {clip_key(m) for m in st}:
+            used.setdefault(k, []).append(n)
+        if len(st) == 1 and len(motions_of(c)) == 1 and end > 40:
+            warns.append("%s stands %.0f s on one clip (%s): list 2-3 different calm clips in motions (user 2026-11-22)" % (n, end, os.path.basename(st[0])))
+    for k, who in used.items():
+        if len(who) > 1: errs.append("%s share the standing clip %s: give each a different one (user 2026-11-22)" % (", ".join(who), k))
+    crossed = [n for n, c in S["cast"].items() if any(CROSSED.search(m.replace("\\", "/")) for m in motions_of(c))]
+    if len(crossed) > 1: errs.append("arms folded on %s: at most 1 character per part (user 2026-11-22)" % ", ".join(crossed))
+    other = {}
+    for f in glob.glob(os.path.join(ROOT, "parts", "%s_*.json" % S["story"])):
+        part = os.path.basename(f)[len(S["story"]) + 1:-5]
+        if part == str(S["part"]) or not part.isdigit(): continue
+        try: spec = json.load(open(f, encoding="utf-8"))
+        except (OSError, ValueError): continue
+        for c in spec.get("cast", {}).values():
+            for m in motions_of(c):
+                if STANDY.search(os.path.basename(m)): other.setdefault(clip_key(m), set()).add(part)
+    for k in used:
+        if len(other.get(k, ())) >= 2:
+            errs.append("standing clip %s already in parts %s of this story: pick another one (acting skill: Standing pool, user 2026-11-22)" % (k, ", ".join(sorted(other[k], key=int))))
 
 
 WALKY = re.compile(r"walk|run|jog|chore|pick|weed|wander|turn|step|enter|exit|leave|approach", re.I)

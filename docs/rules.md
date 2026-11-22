@@ -535,3 +535,6 @@ The user has repeated every item below many times and is furious about repeating
 - `mcp_server/server.py` is a thin wrapper: each tool runs ONE Ai-iclone command (status, steps, rules, do_next_step, use_part, new_story, set_range, approve, clean_temp_files, version). No part-specific tools, no free Python. New features go into Ai-iclone, never as new MCP tools.
 - Child processes get stdin=DEVNULL (sharing the MCP stdio pipe hangs the call).
 - Explain things to the user in plain everyday Thai: they are a normal user, not a programmer (user 2026-11-22).
+
+## Vary standing poses (user 2026-11-22)
+- User angry: one folded-arms standing clip (MographMotion 02_Female/Stand03) was used almost the whole story, 7 times in 4 parts. It looked boring and brainless. Rotate standing clips from the acting skill's "Standing pool". `ic8_part.py check` FAILs when 2 people in a part share a standing clip, when a standing clip is already in 2 other parts of the story, or when more than 1 person per part has folded arms. One person standing more than 40 s on one clip gets a WARN: chain 2-3 different calm clips. "Calm" (the 2026-11-21 rule) means slow speed and no big gestures. It does NOT mean the same clip every time.

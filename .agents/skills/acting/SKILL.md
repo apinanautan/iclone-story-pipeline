@@ -21,6 +21,20 @@ Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Full list of 1570 bod
   - Feelings: `4.Feel_Like\1.Pleased`, `2.Excited`, `3.Tender`. Looping versions: `Expression_Loop\<Emotion>\`.
   - Pick per character from the script: e.g. greedy daughter -> `Happy_Lo` while gifts are given, `Disgust_Lo` when disappointed; sad old parents -> `Sad_Lo`/`Sad_Med`.
 
+## Standing pool: ROTATE, never the same clip all story (user 2026-11-22)
+The user, angry: one folded-arms standing clip almost the whole story looked "like no brain made it".
+`ic8_part.py check` now FAILs when 2 people in a part share a standing clip, when a standing clip is
+already in 2 other parts of the story, or when more than 1 person per part has folded arms. Pick by mood, mix packs:
+- Women, calm: `04_CC MixMove_Female\Stand00`, `Stand03`, `Stand04_Mirror`; `MographMotion\02_Female\Stand04_L_agree01`, `Stand04_L_agree02`.
+- Women, sad / worried: `MographMotion\02_Female\Stand04_L_Sad`, `StandTKI_Sad`, `Stand03_L_Fear01`.
+- Men, calm: `03_CC MixMove_Male\Stand00`, `Stand01`, `Stand03`, `Stand04_Mirror`; `MographMotion\01_Male\StandTKI`, `Stand02_L_Agree01`, `Stand02_L_Agree02`, `Stand03_L_Agree01`.
+- Men, worried: `MographMotion\01_Male\Stand02_L_Fear01`.
+- Talking (small hand moves, check first): `Motion\MixMoves Communication 200_Female|Male\Stand\Idle_Talk\Talk01-03`.
+- Listening (.rlMotion, not in motions.csv): `Motion_-_TalkListen\Listener_Agree_F|M`, `Listener_Curious_F`, `Listener_Focus_F|M`, `Listener_Relax_F`, `Breathing_F|M`.
+- Folded arms / hands on hips = stubborn, angry, bossy ONLY, max 1 person per part: `MographMotion\02_Female\Stand03` (looked folded-armed on screen), `...Communication 200_*\Stand\Arms Crossed_Response\*`, `Hand(s) on Hips_Response\*`.
+- A person standing a long part: chain 2-3 DIFFERENT clips from their mood row in `motions` (they crossfade).
+Find exact paths: search `{MOTION}\motions.csv` by name.
+
 ## Body motion (set in the part spec `cast`, applied by `ic8_part.py pose`)
 - Library first: standing `Stand00.iMotion` (MixMove Male/Female); Female Stand01 (sometimes Stand00) has a raised-hand gesture, Stand02 = hand on hip, **Stand03/Stand04 are quiet**. Conversation mocap: MixMoves Communication / Studio Mocap Conversation.
 - **Speed 0.65-1.0 only (user 2026-11-19):** slower than 0.65 the pose updates ~12x/s and the video judders. Need calm? pick a calmer clip. Too short? list 2-3 clips (or the same one) - `ic8_pose_place.py` puts them back to back (never overlapping, user 2026-11-21) with a 2 s transition at the start of each next clip.
