@@ -81,6 +81,23 @@ def test_cards_exist_for_every_step():
         assert A.card(k).strip()
 
 
+def test_clean_jobs_keeps_queue_and_new_files(monkeypatch):
+    import tempfile, time as _t
+    from pathlib import Path
+    d = Path(tempfile.mkdtemp()); old = _t.time() - 5 * 86400
+    def mk(rel, age_old):
+        f = d / rel; f.parent.mkdir(parents=True, exist_ok=True); f.write_bytes(b"x" * 10)
+        if age_old: os.utime(f, (old, old))
+        return f
+    keep = [mk("run/job.py", True), mk("part_cams.jpg", False)]
+    gone = [mk("c3_00.png", True), mk("run/old.done", True), mk("backup/a_20261101.iProject", False), mk("qa/x.jpg", True)]
+    monkeypatch.setattr(A.P, "J", d)
+    b, n = A.P.clean_jobs()
+    assert n == 4 and b == 40
+    assert all(f.exists() for f in keep) and not any(f.exists() for f in gone)
+    assert not (d / "qa").exists()
+
+
 if __name__ == "__main__":   # no pytest on this PC: tiny stand-ins for monkeypatch / capsys
     import inspect, io, contextlib, traceback
 

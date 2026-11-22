@@ -13,6 +13,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone steps                   every step, numbered, with who does it
   Ai-iclone version                 program version (file VERSION)
   Ai-iclone update                  (exe) get the newest release from GitHub now
+  Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
 
 State lives in files only (stories/, parts/, progress/), read by the same functions as the window
 (scripts/progress_app.py), so the AI and the window always agree. No screenshots needed.
@@ -144,6 +145,8 @@ def show_status():
         out(line.rstrip() + arrow)
     if not nxt:
         out("ท่อน %s เสร็จครบแล้ว -> ท่อนถัดไป: %s use %s %s" % (n, CMD, story, int(n) + 1))
+    b, files = P.jobs_usage()
+    out("ไฟล์ชั่วคราว iClone: %s (%d ไฟล์) ที่ %s%s" % (P.gb(b), files, P.J, "  ⚠ เกิน 5 GB -> " + CMD + " clean" if b > 5e9 else ""))
     return story, stage, n, nxt
 
 
@@ -213,6 +216,8 @@ def do(dry=False, force=False):
         out("\n" + card(nxt)); return 1
     fails(nxt, False)
     out("OK ข้อ %s (%.0f วินาที)" % (nxt, time.time() - t0))
+    if nxt == "video_check":   # part finished: temp stills/logs/previews are not needed any more
+        fb, fn = P.clean_jobs(); out("ลบไฟล์ชั่วคราวเก่า: %s (%d ไฟล์)" % (P.gb(fb), fn))
     if nxt in NOTES: out(NOTES[nxt].replace("{cmd}", CMD))
     out("ต่อ -> %s do" % CMD); return 0
 
@@ -279,6 +284,9 @@ def main(a):
     if c in ("version", "--version"): out("Ai-iclone " + VERSION); return 0
     if c == "status": return 0 if show_status() else 1
     if c == "steps": steps(); return 0
+    if c == "clean":
+        b0, _ = P.jobs_usage(0); fb, fn = P.clean_jobs(); b1, _ = P.jobs_usage(0)
+        out("ลบไฟล์ชั่วคราวเก่ากว่า 2 วัน: %s (%d ไฟล์)  เหลือ %s ที่ %s" % (P.gb(fb), fn, P.gb(b1), P.J)); return 0
     if c == "rules" and len(a) > 1: out(card(a[1])); return 0
     if c == "do": return do("--dry" in a, "--force" in a)
     if c == "range" and len(a) > 1: return set_range(a[1])

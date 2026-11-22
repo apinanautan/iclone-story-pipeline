@@ -111,6 +111,47 @@ def load(p, d):
         return d
 
 
+_usage = {"t": 0, "v": (0, 0)}
+
+
+def jobs_usage(max_age=60):
+    """(bytes, files) in the iClone work folder ic8_jobs (stills, logs, previews, old backups). Cached 60 s.
+    User 2026-11-22: temp files must be visible in the program, never a hidden pile."""
+    if time.time() - _usage["t"] > max_age:
+        n = b = 0
+        for dp, _, fs in os.walk(J):
+            for f in fs:
+                try: b += os.path.getsize(os.path.join(dp, f)); n += 1
+                except OSError: pass
+        _usage.update(t=time.time(), v=(b, n))
+    return _usage["v"]
+
+
+def clean_jobs(days=2):
+    """Delete temp files in ic8_jobs older than `days` days (all of the old backup\\ folder at once).
+    Never a queued job (run\\*.py) or anything newer. Returns (bytes freed, files)."""
+    cut = time.time() - days * 86400; b = n = 0
+    for dp, _, fs in os.walk(J, topdown=False):
+        rel = os.path.relpath(dp, J).lower()
+        for f in fs:
+            p = os.path.join(dp, f)
+            if rel == "run" and f.lower().endswith(".py"): continue
+            try:
+                st = os.stat(p)
+                if rel.startswith("backup") or st.st_mtime < cut:
+                    os.remove(p); b += st.st_size; n += 1
+            except OSError: pass
+        if dp != str(J) and rel not in ("run",):
+            try: os.rmdir(dp)   # only if empty
+            except OSError: pass
+    _usage["t"] = 0
+    return b, n
+
+
+def gb(b):
+    return "%.1f GB" % (b / 1e9) if b >= 1e8 else "%d MB" % (b / 1e6)
+
+
 def load_text(p):
     try:
         return Path(p).read_text(encoding="utf-8").strip()
@@ -309,6 +350,8 @@ class App(tk.Tk):
         txt = f"ท่อน {n} จาก {len(inr)}   เวลาที่ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
         cur = next((p for p in st.get("parts", []) if str(p.get("n")) == str(n)), None)
         if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินเวลาที่ทำงาน"
+        b, _ = jobs_usage()
+        txt += "   ไฟล์ชั่วคราว %s%s" % (gb(b), "  ⚠ สั่ง Ai-iclone clean" if b > 5e9 else "")
         self.head.configure(text=txt)
         ss = story_states(story); sdone = sum(1 for s, _ in ss.values() if s == "done")
         allok = sdone == len(STORY_STEPS)

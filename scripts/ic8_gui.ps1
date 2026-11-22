@@ -132,7 +132,12 @@ function PressButton([string]$rx){
   $false
 }
 function CurrentFile { $t=Title; if($t -match 'iClone 8 - (.+?)( \*)?$'){ $n=$Matches[1]; Get-ChildItem 'E:\ไฟล์งาน\ไฟล์ Save' -Recurse -Filter $n -ErrorAction SilentlyContinue|sort LastWriteTime -Desc|select -First 1 } }
-function Backup($file){ if($file -and (Test-Path $file)){ New-Item -ItemType Directory -Force $BAK|Out-Null; $stem=[IO.Path]::GetFileNameWithoutExtension($file); $dest=Join-Path $BAK ($stem+"_"+(Get-Date -Format "yyyyMMdd_HHmmss_fff")+".iProject"); Copy-Item -LiteralPath $file -Destination $dest -ErrorAction Stop; Say "backup: $dest" } }
+# user 2026-11-22: hidden timestamped backups in ic8_jobs\backup filled the disk (90+ GB). Now ONE visible copy
+# NEXT TO the project in the save folder: <name>.backup.iProject = the project before the last save, overwritten
+# each save. Old timestamped copies of this project in ic8_jobs\backup are deleted.
+function Backup($file){ if($file -and (Test-Path $file)){ $stem=[IO.Path]::GetFileNameWithoutExtension($file)
+    if(Test-Path $BAK){ Get-ChildItem -LiteralPath $BAK -Filter ($stem+"_*.iProject") -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue }
+    $dest=Join-Path ([IO.Path]::GetDirectoryName($file)) ($stem+".backup.iProject"); Copy-Item -LiteralPath $file -Destination $dest -Force -ErrorAction Stop; Say "backup (1 per project, next to it): $dest" } }
 function WaitSaved($file,$before){
   # done = the FILE on disk is newer than before and its size stopped changing (user 2026-11-21: check the
   # result, not the window title; iClone can keep the * after a good save, which used to wait 400 s for nothing)
@@ -237,7 +242,7 @@ switch($Cmd){
             if(($p -join ' ') -notmatch ('width='+$Width+'\|height='+$Height+'\|r_frame_rate=60/1')){ Say ('WARN: not '+$Width+'x'+$Height+' 60fps') }
             if($Shots){ $i=0; foreach($t in $Shots.Split(',')){ $i++; & $FF -v error -y -ss $t -i $out -frames:v 1 -vf scale=480:-1 (Join-Path $J ("gui_r{0:D2}.jpg" -f $i)) }
                         & $FF -v error -y -i (Join-Path $J 'gui_r%02d.jpg') -vf "tile=${i}x1" (Join-Path $J 'gui_render_check.jpg'); Say "frames per shot: $J\gui_render_check.jpg" }
-            [Microsoft.VisualBasic.FileIO.FileSystem]::DeleteFile($raw,'OnlyErrorDialogs','SendToRecycleBin'); Say "OK $out (raw -> Recycle Bin)"
+            Remove-Item -LiteralPath $raw -Force; Say "OK $out (raw deleted: the checked mp4 is the result; Recycle Bin filled the disk)"
             if($Publish){ New-Item -ItemType Directory -Force $Publish|Out-Null; Copy-Item $out $Publish -Force; Say "published to $Publish" }
             Job (Py "L=RLPy.RGlobal.GetProjectLength()`nRLPy.RGlobal.SetStartTime(T(0));RLPy.RGlobal.SetEndTime(L);RLPy.RGlobal.SetPreviewStartTime(T(0));RLPy.RGlobal.SetPreviewEndTime(L);RLPy.RGlobal.SetTime(T(0))") 'zz_gui_range'|Out-Null }
  default  { Get-Content $PSCommandPath -TotalCount 22 }
