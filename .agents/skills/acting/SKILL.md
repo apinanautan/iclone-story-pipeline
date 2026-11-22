@@ -23,7 +23,7 @@ Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Full list of 1570 bod
 
 ## Body motion (set in the part spec `cast`, applied by `ic8_part.py pose`)
 - Library first: standing `Stand00.iMotion` (MixMove Male/Female); Female Stand01 (sometimes Stand00) has a raised-hand gesture, Stand02 = hand on hip, **Stand03/Stand04 are quiet**. Conversation mocap: MixMoves Communication / Studio Mocap Conversation.
-- **SLOW is mandatory:** ONE clip stretched over its segment, `speed` 0.15-0.30 (talkers <= 0.30, listeners ~0.15). Never loop short clips at 0.7-1.0.
+- **Speed 0.65-1.0 only (user 2026-11-19):** slower than 0.65 the pose updates ~12x/s and the video judders. Need calm? pick a calmer clip. Too short? list 2-3 clips (or the same one) - `ic8_pose_place.py` puts them back to back (never overlapping, user 2026-11-21) with a 2 s transition at the start of each next clip.
 - **No two characters on the same clip + speed** (they move in sync): vary motion / speed / start offset.
 - Chained clips must crossfade (X in the timeline): run `scripts/ic8_blend_clips.py` (face 8.58 s, body 3 s) after the cast is built.
 - Walk clips carry ROOT motion that resets at each clip boundary: never chain Walk clips; one walk per shot, match on action.

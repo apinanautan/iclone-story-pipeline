@@ -1,0 +1,567 @@
+{
+ "story": "ชัยชนะของคนไม่ยอมแพ้",
+ "part": "2",
+ "scene": "โรงทำอิฐมอญ",
+ "wav": "{DESKTOP}/ชัยชนะของคนไม่ยอมแพ้/เสียงที่ตัดแล้ว/ท่อน2.wav",
+ "from": "{DRIVE}/ชัยชนะของคนไม่ยอมแพ้/ฉาก/ที่ทำงาน (โรงทำอิฐมอญ).iProject",
+ "project": "{SAVE}/ชัยชนะของคนไม่ยอมแพ้/ท่อน2_โรงอิฐ_20261121.iProject",
+ "video": "{VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน2_20261121.mp4",
+ "lines": [
+  {
+   "t": [
+    0.0,
+    5.1
+   ],
+   "who": "บรรยาย",
+   "text": "ดูแลน้อง พอน้องสาวคนรองจากเธอโตขึ้นมา"
+  },
+  {
+   "t": [
+    5.1,
+    10.26
+   ],
+   "who": "บรรยาย",
+   "text": "น้องก็รับหน้าที่ทำงานบ้าน และดูแลน้องต่อไป"
+  },
+  {
+   "t": [
+    10.26,
+    15.06
+   ],
+   "who": "บรรยาย",
+   "text": "ส่วนอัมพรก็ออกไปช่วยพ่อแม่ทำงานนอกบ้านแทน"
+  },
+  {
+   "t": [
+    15.06,
+    21.72
+   ],
+   "who": "บรรยาย",
+   "text": "สมัยนั้นยังไม่มีการศึกษาภาคบังคับ ที่ให้เด็กเรียนถึงมัธยมสาม"
+  },
+  {
+   "t": [
+    21.72,
+    27.9
+   ],
+   "who": "บรรยาย",
+   "text": "ดังนั้นพอจบป.6 อัมพรก็เลยออกมาช่วยพ่อแม่ทำงานเต็มตัว"
+  },
+  {
+   "t": [
+    27.9,
+    34.4
+   ],
+   "who": "บรรยาย",
+   "text": "งานที่เธอทำ งานแรก คืองานไปช่วยพ่อกับแม่รับจ้างทำอิตมอน"
+  },
+  {
+   "t": [
+    34.4,
+    40.94
+   ],
+   "who": "บรรยาย",
+   "text": "จากครอบครัวหนึ่ง ซึ่งเป็นกิจการในครอบครัว ไม่ได้ใหญ่โตอะไร"
+  },
+  {
+   "t": [
+    40.94,
+    46.76
+   ],
+   "who": "บรรยาย",
+   "text": "อัมพรได้เริ่มฝึกช่วยพ่อแม่ ตั้งแต่งานเตรียมดิน หมักดิน"
+  },
+  {
+   "t": [
+    46.76,
+    52.16
+   ],
+   "who": "บรรยาย",
+   "text": "ที่ต้องผสมดินกับน้ำ ขี้เท่า แกรบ และสาย"
+  },
+  {
+   "t": [
+    52.16,
+    55.8
+   ],
+   "who": "บรรยาย",
+   "text": "ไปจนถึงการขึ้นรูปปั้นอิต ตากแดดและผึงลม"
+  },
+  {
+   "t": [
+    55.8,
+    61.3
+   ],
+   "who": "บรรยาย",
+   "text": "มีเพียงงานเผาอิตเท่านั้น ที่เป็นงานที่เธอไม่ได้ช่วย"
+  },
+  {
+   "t": [
+    61.3,
+    66.82
+   ],
+   "who": "บรรยาย",
+   "text": "เพราะต้องเกี่ยวข้องกับเตาและความร้อน เธอจะไปช่วยพ่อแม่อีกที"
+  },
+  {
+   "t": [
+    66.82,
+    71.12
+   ],
+   "who": "บรรยาย",
+   "text": "ก็ตอนที่นําอิตที่เย็นแล้ว มาคัดแย่ขนาด"
+  },
+  {
+   "t": [
+    71.12,
+    76.07
+   ],
+   "who": "บรรยาย",
+   "text": "คัดความสมบูรณ์ของอิต เพื่อเตรียมให้เท่าแก่จํานายต่อไป"
+  }
+ ],
+ "cast": {
+  "พ่ออัมพร": {
+   "pos": [
+    -1560,
+    -1880,
+    0
+   ],
+   "yaw": -90,
+   "speed": 1,
+   "motion": "{SAVE}/_motion_cache/Yard_Weeding_M.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     5.1,
+     1
+    ],
+    [
+     66.82,
+     0
+    ]
+   ]
+  },
+  "แม่อัมพร": {
+   "pos": [
+    -1250,
+    -2420,
+    0
+   ],
+   "yaw": 180,
+   "speed": 1,
+   "motion": "{SAVE}/_motion_cache/LivingRoom_DoChores_Squat_F.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     5.1,
+     1
+    ]
+   ]
+  },
+  "อัมพรเด็ก_ตัวทดลอง": {
+   "pos": [
+    -1130,
+    -2420,
+    0
+   ],
+   "yaw": 180,
+   "speed": 0.9,
+   "motion": "{SAVE}/_motion_cache/LivingRoom_DoChores_Squat_F.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     10.26,
+     1
+    ],
+    [
+     66.82,
+     0
+    ]
+   ]
+  },
+  "คนงานโรงอิฐA": {
+   "pos": [
+    -450,
+    -2380,
+    0
+   ],
+   "yaw": 0,
+   "speed": 1,
+   "motion": "{SAVE}/_motion_cache/LivingRoom_DoChores_F.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     5.1,
+     1
+    ]
+   ]
+  },
+  "คนงานโรงอิฐB": {
+   "pos": [
+    -1350,
+    -1650,
+    0
+   ],
+   "yaw": 0,
+   "speed": 0.9,
+   "motion": "{SAVE}/_motion_cache/Yard_Weeding_M.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     5.1,
+     1
+    ]
+   ]
+  },
+  "คนงานโรงอิฐC": {
+   "pos": [
+    -1450,
+    -1960,
+    0
+   ],
+   "yaw": 0,
+   "speed": 1,
+   "motion": "{MOTION}/Shopping_Clean vfxmed/Shopping_Clean vfxmed/iClone 7 Template/iClone Template/motion/Studio Mocap-Shopping/Grocery Store/Market_Sales_SortOut_M.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     5.1,
+     1
+    ]
+   ]
+  },
+  "อัมพรเด็ก_คัดอิฐ": {
+   "pos": [
+    -880,
+    -3690,
+    0
+   ],
+   "yaw": 0,
+   "speed": 0.9,
+   "motion": "{MOTION}/Shopping_Clean vfxmed/Shopping_Clean vfxmed/iClone 7 Template/iClone Template/motion/Studio Mocap-Shopping/Grocery Store/Market_Sales_SortOut_M.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     66.82,
+     1
+    ]
+   ]
+  },
+  "พ่ออัมพร_คัดอิฐ": {
+   "pos": [
+    -760,
+    -3690,
+    0
+   ],
+   "yaw": 0,
+   "speed": 1,
+   "motion": "{MOTION}/Shopping_Clean vfxmed/Shopping_Clean vfxmed/iClone 7 Template/iClone Template/motion/Studio Mocap-Shopping/Grocery Store/Market_Sales_SortOut_M.rlMotion",
+   "lookfront": false,
+   "lookat": false,
+   "lookat_strength": 0,
+   "work": true,
+   "visible": [
+    [
+     0,
+     0
+    ],
+    [
+     66.82,
+     1
+    ]
+   ]
+  }
+ },
+ "hide": [
+  "Kevin actorScan"
+ ],
+ "shots": [
+  {
+   "t": [
+    0,
+    5.1
+   ],
+   "pos": [
+    -1000,
+    -3700,
+    420
+   ],
+   "target": [
+    -963,
+    -2000,
+    90
+   ],
+   "focal": 30,
+   "move": 170,
+   "wide": true
+  },
+  {
+   "t": [
+    5.1,
+    10.26
+   ],
+   "pos": [
+    -1250,
+    -2030,
+    130
+   ],
+   "target": [
+    -1350,
+    -1650,
+    85
+   ],
+   "focal": 100,
+   "move": 28
+  },
+  {
+   "t": [
+    10.26,
+    15.06
+   ],
+   "pos": [
+    -1190,
+    -2100,
+    140
+   ],
+   "target": [
+    -1190,
+    -2420,
+    70
+   ],
+   "focal": 80,
+   "move": -25
+  },
+  {
+   "t": [
+    15.06,
+    21.72
+   ],
+   "pos": [
+    -1090,
+    -2060,
+    115
+   ],
+   "target": [
+    -1130,
+    -2420,
+    65
+   ],
+   "focal": 100,
+   "move": 25
+  },
+  {
+   "t": [
+    21.72,
+    27.9
+   ],
+   "pos": [
+    -1300,
+    -2070,
+    125
+   ],
+   "target": [
+    -1250,
+    -2420,
+    75
+   ],
+   "focal": 100,
+   "move": -25
+  },
+  {
+   "t": [
+    27.9,
+    34.4
+   ],
+   "pos": [
+    -1850,
+    -2140,
+    125
+   ],
+   "target": [
+    -1560,
+    -1880,
+    80
+   ],
+   "focal": 100,
+   "move": 28
+  },
+  {
+   "t": [
+    34.4,
+    40.94
+   ],
+   "pos": [
+    -1400,
+    -2340,
+    130
+   ],
+   "target": [
+    -1450,
+    -1960,
+    95
+   ],
+   "focal": 100,
+   "move": -27
+  },
+  {
+   "t": [
+    40.94,
+    46.76
+   ],
+   "pos": [
+    -1840,
+    -1650,
+    120
+   ],
+   "target": [
+    -1560,
+    -1880,
+    75
+   ],
+   "focal": 100,
+   "move": 26
+  },
+  {
+   "t": [
+    46.76,
+    52.16
+   ],
+   "pos": [
+    -1630,
+    -1930,
+    120
+   ],
+   "target": [
+    -1350,
+    -1650,
+    80
+   ],
+   "focal": 100,
+   "move": -27
+  },
+  {
+   "t": [
+    52.16,
+    55.8
+   ],
+   "pos": [
+    -1040,
+    -2090,
+    110
+   ],
+   "target": [
+    -1130,
+    -2420,
+    60
+   ],
+   "focal": 100,
+   "move": 24
+  },
+  {
+   "t": [
+    55.8,
+    61.3
+   ],
+   "pos": [
+    -470,
+    -2760,
+    130
+   ],
+   "target": [
+    -450,
+    -2380,
+    100
+   ],
+   "focal": 100,
+   "move": -27
+  },
+  {
+   "t": [
+    61.3,
+    66.82
+   ],
+   "pos": [
+    -960,
+    -2220,
+    130
+   ],
+   "target": [
+    -1190,
+    -2420,
+    70
+   ],
+   "focal": 80,
+   "move": -24
+  },
+  {
+   "t": [
+    66.82,
+    76.07
+   ],
+   "pos": [
+    -1180,
+    -3740,
+    150
+   ],
+   "target": [
+    -820,
+    -3690,
+    105
+   ],
+   "focal": 100,
+   "move": 30
+  }
+ ],
+ "review_per_sec": 1,
+ "face_light_multiplier": 0.4
+}

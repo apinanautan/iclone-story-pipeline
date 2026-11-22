@@ -12,8 +12,8 @@ try:
     p = RLPy.RGlobal.GetRenderExportVideoParameter()
     fps = RLPy.RGlobal.GetFps().ToFloat()
     p.strFormat = "MP4"
-    p.kCommon.kFps = "60"  # user: always 60 fps
-    p.kCommon.nOutputSizeWidth, p.kCommon.nOutputSizeHeight = 1920, 1080
+    p.kCommon.kFps = str(job.get("fps", 60))  # 30 = smooth for slowed 60-key mocap (2026-11-19)
+    p.kCommon.nOutputSizeWidth, p.kCommon.nOutputSizeHeight = int(job.get("width", 1920)), int(job.get("height", 1080))
     p.kCommon.bFinalRender = True
     p.kOutputRange.nOutputRangeStart = int(round(job["start"] * fps))
     p.kOutputRange.nOutputRangeEnd = int(round(job["end"] * fps))

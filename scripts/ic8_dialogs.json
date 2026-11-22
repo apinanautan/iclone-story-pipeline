@@ -1,0 +1,37 @@
+{
+ "_doc": "iClone popups the watcher (scripts/ic8_watch.ps1) answers by itself. match = regex on the popup text (read by UIA, else screenshot + Windows OCR). press = button text. fresh_save_s = only press when the open project file was written less than this many seconds ago (so No never throws work away). Add a rule = add a line here; unknown popups are saved to ic8_jobs/dialogs/ as png + txt and left alone. press null = known progress window, ignore.",
+ "rules": [
+  {
+   "match": "Rendering \\d+ of|Please wait|Texture Loading|Loading",
+   "press": null,
+   "_note": "progress windows: leave alone, no log"
+  },
+  {
+   "match": "physics memory is insufficient|may not run smoothly",
+   "press": "OK"
+  },
+  {
+   "match": "current project will be discarded.*save",
+   "press": "No",
+   "fresh_save_s": 120
+  },
+  {
+   "match": "Convert All",
+   "press": "Convert All"
+  },
+  {
+   "match": "iTalk file contains custom expressions",
+   "press": "Traditional",
+   "_note": "emotion .iTalk on a CC avatar (2026-11-21)"
+  },
+  {
+   "match": "custom expression key\\(s\\) which can not find",
+   "press": "OK"
+  },
+  {
+   "match": "Unsaved project data found",
+   "press": "Cancel",
+   "_note": "after a crash: the saved .iProject is the truth; re-run steps after the last save (2026-11-21)"
+  }
+ ]
+}

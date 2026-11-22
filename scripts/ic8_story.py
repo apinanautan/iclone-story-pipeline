@@ -103,6 +103,9 @@ def cmd_brief(S, n):
     bl = P.get("script_block"); blocks = docx_blocks(S)
     if bl and 0 < bl <= len(blocks):
         say("\n## script block %d (docx, find this part's lines inside it)\n%s" % (bl, blocks[bl - 1]))
+    if P.get("transcript"):   # timed lines stored in the story file (who speaks / who is talked about -> camera)
+        say("\n## transcript in story file (part-local seconds; camera = who, or 'about' for narration)")
+        for L in P["transcript"]: say("  %6.2f-%6.2f %s: %s%s" % (L["t"][0], L["t"][1], L["who"], L["text"], ("  [about " + ", ".join(L["about"]) + "]") if L.get("about") else ""))
     tr = transcript(f["transcript"])
     if tr:
         say("\n## transcript (part-local seconds; who = match with the script)")

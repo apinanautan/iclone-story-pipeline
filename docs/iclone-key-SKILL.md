@@ -226,3 +226,7 @@ RLPy RIAvatar ไม่มี GetVisible(); ใช้ IsVisible(RTime) เช่
 ## 2026-11-17 — Light type capability
 ไฟ RIDirectionalLight ไม่มี SetRange(); ตรวจว่ามีเมธอดก่อนใช้ point/spot light API. scripts/ic8_cams.py ข้าม FaceLight เมื่อไม่มีไฟที่รองรับ.
 
+
+## 2026-11-17 — Directional light color scale
+ในฉากกรงกตัญญู RIDirectionalLight.SetColor ที่ส่ง RGB 255,236,214 ทำให้ภาพล้นขาว; ใช้ normalized RRgb(1.0,0.92,0.84) สำหรับ Directional Light และตรวจภาพนิ่งก่อนบันทึก. Point/spot light คงใช้ค่าตามกฎ FaceLight.
+

@@ -60,3 +60,29 @@ RIAvatar.GetVisible() ไม่มีใน iClone 8 ที่ใช้; ใช�
 ## 2026-11-17 — Light type capability
 RIDirectionalLight ไม่มี SetRange(); ตรวจ hasattr(light, 'SetRange') ก่อนใช้ API point/spot. ถ้าไม่มีไฟที่รองรับ ให้ข้าม FaceLight และบันทึกคำเตือน ไม่ให้กล้องพาสหยุด.
 
+
+## 2026-11-17 — Directional light color scale
+RIDirectionalLight.SetColor ตั้งด้วยค่า RGB 255,236,214 แล้วขาวล้นในภาพ; ค่าที่ไม่ล้นสำหรับ Directional Light ฉากนี้คือ normalized RRgb(1.0,0.92,0.84). อย่านำไปแทนค่า point/spot FaceLight ซึ่งมีคู่มือเดิมแยกต่างหาก.
+
+
+## 2026-11-20 — ภาพสำรวจกล้องแบบ read-only-ish และคืนตำแหน่ง
+- สคริปต์กลาง scripts/ic8_scene_overview.py อ่าน ic8_jobs/scene_overview.json และสร้างภาพ RenderImage ตามมุมกล้องสำรวจ; ตั้ง survey_only=true, คงกล้องต้นฉบับ Cam_A และค่า Focal ที่เวลา 0 กลับใน finally.
+- ผลจริง 4 ภาพกว้าง + 4 ภาพ 80/100mm, errors=0; Cam_A Transform key count ก่อนและหลัง = 8 เท่ากัน; iClone title ไม่ติด * หลัง job. ยังคงต้องตรวจภาพจริงก่อนอนุมัติ spot/cam.
+- A1/A2 เห็นหน้า 3/4, แต่ B1/B2 เป็น profile ไม่ผ่าน. ห้ามใช้การผ่านของ script/การมีไฟล์ภาพแทนการตรวจคุณภาพภาพ.
+
+## 2026-11-20 — Real still QA: explicit Linear camera transitions
+- In ic8_cams.py, after c.SetValue(T(s),tr), call c.SetKeyTransition(T(s), RLPy.ETransitionType_Linear,0.0). Otherwise default ease differs from planned constant-speed trajectory by 3-6 cm and STILL_MISMATCH flags real nonlinearity. With Linear, all sampled errors were 0cm.
+- Set project length AND End/PreviewEnd to WAV length+5s; camera view must be Qt ComboBox qtCameraSwitchAction currentText Switch at frame0. QA contact sheets 1/sec 3-8 per shot mechanical success is NOT content success (head cropped/work props missing/child missing).
+
+## 2026-11-20 — Offline still QA: consistency is not framing quality
+- Actual saved 54 stills / 7 shots: shift estimate 0.0% for every adjacent pair = image-consistency PASS, NOT cinematic/framing approval.
+- Synthetic 120 px jump -> JUMP 6.3%; 250 px jump -> JUMP 10.1%; A-B-A -> FLIP. Steady frames PASS. No files and incorrect per-shot frame count -> FAIL exit 1.
+- ic8_cams.py checks active camera ID and evaluated camera position before RenderImage and aborts at >3 cm; verifies PNG exists and is non-empty.
+- ic8_part.py passes expected frame counts to still_check.py, which rejects missing shots, missing frame indices, unreadable PNGs and empty input.
+- Image shift alone cannot distinguish camera error from actor/environment motion; inspect camera keys, image tiles and acting before diagnosis. This turn only exercised offline checks. New iClone capture loop not yet runtime-tested under the no-iClone-test rule. Persistent offline regressions: tests/test_still_check.py, 6 tests passing (steady, jump, flip, no frames, missing index, corrupt image).
+
+## 2026-11-20 — Job source race and inspection workflow
+- ic8_part.py job() must write input scripts into ic8_jobs/staging/ before ic8_gui.ps1 job; writing directly to watched run/ races watcher rename and PowerShell Get-Content. Verified after patch by importing trial avatar with shared cast step.
+- ic8_cams.py supports no_dof:true for environmental/architectural insert without treating it as an additional establishing wide; this keeps camera check rules for people unchanged.
+- review_per_sec:0 mid-only intentionally does not pass still_check.py filename validation; for mandatory final still QA restore review_per_sec:1 to capture 3-8/shot and contact sheet 3x3 per page.
+- For child motions, verify child bone head positions at multiple times: LivingRoom_CleanOut&Chat_C moved along y >100cm so camera clipped the child; Yard_Watering_C kept head y stable and passed per-second framing, but no prop yet, hence not approved final.

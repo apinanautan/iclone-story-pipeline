@@ -16,3 +16,14 @@ description: Write the part spec parts/<story>_<N>.json (lines, cast, shots) and
    - Same person twice in a row -> change size AND angle.
 6. `python scripts/ic8_part.py parts/<spec>.json audio` gives silences for cut points.
 7. `python scripts/ic8_part.py parts/<spec>.json check` - fix every FAIL. WARN "not approved" means: show the user stills first.
+
+## How to choose shots (think like an editor, user 2026-11-19)
+Start from the timed transcript (`brief` prints it). For each line ask: who speaks, or for narration, who is it ABOUT?
+- Speaker on screen while they talk. Narration -> the person it describes ("about"); both -> one shot holding both.
+- Same angle twice in a row = one shot with a slow zoom, not a cut. A return to a wide must come from a new angle.
+- **The part END:** after the last line, do NOT cut to someone new. Hold the last line's subject to the end of the part
+- **Last shot must be 6 s or longer.** If the last-mentioned person's shot (from its cut to the part end) would be under 6 s, do not cut to them at all: delete that shot and stretch the previous shot to the part end. `ic8_part.py check` fails otherwise.
+  (the tail is silence; a 2-3 s new shot right before the next part looks like a jump when parts are joined).
+  Then look at the NEXT part's first line: the next part should open on a different angle/person, not the same shot.
+- No shot under ~3 s unless it is a quick reaction the story needs.
+- Close-ups: aim at eye height, full head with a little room above (check every still).
