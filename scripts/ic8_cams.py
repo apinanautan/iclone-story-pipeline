@@ -124,9 +124,15 @@ def face_lights():
         tr = a.WorldTransform(); q = tr.R()
         yaw = 2 * math.atan2(q.z, q.w)
         fx, fy = math.sin(yaw), -math.cos(yaw)          # facing (rules: yaw = atan2(dx,-dy))
-        mx, cc, mn = RLPy.RVector3(), RLPy.RVector3(), RLPy.RVector3(); a.GetBounds(mx, cc, mn)
-        face = (cc.x, cc.y, mx.z - 15)                  # same face point as the camera auto-aim
-        pos = (face[0] + fx * 110, face[1] + fy * 110, face[2] + 20)   # straight-on, slightly above eye line
+        bone = next((b for b in a.GetSkeletonComponent().GetSkinBones() if b.GetName().endswith("Head")), None)
+        if bone is not None:
+            head_pos = bone.WorldTransform().T()
+            face = (head_pos.x, head_pos.y, head_pos.z)
+        else:
+            mx, cc, mn = RLPy.RVector3(), RLPy.RVector3(), RLPy.RVector3()
+            a.GetBounds(mx, cc, mn)
+            face = (cc.x, cc.y, mx.z - 15)
+        pos = (face[0] + fx * 110, face[1] + fy * 110, face[2] + 10)
         lt = src.Clone(); lt.SetName("FaceLight_" + a.GetName())
         if hasattr(RLPy.RScene, "Show"): RLPy.RScene.Show(lt)   # presets sometimes keep the source hidden
         if hasattr(lt, "SetActive"):
@@ -148,7 +154,6 @@ def face_lights():
             except Exception as e: LOG.append("  %s skipped: %s" % (fn, e))
         if hasattr(lt, 'SetVisible'): lt.SetVisible(T(0), True)
         # follow the face: link to the head bone, else to the avatar
-        bone = next((b for b in a.GetSkeletonComponent().GetSkinBones() if b.GetName().endswith("Head")), None)
         link = "none"
         for par in ([bone] if bone else []) + [a]:
             try:
@@ -158,7 +163,9 @@ def face_lights():
                     break
             except Exception as e:
                 LOG.append("  LinkTo %s failed: %s" % (par.GetName(), e))
-        LOG.append("face light %s at %s linked=%s" % (a.GetName(), tuple(round(v) for v in pos), link))
+        LOG.append("face light %s: %s Z=%.1f cm at %.2fs, light Z=%.1f cm, strength=%.2f, linked=%s" %
+                   (a.GetName(), bone.GetName() if bone is not None else "bounds fallback", face[2],
+                    visible_at, pos[2], multiplier, link))
     RLPy.RGlobal.SetTime(T(0))
 
 
