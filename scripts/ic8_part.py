@@ -418,7 +418,7 @@ def face_desc(c):
     mot = " → ".join(os.path.splitext(os.path.basename(f))[0] for f in fl)
     feel = []
     if c.get("smile"): feel.append("ยิ้มค่อยๆขึ้น 10→%d%%" % round(100 * min(0.8, c["smile"])))
-    if c.get("think"): feel.append("หน้าคิด" + ("" if c["think"] is True else " %.0f-%.0fs" % tuple(c["think"])))
+    if c.get("think"): feel.append("หน้าคิด" + ("" if c["think"] is True else " " + ", ".join("%.0f-%.0fs" % tuple(r) for r in think_rng(c["think"], 0))))
     if c.get("face"): feel.append("face keys")
     warn = ("" if fl else "⚠ ไม่มีท่าหน้า ") + ("" if feel else "⚠ ไม่มีความรู้สึก ")
     return "%s① กระพริบ %s ② ท่าหน้า %s (%.0f%%) ③ ความรู้สึก %s" % (
@@ -585,6 +585,13 @@ def step_motion_check(S, base):
 THINKY = re.compile("คิด|เห็นว่า|สงสัย|ตัดสินใจ|ไตร่ตรอง|วางแผน|นึก")
 
 
+def think_rng(th, end):
+    """spec "think": true | [t0, t1] | [[t0, t1], ...] -> list of [t0, t1]"""
+    if not th: return []
+    if th is True: return [[0, end]]
+    return [th] if not isinstance(th[0], list) else th
+
+
 def think_warns(S):
     """User 2026-11-22: a line about thinking must show a thinking face on the person in that shot."""
     out = []
@@ -595,7 +602,7 @@ def think_warns(S):
         who = sh and sh.get("subject")
         c = S["cast"].get(who or "", {})
         th = c.get("think")
-        ok = th is True or (isinstance(th, list) and th[0] <= mid <= th[1])
+        ok = any(a <= mid <= b for a, b in think_rng(th, 1e9))
         if who and not ok:
             out.append("%.1fs \"%s\": %s needs \"think\" (thinking face)" % (ln["t"][0], ln["text"][:30], who))
     return out
@@ -652,8 +659,7 @@ def step_face_check(S, base):
     q = {}
     for n, c in S["cast"].items():
         pr = [[t, [SMILE_K]] for t in vis_mids(c, end)] if c.get("smile") else []
-        th = c.get("think"); tw = [0, end] if th is True else th
-        if tw: pr.append([round((tw[0] + tw[1]) / 2, 2), [THINK_K]])
+        for tw in think_rng(c.get("think"), end): pr.append([round((tw[0] + tw[1]) / 2, 2), [THINK_K]])
         q[n] = {"probe": pr}
     wjson("face_check.json", {"cast": q})
     job(FACE_JOB, "zz_face_check")

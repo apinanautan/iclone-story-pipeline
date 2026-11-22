@@ -198,7 +198,11 @@ try:
         s["pos"] = [s["pos"][k] + dv[k] for k in range(3)]; s["target"] = new
         LOG.append("shot %d subject %s -> target %s" % (i + 1, s["subject"], [round(v) for v in new]))
     for i, s in enumerate(p["shots"]):
-        cam = cams[i % 2]; a, b = s["t"]; stop = b - fr if i < len(p["shots"]) - 1 else b
+        cam = cams[i % 2]; a, b = s["t"]
+        # 2026-11-22 camera bounce fix (read back from part 4 video): the end key used to sit 1 frame BEFORE the cut,
+        # so the last frame(s) of every shot already showed the camera leaving for its next shot = a jerk before the cut.
+        # End key now sits ON the first frame at/after the cut: every frame of the shot stays on its own straight move.
+        stop = math.ceil(b * 60 - 1e-6) / 60.0
         LIVE(20 + 10.0 * i / len(p["shots"]), "คีย์กล้อง ช็อต %d/%d" % (i + 1, len(p["shots"])))
         c0 = s["pos"]; tg = s["target"]; d = math.dist(c0, tg); m = move_cm(s, d)
         c1 = [c0[k] + (tg[k] - c0[k]) * m / d for k in range(3)]

@@ -198,7 +198,8 @@ try:
         if s.get("think"):   # user 2026-11-22: thinking moments need a visible thinking face, not a blank one
             # "think": true (whole part) or [t0, t1]. Inner brows up, slight squint, lips pressed, eyes drift
             # up-left / up-right and back every ~3 s. Adds on top of the Considering_F face clip.
-            t0, t1 = (0.0, END) if s["think"] is True else (float(s["think"][0]), float(s["think"][1]))
+            th = s["think"]   # true, [t0, t1] or [[t0, t1], [t2, t3]] (several thinking moments, 2026-11-22)
+            RNG = [[0.0, END]] if th is True else ([th] if not isinstance(th[0], list) else th)
             f = a.GetFaceComponent()
             BASE = {"Brow_Raise_In_L": 0.55, "Brow_Raise_In_R": 0.55, "Brow_Lateral_L": 0.25, "Brow_Lateral_R": 0.25,
                     "Eye_Squint_Inner_L": 0.25, "Eye_Squint_Inner_R": 0.25, "Mouth_Lips_Press_L": 0.45, "Mouth_Lips_Press_R": 0.45,
@@ -208,16 +209,20 @@ try:
                     {"Eye_Look_Up_L": 0.35, "Eye_Look_Up_R": 0.35, "Eye_Look_Right_L": 0.3, "Eye_Look_Right_R": 0.3}]
             EYES = sorted({k for d in LOOK for k in d})
             NM = list(BASE) + EYES
-            f.BeginKeyEditing()
-            f.AddExpressionKeys(KT(max(0.0, t0 - 0.5)), NM, [0.0] * len(NM), T(0.1))
-            t, i = t0, 0
-            while t < t1 - 0.5:
-                look = LOOK[i % len(LOOK)]
-                f.AddExpressionKeys(KT(t), NM, [BASE[k] for k in BASE] + [look.get(k, 0.0) for k in EYES], T(0.8))
-                t += 3.0; i += 1
-            f.AddExpressionKeys(KT(t1), NM, [0.0] * len(NM), T(0.6))
-            f.EndKeyEditing()
-            LOG.append("%s think %.1f-%.1f (%d looks)" % (name, t0, t1, i))
+            for t0, t1 in RNG:
+                t0, t1 = float(t0), float(t1)
+                f.BeginKeyEditing()
+                f.AddExpressionKeys(KT(max(0.0, t0 - 0.5)), NM, [0.0] * len(NM), T(0.1))
+                t, i = t0, 0
+                while t < t1 - 0.5:
+                    look = LOOK[i % len(LOOK)]
+                    f.AddExpressionKeys(KT(t), NM, [BASE[k] for k in BASE] + [look.get(k, 0.0) for k in EYES], T(0.8))
+                    t += 3.0; i += 1
+                # hold the last look until 0.6 s before the end (a short range used to fade out over its whole length)
+                f.AddExpressionKeys(KT(max(t0, t1 - 0.6)), NM, [BASE[k] for k in BASE] + [look.get(k, 0.0) for k in EYES], T(0.3))
+                f.AddExpressionKeys(KT(t1), NM, [0.0] * len(NM), T(0.6))
+                f.EndKeyEditing()
+                LOG.append("%s think %.1f-%.1f (%d looks)" % (name, t0, t1, i))
         if s.get("face"):
             f = a.GetFaceComponent(); names = list(s["face"]); vals = [s["face"][k] for k in names]
             f.BeginKeyEditing()
@@ -263,7 +268,7 @@ try:
         vis = sorted(s.get("visible", []))
         for t, v in vis:
             a.SetVisible(T(t), bool(v))
-        if len(vis) > 1:   # old keys from earlier runs survive (no API to delete them): scan every frame, key over any mismatch
+        if vis:   # (2026-11-22: also for ONE key - part 5 kept part 4 hide keys) old keys from earlier runs survive (no API to delete them): scan every frame, key over any mismatch
             want = lambda tt: bool([v for t, v in vis if t <= tt + 1e-6][-1]) if tt + 1e-6 >= vis[0][0] else bool(vis[0][1])
             # coarse 1 s pass (per-frame over the whole part was minutes slow); on a mismatch step back frame by frame
             fixed = 0

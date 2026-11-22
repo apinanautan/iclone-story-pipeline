@@ -63,6 +63,9 @@ function FgIsIclone { [uint32]$p=0; [void][IG.U]::GetWindowThreadProcessId([IG.U
 # never scan the MAIN window: its UIA tree (timeline, scene list) takes minutes once a scene is loaded (2026-11-21)
 function Nag { foreach($h in (IcloneWindows)){ if($h -eq (MainH)){continue}; try{ $w=[Windows.Automation.AutomationElement]::FromHandle($h); $t=($w.FindAll([Windows.Automation.TreeScope]::Descendants,[Windows.Automation.Condition]::TrueCondition)|%{$_.Current.Name}) -join ' ' }catch{continue}
     if($t -match 'physics memory is insufficient|may not run smoothly'){ if(PressButton '^OK$'){ Say 'answered iClone warning: physics memory -> OK' } } } }
+# 2026-11-22: the Preview window (progress_app.py, topmost) sits over iClone's top-left menu, so menu clicks hit
+# Preview (AccuLips "file dialog did not appear"). Minimise it during menu clicks, restore after.
+function PreviewWin([int]$cmd){ Get-Process | ?{ $_.MainWindowTitle -like 'Preview*' } | %{ [IG.U]::ShowWindow($_.MainWindowHandle,$cmd)|Out-Null } }
 function Front { Nag; $h=MainH
   # Windows foreground lock: a tapped Alt lets a background process take the foreground (rules: Win32 Alt trick)
   for($i=0;$i -lt 5;$i++){ if($i -gt 0){ [IG.U]::keybd_event(0x12,0,0,0); [IG.U]::keybd_event(0x12,0,2,0); [IG.U]::ShowWindow($h,5)|Out-Null }
@@ -203,7 +206,7 @@ switch($Cmd){
             Say "imported $(Split-Path $A1 -Leaf) at frame 0 - check gui_tl.png: Sound row must start with the clip name at frame 0, then: save" }
  'lip'    { $av=$A1; $wav=$A2; [double]$s=$A3; [double]$e=$A4
             Job (Py "RLPy.RGlobal.Stop();RLPy.RScene.ClearSelectObjects()`na=[x for x in RLPy.RScene.GetAvatars() if x.GetName()=='$av'][0]`nRLPy.RScene.SelectObject(a);RLPy.RGlobal.SetTime(T(0))") 'zz_gui_sel'|Out-Null
-            Front|Out-Null; ClickRel 220 49; ClickRel 290 79; ClickRel 538 129; FillDialog $wav; Start-Sleep 8
+            PreviewWin 6; Front|Out-Null; ClickRel 220 49; ClickRel 290 79; ClickRel 538 129; try { FillDialog $wav } finally { PreviewWin 9 }; Start-Sleep 8
             $chk=Py "a=[x for x in RLPy.RScene.GetAvatars() if x.GetName()=='$av'][0]`nopen(os.path.join(J,'gui_vis.txt'),'w').write(str(len(a.GetVisemeComponent().GetVisemeKeys())))"
             $n=0; for($i=0;$i -lt 30;$i++){ Job $chk 'zz_gui_vis'|Out-Null; $n=[int](Get-Content (Join-Path $J 'gui_vis.txt')); if($n -gt 0){break}; Start-Sleep 2 }
             if($n -eq 0){ Fail "no viseme keys on $av (look at the screen)" }
