@@ -33,7 +33,7 @@ SKILLS = ROOT / ".agents" / "skills"
 SEL = P.PROG / "ai_iclone.json"
 PY = sys.executable
 CMD = "Ai-iclone"   # short name in the text; the full path is printed once in the manual
-FULL = str(ROOT / "Ai-iclone.cmd")
+FULL = str(ROOT / "Ai-iclone.exe") if (ROOT / "Ai-iclone.exe").exists() else str(ROOT / "Ai-iclone.cmd")
 try: VERSION = (ROOT / "VERSION").read_text(encoding="utf-8").strip()
 except OSError: VERSION = "?"
 
@@ -82,7 +82,10 @@ CHAT = """ผู้ใช้พูดในแชท -> คำสั่ง:
 
 
 def out(s=""):
-    print(s, flush=True)
+    try:
+        print(s, flush=True)
+    except OSError:   # reader closed the pipe (e.g. `| head`): stop quietly, no traceback
+        os._exit(0)
 
 
 def sel():
@@ -247,7 +250,7 @@ def set_range(v):
 def manual():
     out("Ai-iclone " + VERSION + " — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
     out("ทำงานเป็นข้อๆ ตามลำดับ: ① เตรียมเรื่อง 9 ข้อ (ครั้งเดียวต่อเรื่อง) -> ② ทำทีละท่อน 18 ข้อ")
-    out("Ai-iclone = \"%s\"  (PowerShell: & \"%s\" do   /  bash: cmd //c \"%s\" do)" % (FULL, FULL, FULL))
+    out("Ai-iclone = \"%s\"   (PowerShell: & \"%s\" do   /  bash: \"%s\" do)" % (FULL, FULL, FULL.replace("\\", "/")))
     out("วิธีทำงาน: รัน %s do ทีละครั้ง ทำตามที่มันบอก จนเจอ STOP แล้วรายงานผู้ใช้\n" % CMD)
     out(CHAT.replace("{cmd}", CMD)); out(""); out(HARD); out("")
     out("ก่อนข้อที่ใช้ iClone: iClone ต้องเปิดอยู่และโหลด Script > Load Python > scripts/ic8_watch.py แล้ว (ถ้าไม่แน่ใจ ถามผู้ใช้)\n")

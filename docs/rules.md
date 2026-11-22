@@ -527,3 +527,4 @@ The user has repeated every item below many times and is furious about repeating
 - The AI reads state as text from the same files as the window; no screenshots of the window.
 - User approvals typed in chat are recorded with `Ai-iclone approve --said "..."`; the working range with `Ai-iclone range m:ss-m:ss`. Never invent either.
 - A step that FAILs twice stops; tell the user in Thai.
+- Ai-iclone.exe (user 2026-11-22): the program is an exe next to scripts/ (launcher/AiIclone.cs, build launcher/build.ps1). Terminal = text for AI; double-click = the window. Ai-iclone.cmd still works.

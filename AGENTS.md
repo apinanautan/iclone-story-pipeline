@@ -1,6 +1,6 @@
 # iClone Story Pipeline: instructions for any AI that picks this up
 
-**START HERE (2026-11-22): run `Ai-iclone.cmd` (no arguments) in this folder and follow what it prints.** It is the program for this work: it shows the story/part status (same as the Ai-iclone window), the one next command (`Ai-iclone do`), and the rules card of that step. Do not read the rest of this file or docs/ unless it says so.
+**START HERE (2026-11-22): run `Ai-iclone.exe` (no arguments) in this folder and follow what it prints.** It is the program for this work: it shows the story/part status (same as the Ai-iclone window), the one next command (`Ai-iclone do`), and the rules card of that step. Do not read the rest of this file or docs/ unless it says so.
 Older notes below are history/reference.
 
 ## Skills first (2026-11-17)
