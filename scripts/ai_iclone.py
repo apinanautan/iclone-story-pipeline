@@ -41,7 +41,7 @@ except OSError: VERSION = "?"
 
 # who does each step: script = the program runs it; ai = the AI thinks and fills a file; user = STOP, the user decides
 PART_KIND = {"plan": "ai", "audio": "script", "check": "script", "motion_plan": "script", "open": "script",
-             "cast": "script", "pose": "script", "sound": "script", "lip": "script", "cams": "script",
+             "cast": "script", "pose": "script", "sound": "script", "lip": "script", "cams": "script", "cam_check": "script",
              "motion_check": "script", "light_check": "script", "face_check": "script", "switch": "script",
              "user_ok": "user", "ready": "script", "render": "script", "video_check": "script"}
 STORY_KIND = {"sheet": "ai", "source": "ai", "range": "user", "split": "ai", "chars": "ai", "scenes": "ai",
@@ -49,7 +49,7 @@ STORY_KIND = {"sheet": "ai", "source": "ai", "range": "user", "split": "ai", "ch
 # rules card of a step = these skill files (short, already written for AI) + the notes below
 SKILL_OF = {"plan": ["plan-part", "acting"], "audio": ["cut-audio"], "check": ["plan-part"], "motion_plan": ["acting"],
             "open": ["build-part"], "cast": ["build-part"], "pose": ["build-part", "pose-bones"], "sound": ["build-part"],
-            "lip": ["lip-sync"], "cams": ["review-stills"], "motion_check": ["review-stills"],
+            "lip": ["lip-sync"], "cams": ["review-stills"], "cam_check": ["review-stills"], "motion_check": ["review-stills"],
             "light_check": ["review-stills"], "face_check": ["review-stills", "acting"], "switch": ["iclone-control"],
             "ready": ["save-render"], "render": ["save-render"], "video_check": ["save-render"],
             "split": ["cut-audio"]}
@@ -64,8 +64,9 @@ NOTES = {
     "output": "เติม save_dir และ video_dir ใน stories/<เรื่อง>.json โฟลเดอร์ต้องมีจริง",
     "story_ok": "STOP: ส่งแผนทั้งเรื่องให้ผู้ใช้ดู (เรื่อง ช่วงเวลา ท่อน ตัวละคร ฉาก) รอผู้ใช้คลิกอนุมัติในหน้าต่าง หรือพิมพ์ในแชทว่าผ่าน แล้วรัน {cmd} approve --said \"<คำที่ผู้ใช้พิมพ์>\"",
     "plan": "เขียนสเปกท่อน parts/<เรื่อง>_<N>.json: lines.who ทุกบรรทัด, cast (spot หรือ pos/yaw, motions, lookat), shots จนจบเสียง ห้ามมี who เป็น \"?\" และ shots ห้ามว่าง เสร็จแล้วรัน {cmd} do (ข้อถัดไปคือ check จะตรวจตามกฎ)",
-    "cams": "หลังรันเสร็จ ต้องเปิดดูภาพ ic8_jobs/part_cams.jpg ทุกช็อต ถ้าช็อตไหนไม่ดี แก้ shots ในสเปก แล้วรัน ic8_part.py <spec> cams --shot <เลข>",
-    "user_ok": "STOP: ส่งภาพรวมกล้อง (part_cams.jpg) ให้ผู้ใช้ดู รอผู้ใช้คลิก 'ผู้ใช้ตรวจ (ผ่าน)' ในหน้าต่าง หรือพิมพ์ในแชทว่าผ่าน แล้วรัน {cmd} approve --said \"<คำที่ผู้ใช้พิมพ์>\"",
+    "cams": "ภาพนิ่งเสร็จแล้ว ข้อต่อไปคือ cam_check: รัน {cmd} do",
+    "cam_check": "เปิดดูรูป ic8_jobs/part_cams_all.jpg (ทุกช็อตในรูปเดียว) แล้วเติมไฟล์ progress/<เรื่อง>_<N>_camcheck.json ทุกช็อต: see = เห็นอะไรจริงในภาพ, ตอบ true/false ทุกคำถาม ห้ามเดาจากแผน ช็อตไหน false เขียน fix แล้วแก้ shots ในสเปก รัน ic8_part.py <spec> cams --shot <เลข> แล้ว {cmd} do",
+    "user_ok": "STOP: ส่งภาพรวมกล้อง (part_cams_all.jpg) ให้ผู้ใช้ดู รอผู้ใช้คลิก 'ผู้ใช้ตรวจ (ผ่าน)' ในหน้าต่าง หรือพิมพ์ในแชทว่าผ่าน แล้วรัน {cmd} approve --said \"<คำที่ผู้ใช้พิมพ์>\"",
     "render": "เรนเดอร์ได้เพราะผู้ใช้ผ่านแล้ว ใช้เวลานาน (~40 นาที) อย่าแตะ iClone ระหว่างนั้น",
 }
 HARD = """กฎเหล็ก (ห้ามผิด):
@@ -210,6 +211,8 @@ def do(dry=False, force=False):
     if dry: out("(--dry: ไม่ได้รันจริง)"); return 0
     t0 = time.time(); rc = subprocess.run(c, cwd=ROOT).returncode
     out("")
+    if rc == 3:   # the step needs the AI (e.g. cam_check: look at the image, fill the check file)
+        out("งานของ AI ข้อ %s: ทำตามข้อความด้านบน แล้ว %s do" % (nxt, CMD)); return 3
     if rc != 0:
         k = fails(nxt, True)
         out("FAIL ข้อ %s (ครั้งที่ %d, %.0f วินาที). อ่านข้อความด้านบน%s" % (nxt, k, time.time() - t0,
@@ -256,7 +259,7 @@ def set_range(v):
 
 def manual():
     out("Ai-iclone " + VERSION + " (" + str(ROOT) + ") — โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน (ตัวละครจาก Character Creator 5)")
-    out("ทำงานเป็นข้อๆ ตามลำดับ: ① เตรียมเรื่อง 9 ข้อ (ครั้งเดียวต่อเรื่อง) -> ② ทำทีละท่อน 18 ข้อ")
+    out("ทำงานเป็นข้อๆ ตามลำดับ: ① เตรียมเรื่อง 9 ข้อ (ครั้งเดียวต่อเรื่อง) -> ② ทำทีละท่อน %d ข้อ" % len(P.STEPS))
     out("Ai-iclone = \"%s\"   (PowerShell: & \"%s\" do   /  bash: \"%s\" do)" % (FULL, FULL, FULL.replace("\\", "/")))
     out("วิธีทำงาน: รัน %s do ทีละครั้ง ทำตามที่มันบอก จนเจอ STOP แล้วรายงานผู้ใช้\n" % CMD)
     out(CHAT.replace("{cmd}", CMD)); out(""); out(HARD); out("")

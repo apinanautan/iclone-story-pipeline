@@ -33,3 +33,9 @@ Write the shot list you SEE (not what you planned): `S01 0-7s Cam_A MCU สม�
 
 ## 3. Send and STOP
 Send the page images to the user with one Thai line per shot. **STOP.** No lip-sync, save or render until the user answers.
+
+## 4. cam_check (mandatory step after cams, user 2026-11-23)
+`ic8_part.py <spec> cam_check` (or `Ai-iclone do`) puts ALL shots in ONE image `ic8_jobs/part_cams_all.jpg` and writes
+`progress/<story>_<N>_camcheck.json`. Open the image, then per shot fill `see` (what is REALLY in the frame) and true/false for
+subject_face, framing, clean, differs. Any false -> write `fix`, change the spec, `cams --shot <N>`, run cam_check again.
+The step does not pass until every shot is filled and true. Never copy the plan into `see`.

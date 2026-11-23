@@ -11,6 +11,7 @@ Steps (in order; `all` = check..ready, never render):
   sound   delete old Project Sound, import wav at frame 0 (GUI)
   lip     AccuLips per speaker (GUI), keep only that speaker's line windows; non-speakers' mouths cleared
   cams    Cam_A/Cam_B, 2 keys per shot, switcher, 1 still per shot (quick; --shot 3,5 re-shoots only those, --full = ~1/s) -> ic8_jobs/part_cams.jpg (look at it!)
+  cam_check ALL shots in ONE image (part_cams_all.jpg) + the AI fills progress/<story>_<N>_camcheck.json per shot; any fail = FAIL
   ready   Switch, playhead 0, play range 0..end, GUI save, reopen  -> STOP: user presses Play
   render  ONLY with --approved (user said ผ่าน): 1080p60 + clean wav + checks + publish
 `<step> --from` runs that step and every later one up to ready (fix a number in the spec, re-run from there).
@@ -47,7 +48,7 @@ FF = r"C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffm
 FFP = FF.replace("ffmpeg.exe", "ffprobe.exe")
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
-ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "motion_check", "light_check", "face_check", "switch"]
+ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
 
 
 def say(s):
@@ -782,6 +783,14 @@ def step_video_check(S, base):
     say("OK video_check: %s %.1fs (%.0f MB)" % (os.path.basename(v), got, os.path.getsize(v) / 1e6))
 
 
+def step_cam_check(S, base):
+    """ALL shots in one image + the AI's answer for every shot (scripts/cam_check.py). user 2026-11-23."""
+    import cam_check
+    code, msg = cam_check.check(S, J)
+    say(msg)
+    if code: sys.exit(code)   # 3 = AI must fill the check file, 1 = shots fail
+
+
 def step_ready(S, base):
     # Flow guard (user 2026-11-21 "ทำไมไม่ทำตามโฟว์งาน"): every earlier step must be done (green) and the
     # user must have approved the stills (Preview "ผู้ใช้ตรวจ"), otherwise no save/render.
@@ -805,7 +814,7 @@ def step_render(S, base, approved):
 
 
 STEPS = {"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
-         "sound": step_sound, "lip": step_lip, "cams": step_cams, "motion_check": step_motion_check,
+         "sound": step_sound, "lip": step_lip, "cams": step_cams, "cam_check": step_cam_check, "motion_check": step_motion_check,
          "light_check": step_light_check, "face_check": step_face_check, "switch": step_switch, "ready": step_ready, "video_check": step_video_check}
 
 if __name__ == "__main__":

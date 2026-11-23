@@ -554,3 +554,6 @@ The user has repeated every item below many times and is furious about repeating
 ## Transcription never hangs (user 2026-11-23)
 - On another PC Tidmunz's whisper hung even on 2-3 s audio and nothing fell back. cut_audio.py now gives Tidmunz whisper a hard limit (60 s + 2x audio), kills it, then uses faster-whisper, then Tidmunz on CPU (-ng). Step `audio` passes `--script` (words from the script docx, same times). If all fail it says TRANSCRIBE FAIL: tell the user, never test GPUs or install things yourself.
 - (user 2026-11-23) Call Tidmunz's whisper-cli EXACTLY like Tidmunz does (snapgen_modules/snapgen_whisper_vulkan.py): `-np --vad -vm ggml-silero-*.bin`, threads = cores-1. Without VAD, large-v3 loops on silence and looks stuck. Tested: 66 s part in 16.5 s.
+
+## cam_check: the AI must really check the cameras (user 2026-11-23)
+- Before, `cams` only TOLD the AI to look at part_cams.jpg and passed by itself, so the AI skipped looking. New mandatory step `cam_check` after `cams` (scripts/cam_check.py): ALL shots in ONE image `ic8_jobs/part_cams_all.jpg` (label: shot, time, lens, who speaks) + `progress/<story>_<N>_camcheck.json`, where the AI writes per shot what it SEES and true/false for subject_face / framing / clean / differs. Blank = AI WORK (exit 3), any false = FAIL -> fix spec, `cams --shot N`. `ready` refuses to save until cam_check passed.
