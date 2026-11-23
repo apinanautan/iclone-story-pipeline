@@ -6,7 +6,7 @@
 // Where the program files live (APP):
 //   - the exe's own folder if it has scripts\ai_iclone.py (a git checkout or an unzipped release)
 //   - otherwise %LOCALAPPDATA%\Ai-iclone  (first run downloads the latest release there by itself)
-// Updates: at most every 10 minutes the exe reads the latest GitHub release tag; if it is newer than APP\VERSION
+// Updates: every double-click (window) checks; terminal commands at most every 10 minutes the exe reads the latest GitHub release tag; if it is newer than APP\VERSION
 // it downloads that release and copies it over APP. Never touched: work data (stories\, parts\, progress\
 // except new template files) and paths.local.json. A git checkout is never auto-updated (use git pull).
 using System;
@@ -121,12 +121,25 @@ static class AiIclone
                 File.Copy(f, dst, true); n++;
             }
             Log("installed " + tag + " (" + n + " files) -> " + app);
+            // this exe lives elsewhere (e.g. Downloads): replace it with the new launcher too, so it updates itself
+            string fresh = Path.Combine(app, "Ai-iclone.exe");
+            if (File.Exists(fresh) && !string.Equals(Path.GetFullPath(fresh), self, StringComparison.OrdinalIgnoreCase))
+            {
+                try
+                {
+                    string old = self + ".old";
+                    try { File.Delete(old); } catch { }
+                    File.Move(self, old);
+                    File.Copy(fresh, self, true);
+                }
+                catch (Exception e) { Log("could not refresh " + self + ": " + e.Message); }
+            }
         }
         finally { try { Directory.Delete(tmp, true); } catch { } }
     }
 
     // returns false only when there is no program at all and it could not be downloaded
-    static bool Update(string app, bool force)
+    static bool Update(string app, bool force, bool always = false)
     {
         bool have = File.Exists(Path.Combine(app, "scripts", "ai_iclone.py"));
         if (Directory.Exists(Path.Combine(app, ".git")))
@@ -135,7 +148,7 @@ static class AiIclone
             return have;
         }
         string stamp = Path.Combine(app, "progress", "update_check.txt");
-        if (have && !force)
+        if (have && !force && !always)   // double-click (opening the window) always checks (user 2026-11-23)
         {
             try { if ((DateTime.UtcNow - File.GetLastWriteTimeUtc(stamp)).TotalMinutes < 10) return true; } catch { }
         }
@@ -159,16 +172,17 @@ static class AiIclone
     static int Main(string[] args)
     {
         string exeDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\');
+        try { File.Delete(Process.GetCurrentProcess().MainModule.FileName + ".old"); } catch { }   // left by the last self-update
         string app = File.Exists(Path.Combine(exeDir, "scripts", "ai_iclone.py")) ? exeDir
             : !string.IsNullOrEmpty(Environment.GetEnvironmentVariable("AI_ICLONE_HOME")) ? Environment.GetEnvironmentVariable("AI_ICLONE_HOME")
             : Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Ai-iclone");
         bool forceUpdate = args.Length > 0 && args[0].Equals("update", StringComparison.OrdinalIgnoreCase);
-        if (!Update(app, forceUpdate)) return 1;
-        if (forceUpdate) { Console.WriteLine("Ai-iclone " + ReadVersion(app) + "  (" + app + ")"); return 0; }
-
         // double-clicked = this exe owns its console alone and nobody reads its output -> open the window
         bool doubleClicked = args.Length == 0 && !Console.IsOutputRedirected && GetConsoleProcessList(new uint[2], 2) == 1;
-        if (doubleClicked || (args.Length > 0 && args[0].Equals("window", StringComparison.OrdinalIgnoreCase)))
+        bool window = doubleClicked || (args.Length > 0 && args[0].Equals("window", StringComparison.OrdinalIgnoreCase));
+        if (!Update(app, forceUpdate, window)) return 1;
+        if (forceUpdate) { Console.WriteLine("Ai-iclone " + ReadVersion(app) + "  (" + app + ")"); return 0; }
+        if (window)
         {
             var w = new ProcessStartInfo("pyw", "-3 " + Quote(Path.Combine(app, "scripts", "progress_app.py")))
             { UseShellExecute = false, WorkingDirectory = app, CreateNoWindow = true };
