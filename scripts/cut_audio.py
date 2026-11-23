@@ -68,10 +68,17 @@ def whisper_cpp(cli, mdl, wav, extra, limit):
     tmp = tempfile.mkdtemp()
     w16, base = os.path.join(tmp, "a.wav"), os.path.join(tmp, "a")
     subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", w16], check=True)
-    print("WHISPER tidmunz %s %s (max %d s)" % (os.path.basename(mdl), "CPU" if extra else "GPU", limit), flush=True)
+    print("WHISPER tidmunz %s %s (max %d s)" % (os.path.basename(mdl), "CPU" if extra else "GPU", limit), flush=True)   # + VAD like Tidmunz
     try:
-        pr = subprocess.Popen([cli, "-m", mdl, "-l", "th", "-t", str(min(8, os.cpu_count() or 4)), "-oj", "-of", base, "-f", w16] + extra,
-                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=os.path.dirname(cli))
+        # the SAME switches Tidmunz Studio uses (snapgen_whisper_vulkan.py): -np + --vad with its silero model.
+        # Without VAD large-v3 loops on silence and looks stuck (user 2026-11-23: "in Tidmunz it works").
+        import glob
+        vad = (glob.glob(os.path.join(os.path.dirname(mdl), "ggml-silero*.bin")) +
+               glob.glob(os.path.join(os.path.dirname(os.path.dirname(cli)), "**", "ggml-silero*.bin"), recursive=True))
+        cmd = [cli, "-m", mdl, "-f", w16, "-l", "th", "-t", str(max(1, min(8, (os.cpu_count() or 4) - 1))), "-oj", "-of", base, "-np"]
+        if vad: cmd += ["--vad", "-vm", vad[0]]
+        pr = subprocess.Popen(cmd + extra, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                              cwd=os.path.dirname(cli), creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
         try:
             pr.wait(timeout=limit)
         except subprocess.TimeoutExpired:   # kill it AND its children, then go on
