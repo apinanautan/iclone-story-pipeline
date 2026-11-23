@@ -177,7 +177,8 @@ def script_cmd(story, n, step):
         if not p or not p.get("master"): return None
         S = P.load(spec, {}) or {}
         wav = S.get("wav") or os.path.join(st.get("audio_dir", ""), f"ท่อน{n}.wav")
-        return [PY, str(SCR / "cut_audio.py"), expand(st["master_audio"]), str(p["master"][0]), str(p["master"][1]), expand(wav)]
+        c = [PY, str(SCR / "cut_audio.py"), expand(st["master_audio"]), str(p["master"][0]), str(p["master"][1]), expand(wav)]
+        return c + ["--script", expand(st["script_docx"])] if st.get("script_docx") else c   # exact words, same times
     c = [PY, str(SCR / "ic8_part.py"), str(spec), step]
     return c + ["--approved"] if step == "render" else c
 

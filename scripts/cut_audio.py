@@ -35,29 +35,61 @@ def snap(src, t):
     return round((s + e) / 2, 2)
 
 def transcribe(wav):
-    """1st: Tidmunz Studio's whisper.cpp (Vulkan = fast on ANY graphics card; Tidmunz need not be open), found
-    wherever Tidmunz put it, with the best ggml model it has. 2nd: faster-whisper (see whisper_model)."""
+    """1st: Tidmunz Studio's whisper.cpp (Vulkan GPU), with a HARD time limit. 2nd: faster-whisper (see whisper_model).
+    3rd: Tidmunz whisper.cpp on CPU (-ng). user 2026-11-23: on another PC Tidmunz's whisper hung even on 2-3 s audio
+    and nothing fell back -> every way now has a time limit and the next way runs after a hang or error."""
+    import wave
+    with wave.open(wav) as w: dur = w.getnframes() / float(w.getframerate())
     cli, mdl = tidmunz_whisper()
     if cli and mdl:
-        print("WHISPER tidmunz %s" % os.path.basename(mdl))
-        import tempfile
-        tmp = tempfile.mkdtemp()
-        w16 = os.path.join(tmp, "a.wav")
-        subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", w16], check=True)
-        subprocess.run([cli, "-m", mdl, "-l", "th", "-oj", "-of", os.path.join(tmp, "a"), "-f", w16],
-                       capture_output=True, check=True)
-        j = json.load(open(os.path.join(tmp, "a.json"), encoding="utf8", errors="replace"))
-        return [{"t": [x["offsets"]["from"] / 1000, x["offsets"]["to"] / 1000], "text": x["text"].strip()} for x in j["transcription"]]
-    from faster_whisper import WhisperModel
-    import numpy as np   # decode with ffmpeg ourselves (faster-whisper's PyAV path breaks on some av versions)
-    m = whisper_model(WhisperModel)
-    pcm = subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
-                         capture_output=True, check=True).stdout
-    segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True, beam_size=1)
-    return [{"t": [round(x.start, 2), round(x.end, 2)], "text": x.text.strip()} for x in segs]
+        r = whisper_cpp(cli, mdl, wav, [], 60 + 2 * dur)
+        if r is not None: return r
+    try:
+        from faster_whisper import WhisperModel
+    except ImportError:
+        WhisperModel = None
+    if WhisperModel:
+        import numpy as np   # decode with ffmpeg ourselves (faster-whisper's PyAV path breaks on some av versions)
+        m = whisper_model(WhisperModel)
+        pcm = subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
+                             capture_output=True, check=True).stdout
+        segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True, beam_size=1)
+        return [{"t": [round(x.start, 2), round(x.end, 2)], "text": x.text.strip()} for x in segs]
+    if cli and mdl:   # no faster-whisper: Tidmunz's whisper on the CPU, smallest model it has
+        r = whisper_cpp(cli, tidmunz_whisper(small=True)[1], wav, ["-ng"], 120 + 6 * dur)
+        if r is not None: return r
+    sys.exit("TRANSCRIBE FAIL: Tidmunz whisper hung/failed and faster-whisper is not installed. "
+             "Tell the user (Thai). Do NOT test GPUs or install things yourself.")
 
 
-def tidmunz_whisper():
+def whisper_cpp(cli, mdl, wav, extra, limit):
+    """run whisper.cpp once with a hard time limit; segments or None (hang / error / bad output)."""
+    import tempfile
+    tmp = tempfile.mkdtemp()
+    w16, base = os.path.join(tmp, "a.wav"), os.path.join(tmp, "a")
+    subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", w16], check=True)
+    print("WHISPER tidmunz %s %s (max %d s)" % (os.path.basename(mdl), "CPU" if extra else "GPU", limit), flush=True)
+    try:
+        pr = subprocess.Popen([cli, "-m", mdl, "-l", "th", "-t", str(min(8, os.cpu_count() or 4)), "-oj", "-of", base, "-f", w16] + extra,
+                              stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, cwd=os.path.dirname(cli))
+        try:
+            pr.wait(timeout=limit)
+        except subprocess.TimeoutExpired:   # kill it AND its children, then go on
+            subprocess.run(["taskkill", "/T", "/F", "/PID", str(pr.pid)], capture_output=True); raise
+        j = json.load(open(base + ".json", encoding="utf8", errors="replace"))
+        out = []
+        for x in j.get("transcription", []):
+            o = x.get("offsets") or {}
+            out.append({"t": [o.get("from", 0) / 1000, o.get("to", 0) / 1000], "text": x.get("text", "").strip()})
+        if out: return out
+        print("WARN tidmunz whisper gave no text; trying the next way")
+    except subprocess.TimeoutExpired:
+        print("WARN tidmunz whisper took over %d s (stuck); trying the next way" % limit)
+    except Exception as e:
+        print("WARN tidmunz whisper failed (%s); trying the next way" % str(e)[:200])
+    return None
+
+def tidmunz_whisper(small=False):
     """(whisper-cli.exe, best ggml model) from any Tidmunz Studio install, else (None, None).
     user 2026-11-23: on another PC Tidmunz transcribed fine but Ai-iclone did not find it (fixed path + one model name)."""
     import glob
@@ -75,7 +107,7 @@ def tidmunz_whisper():
             n = os.path.basename(m).lower()
             return next((i for i, k in enumerate(rank) if "ggml-" + k in n), len(rank))
         if mdls:
-            return cli, min(mdls, key=score)
+            return cli, (max if small else min)(mdls, key=score)
     return None, None
 
 

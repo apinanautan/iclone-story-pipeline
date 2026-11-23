@@ -550,3 +550,6 @@ The user has repeated every item below many times and is furious about repeating
 
 ## Machine names (user 2026-11-23)
 - The user has 3 PCs, each with its own MyComp Bot tunnel name (Dino is only one of them). Never write docs, prompts or code that assume one machine name: say "MyComp Bot on any PC". Paths use %USERPROFILE% / %LOCALAPPDATA%, never one PC's folder.
+
+## Transcription never hangs (user 2026-11-23)
+- On another PC Tidmunz's whisper hung even on 2-3 s audio and nothing fell back. cut_audio.py now gives Tidmunz whisper a hard limit (60 s + 2x audio), kills it, then uses faster-whisper, then Tidmunz on CPU (-ng). Step `audio` passes `--script` (words from the script docx, same times). If all fail it says TRANSCRIBE FAIL: tell the user, never test GPUs or install things yourself.
