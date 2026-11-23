@@ -12,7 +12,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone approve --said "<text>" user approval typed in chat (story plan / part stills)
   Ai-iclone steps                   every step, numbered, with who does it
   Ai-iclone version                 program version (file VERSION)
-  Ai-iclone update                  (exe) get the newest release from GitHub now
+  Ai-iclone update                  get the newest release from GitHub now (every command also checks, at most once per 10 min)
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
   Ai-iclone log                     what runs now (real %), log with clock + seconds, last FAIL report (screen text, picture)
   Ai-iclone doctor                  check this PC's tools (ffmpeg, ffprobe, Python, Blender, iClone jobs folder)
@@ -329,6 +329,14 @@ def main(a):
         try: s.reconfigure(encoding="utf-8")
         except Exception: pass
     c = a[0] if a else ""
+    # self-update on EVERY start (exe, Ai-iclone.cmd, GPT/MCP): only the exe used to update (user 2026-11-23)
+    if c == "update" or (c not in ("", "help", "-h", "--help", "version", "--version") and os.environ.get("AIICLONE_NO_UPDATE") != "1"):
+        import selfupdate
+        new = selfupdate.check(force=(c == "update"))
+        if c == "update": return 0
+        if new:   # run the command with the NEW code
+            return subprocess.run([PY, str(SCR / "ai_iclone.py")] + list(a), cwd=ROOT,
+                                  env=dict(os.environ, AIICLONE_NO_UPDATE="1")).returncode
     if c in ("", "help", "-h", "--help"): manual(); return 0
     if c in ("version", "--version"): out("Ai-iclone " + VERSION); return 0
     if c == "status": return 0 if show_status() else 1
