@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "ai-iclone": {
+      "command": "py",
+      "args": ["-3", "%LOCALAPPDATA%\\Ai-iclone\\mcp_server\\server.py"],
+      "note": "Run Ai-iclone.exe once first (it installs to %LOCALAPPDATA%\\Ai-iclone). Needs: py -3 -m pip install mcp. Replace %LOCALAPPDATA% with the real path if your client does not expand it."
+    }
+  }
+}
