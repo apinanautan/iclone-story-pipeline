@@ -37,6 +37,7 @@ The same commands in a normal PowerShell window:
 | "ผ่าน" / "อนุมัติ" / "โอเค" (approval) | `approve --said "<the user's exact words>"` |
 | "ต่อเลย" / nothing specific | `do` |
 | "ลบไฟล์ขยะ" | `clean` |
+| "แปลงคลิปเป็นท่า <file>" (video to motion) | `video2motion <file.mp4>` through `shell` (not in the ai_iclone tool list). First time it says STOP: ask the user once, then add `--allow-install`. Show the user `<name>_check.mp4`; the `_CC.fbx` goes into iClone with Convert All. |
 
 ## The loop
 Run `do`, read the reply, act on the exit code:

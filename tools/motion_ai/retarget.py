@@ -2,7 +2,7 @@
 # SOMA (Motion AI) motion -> CC3/CC4 CC_Base skeleton, export FBX with the CC mesh (iClone: Convert All).
 import bpy, sys, mathutils, os
 src_blend, out = sys.argv[sys.argv.index("--") + 1:][:2]
-CC = r"C:\Users\Apinan\Documents\Reallusion\DataLink\CC4 - CC3_Base_Plus_2\exports\CC3_Base_Plus\CC3_Base_Plus.fbx"
+CC = os.environ.get("CC_BASE_FBX") or r"C:\Users\Apinan\Documents\Reallusion\DataLink\CC4 - CC3_Base_Plus_2\exports\CC3_Base_Plus\CC3_Base_Plus.fbx"
 MAP = [("Hips", "CC_Base_Hip"), ("Spine1", "CC_Base_Waist"), ("Spine2", "CC_Base_Spine01"), ("Chest", "CC_Base_Spine02"),
        ("Neck1", "CC_Base_NeckTwist01"), ("Neck2", "CC_Base_NeckTwist02"), ("Head", "CC_Base_Head")]
 for s in ("Left", "Right"):

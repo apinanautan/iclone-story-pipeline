@@ -14,6 +14,8 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone version                 program version (file VERSION)
   Ai-iclone update                  (exe) get the newest release from GitHub now
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
+  Ai-iclone video2motion <clip.mp4> [name] [--allow-install]
+                                    a video of one person -> iClone motion FBX on CC3_Base_Plus (local, CPU, no iClone)
 
 State lives in files only (stories/, parts/, progress/), read by the same functions as the window
 (scripts/progress_app.py), so the AI and the window always agree. No screenshots needed.
@@ -81,7 +83,8 @@ CHAT = """ผู้ใช้พูดในแชท -> คำสั่ง:
   "ทำช่วง 0:00 ถึง 7:14"         -> {cmd} range 0:00-7:14
   "ทำท่อน 2"                    -> {cmd} use X 2  แล้ว {cmd} do ซ้ำจนเจอ STOP
   "ผ่าน" / "อนุมัติ"              -> {cmd} approve --said "ผ่าน"
-  "ต่อเลย" / ไม่ได้บอกอะไร        -> {cmd} do"""
+  "ต่อเลย" / ไม่ได้บอกอะไร        -> {cmd} do
+  "แปลงคลิปเป็นท่า <ไฟล์>"         -> {cmd} video2motion <ไฟล์.mp4>  (ครั้งแรกขึ้น STOP: ถามผู้ใช้ก่อนติดตั้ง แล้วเติม --allow-install)"""
 
 
 def out(s=""):
@@ -304,6 +307,8 @@ def main(a):
         rc = subprocess.run([PY, str(SCR / "ic8_story.py"), a[1], "init"], cwd=ROOT).returncode
         if rc == 0: save_sel({"story": a[1]})
         return rc
+    if c == "video2motion" and len(a) > 1:
+        return subprocess.run([PY, str(SCR / "video2motion.py")] + a[1:], cwd=ROOT).returncode
     out(__doc__); return 1
 
 
