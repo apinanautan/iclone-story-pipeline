@@ -35,12 +35,11 @@ def snap(src, t):
     return round((s + e) / 2, 2)
 
 def transcribe(wav):
-    """Use the large-v3 model ALREADY on this PC - never download a second copy.
-    1st: Tidmunz Studio's whisper.cpp (Vulkan) + ggml-large-v3.bin (Tidmunz need not be open).
-    2nd: faster-whisper large-v3 only if it is already in the HuggingFace cache (local_files_only)."""
-    W = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "tools", "whisper_vulkan")
-    cli, mdl = os.path.join(W, "bin", "whisper-cli.exe"), os.path.join(W, "ggml-large-v3.bin")
-    if os.path.exists(cli) and os.path.exists(mdl):
+    """1st: Tidmunz Studio's whisper.cpp (Vulkan = fast on ANY graphics card; Tidmunz need not be open), found
+    wherever Tidmunz put it, with the best ggml model it has. 2nd: faster-whisper (see whisper_model)."""
+    cli, mdl = tidmunz_whisper()
+    if cli and mdl:
+        print("WHISPER tidmunz %s" % os.path.basename(mdl))
         import tempfile
         tmp = tempfile.mkdtemp()
         w16 = os.path.join(tmp, "a.wav")
@@ -56,6 +55,79 @@ def transcribe(wav):
                          capture_output=True, check=True).stdout
     segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True, beam_size=1)
     return [{"t": [round(x.start, 2), round(x.end, 2)], "text": x.text.strip()} for x in segs]
+
+
+def tidmunz_whisper():
+    """(whisper-cli.exe, best ggml model) from any Tidmunz Studio install, else (None, None).
+    user 2026-11-23: on another PC Tidmunz transcribed fine but Ai-iclone did not find it (fixed path + one model name)."""
+    import glob
+    la, pf = os.environ.get("LOCALAPPDATA", ""), os.environ.get("ProgramFiles", r"C:\Program Files")
+    roots = [os.path.join(la, "Tidmunz Studio"), os.path.join(la, "Programs", "Tidmunz Studio")] + glob.glob(os.path.join(pf, "Tidmunz*"))
+    rank = ["large-v3-turbo", "large-v3", "large-v2", "large", "medium", "small", "base"]
+    for r in roots:
+        if not os.path.isdir(r): continue
+        clis = glob.glob(os.path.join(r, "**", "whisper-cli.exe"), recursive=True)
+        if not clis: continue
+        cli = clis[0]; top = os.path.dirname(os.path.dirname(cli))
+        mdls = [m for m in glob.glob(os.path.join(top, "**", "ggml-*.bin"), recursive=True) if "silero" not in m.lower()]
+        if not mdls: mdls = [m for m in glob.glob(os.path.join(r, "**", "ggml-*.bin"), recursive=True) if "silero" not in m.lower()]
+        def score(m):
+            n = os.path.basename(m).lower()
+            return next((i for i, k in enumerate(rank) if "ggml-" + k in n), len(rank))
+        if mdls:
+            return cli, min(mdls, key=score)
+    return None, None
+
+
+def norm(t):   # Whisper writes sara am as nikhahit + sara aa
+    return t.replace("ํา", "ำ")
+
+
+def fix_words(segments, docx, split="(AD.)"):
+    """Replace Whisper's rough Thai with the exact words of the script .docx; times stay EXACTLY the same
+    (user 2026-11-23). Finds this audio's place in the script, aligns letters, cuts the script at each segment's
+    boundary. Keeps Whisper's text in 'heard'. Segments that match nothing keep their text."""
+    import difflib, zipfile
+    xml = zipfile.ZipFile(docx).read("word/document.xml").decode("utf-8")
+    paras = [re.sub(r"<[^>]+>", "", x) for x in re.findall(r"<w:p[ >].*?</w:p>", xml, re.S)]
+    full = "\n".join(x for x in paras if x.strip()).replace(split, "\n")
+    keep = [i for i, c in enumerate(full) if not c.isspace()]      # script letters without spaces -> index in full
+    S = "".join(full[i] for i in keep)
+    heard = [re.sub(r"\s+", "", norm(g["text"])) for g in segments]
+    W = "".join(heard)
+    if not W or not S: return segments
+    # 1) the window of the script this audio is in (best ratio, step = 1/4 of the audio length)
+    n = len(W); win = int(n * 1.4) + 20; best = (0, 0)
+    for st in range(0, max(1, len(S) - n // 2), max(1, n // 4)):
+        r = difflib.SequenceMatcher(None, W, S[st:st + win], autojunk=False).ratio()
+        if r > best[0]: best = (r, st)
+    st = max(0, best[1] - n // 4); Sw = S[st:st + win + n // 2]
+    sm = difflib.SequenceMatcher(None, W, Sw, autojunk=False)
+    blocks = [b for b in sm.get_matching_blocks() if b.size]
+    if not blocks or sum(b.size for b in blocks) < 0.3 * n: return segments   # not this script
+    def to_s(i):   # letter i of W -> letter of Sw (interpolate between matching blocks)
+        prev = (0, 0)
+        for b in blocks:
+            if i < b.a: return prev[1] + round((i - prev[0]) * ((b.b - prev[1]) / max(1, b.a - prev[0])))
+            if i <= b.a + b.size: return b.b + (i - b.a)
+            prev = (b.a + b.size, b.b + b.size)
+        return min(len(Sw), prev[1] + (i - prev[0]))
+    cut, pos = [0], 0
+    for h in heard: pos += len(h); cut.append(to_s(pos))
+    cut[0] = to_s(0); cut[-1] = blocks[-1].b + blocks[-1].size
+    # 2) snap each inner cut to the nearest space/line break in the real script (no word split in half)
+    def snap_full(k):
+        i = keep[min(len(keep) - 1, st + max(0, k))]
+        for d in range(0, 25):
+            for j in (i - d, i + d):
+                if 0 < j < len(full) and full[j - 1].isspace() is False and full[j].isspace(): return j
+        return i
+    edges = [keep[min(len(keep) - 1, st + cut[0])]] + [snap_full(k) for k in cut[1:-1]] + [keep[min(len(keep) - 1, st + max(0, cut[-1] - 1))] + 1]
+    out = []
+    for g, a, b in zip(segments, edges, edges[1:]):
+        t = re.sub(r"\s+", " ", full[a:b]).strip() if b > a else ""
+        out.append(dict(g, text=t or g["text"], heard=g["text"]))
+    return out
 
 
 def whisper_model(WhisperModel):
@@ -98,6 +170,9 @@ def main():
     print("CUT %s  %.2f-%.2f (%.2f s)" % (out, t0, t1, t1 - t0))
     if "--no-text" not in a:
         info["segments"] = transcribe(out)
+        if "--script" in a:   # exact words from the script .docx, same times
+            info["segments"] = fix_words(info["segments"], expand(a[a.index("--script") + 1]))
+            info["words_from"] = "script"
         for g in info["segments"]: print("  %6.2f-%6.2f %s" % (g["t"][0], g["t"][1], g["text"]))
     json.dump(info, open(out[:-4] + ".json", "w", encoding="utf8"), ensure_ascii=False, indent=1)
 
