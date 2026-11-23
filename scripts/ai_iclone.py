@@ -189,6 +189,13 @@ def script_cmd(story, n, step):
     return c + ["--approved"] if step == "render" else c
 
 
+def PROG_NOW(story, n, step, state):
+    """progress/now.json so the window shows this step running with its % (steps that are not ic8_part.py)."""
+    try: (P.PROG / "now.json").write_text(json.dumps({"story": story, "part": str(n), "step": step, "state": state,
+                                                       "time": time.time()}, ensure_ascii=False), encoding="utf-8")
+    except Exception: pass
+
+
 def do(dry=False, force=False):
     r = show_status()
     if not r: return 1
@@ -215,7 +222,18 @@ def do(dry=False, force=False):
     order = list(STORY_KIND if stage == "story" else PART_KIND)
     out("ข้อ %s (%d/%d = %d%%): โปรแกรมทำเอง\n> %s" % (nxt, order.index(nxt) + 1, len(order), 100 * order.index(nxt) // len(order), " ".join('"%s"' % x if " " in x else x for x in c)))
     if dry: out("(--dry: ไม่ได้รันจริง)"); return 0
-    t0 = time.time(); rc = subprocess.run(c, cwd=ROOT).returncode
+    t0 = time.time()
+    if "ic8_part.py" in c[1]: rc = subprocess.run(c, cwd=ROOT).returncode   # it reports its own real %
+    else:   # e.g. audio (cut_audio.py): % = its output lines / the lines it printed last time it passed
+        import ailog
+        ailog.start(nxt); now = PROG_NOW(story, n, nxt, "running")
+        p = subprocess.Popen(c, cwd=ROOT, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                             errors="replace", env=dict(os.environ, PYTHONUNBUFFERED="1", PYTHONIOENCODING="utf-8"))
+        for l in p.stdout: ailog.log(l.rstrip())
+        rc = p.wait()
+        if rc == 0: ailog.done(); ailog.clean_fails()
+        else: out(ailog.fail_report("%s exit %d" % (os.path.basename(c[1]), rc), iclone=False))
+        PROG_NOW(story, n, nxt, "done" if rc == 0 else "failed")
     out("")
     if rc == 3:   # the step needs the AI (e.g. cam_check: look at the image, fill the check file)
         out("งานของ AI ข้อ %s: ทำตามข้อความด้านบน แล้ว %s do" % (nxt, CMD)); return 3

@@ -81,7 +81,7 @@ def story_states(story):
         else: out["split"] = ("done", f"{len(inr)} ท่อน ~{mm(avg)}/ท่อน")
     # user 2026-11-22: every part's audio is cut + transcribed, times exactly = the part's range in the master,
     # and every line says who speaks (narrator / which character -> lip sync)
-    ad = expand(st.get("audio_dir", "")); good = []; why = ""
+    ad = expand(st.get("audio_dir", "")); good = []; why = ""; inr = []
     inr = [p for p in parts if tr[1] > 0 and p["master"][0] < tr[1] - 0.5]
     for p in inr:
         n = p["n"]; jf = Path(ad) / f"ท่อน{n}.json"; j = load(jf, {})
@@ -96,11 +96,21 @@ def story_states(story):
     out["output"] = ("done", "✓") if all(ok(p) for p in outs) else ("todo", "ยังไม่ตั้ง/ไม่มีโฟลเดอร์")
     ch = st.get("characters", {}); miss = [n for n, c in ch.items() if not ok(c.get("avatar"))]
     out["chars"] = ("done", f"{len(ch)} ตัว") if ch and not miss else (("bad", "ไม่พบ: " + ", ".join(miss)[:30]) if ch else ("todo", ""))
+    miss_c = miss
     sc = st.get("scenes", {}); miss = [n for n, c in sc.items() if not ok(c.get("file"))]
     out["scenes"] = ("done", f"{len(sc)} ฉาก") if sc and not miss else (("bad", "ไม่พบ: " + ", ".join(miss)[:30]) if sc else ("todo", ""))
     planned = [p for p in parts if p.get("content") and p.get("plan")]
     out["partplans"] = ("done" if parts and len(planned) == len(parts) else "todo", f"{len(planned)}/{len(parts)}")
     out["story_ok"] = ("done", "✓") if st.get("story_plan_ok") else ("todo", "คลิกเมื่อผ่าน")
+    # user 2026-11-23: a REAL % on every row that is not done, counted from what is filled / found on disk
+    frac = lambda a, b: round(100 * a / b) if b else 0
+    pct = {"sheet": frac(sum(1 for k in ("name", "folder") if st.get(k)), 2), "source": frac(sum(src), 2),
+           "range": 0 if tr[1] <= 0 else (50 if not st.get("teacher_range_confirmed") else 100),
+           "split": frac(len(good), len(inr)) if parts and tr[1] > 0 else 0,
+           "chars": frac(len(ch) - len(miss_c), len(ch)), "scenes": frac(len(sc) - len(miss), len(sc)),
+           "partplans": frac(len(planned), len(parts)), "output": frac(sum(1 for p in outs if ok(p)), 2)}
+    for k, v in pct.items():
+        if out[k][0] != "done": out[k] = (out[k][0], ("%d%%  " % v) + out[k][1])
     return out
 LOAD_STEPS = {"open", "cast", "sound"}   # user 2026-11-21: each load must finish within 3 minutes
 
@@ -207,6 +217,36 @@ def plan_complete(spec):
     (a fresh `ic8_story.py new` skeleton has who "?" and no shots)."""
     return bool(spec and spec.get("shots") and spec.get("lines")
                 and all(L.get("who") and L.get("who") != "?" for L in spec["lines"]))
+
+
+def ai_pct(story, n, k):
+    """REAL % of an AI step, counted from what is already filled in its file (user 2026-11-23: % on every row that can
+    have one). (pct, text) or None."""
+    spec = spec_of(story, n) or {}
+    if k == "plan":
+        L = spec.get("lines", []); cast = spec.get("cast", {}) or {}; shots = spec.get("shots", [])
+        st = load(ROOT / "stories" / f"{story}.json", {})
+        p = next((x for x in st.get("parts", []) if str(x.get("n")) == str(n)), {})
+        length = (p["master"][1] - p["master"][0]) if p.get("master") else max([l["t"][1] for l in L if l.get("t")] or [0])
+        who = sum(1 for l in L if l.get("who") and l["who"] != "?")
+        placed = sum(1 for c in cast.values() if isinstance(c, dict) and (c.get("spot") or c.get("pos")) and (c.get("motion") or c.get("motions")))
+        cover = min(1.0, max([sh["t"][1] for sh in shots if sh.get("t")] or [0]) / length) if length else 0
+        parts = [who / len(L) if L else 0, placed / len(cast) if cast else 0, cover]
+        return round(100 * sum(parts) / 3), "ใครพูด %d/%d บรรทัด · วางตัวละคร %d/%d · กล้อง %d ช็อต ถึง %.0f/%.0f วิ" % (
+            who, len(L), placed, len(cast), len(shots), cover * length, length)
+    if k == "cam_check":   # every answer counts: "see" + each true/false question, per shot
+        shots = spec.get("shots", []); ck = load(PROG / f"{story}_{n}_camcheck.json", {})
+        qs = ck.get("questions", []) if isinstance(ck, dict) else []
+        if not qs:
+            try: from cam_check import ASK as qs
+            except Exception: qs = []
+        rows = ck.get("shots", []) if isinstance(ck, dict) else []
+        if not shots: return None
+        tot = len(shots) * (1 + len(qs)) or 1
+        got = sum((len(str(e.get("see", "")).strip()) >= 10) + sum(e.get(q) is not None for q in qs) for e in rows)
+        full = sum(1 for e in rows if len(str(e.get("see", "")).strip()) >= 10 and all(e.get(q) is not None for q in qs))
+        return round(100 * got / tot), "ตอบครบ %d/%d ช็อต (%d/%d คำตอบ)" % (full, len(shots), got, tot)
+    return None
 
 
 def step_states(story, n):
@@ -363,7 +403,8 @@ class App(tk.Tk):
         st = load(ROOT / "stories" / f"{story}.json", {})   # user 2026-11-22: real numbers from the central sheet (story.json teacher_range)
         tr = st.get("teacher_range") or [0, 0]; mm = lambda x: f"{int(x // 60)}:{int(x % 60):02d}"
         inr = [p for p in st.get("parts", []) if p.get("master") and p["master"][0] < tr[1] - 0.5]
-        txt = f"ท่อน {n} จาก {len(inr)}   เวลาที่ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
+        pp = round(100 * ndone / len(STEPS))
+        txt = f"ท่อน {n} จาก {len(inr)} ({pp}%)   เวลาที่ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
         cur = next((p for p in st.get("parts", []) if str(p.get("n")) == str(n)), None)
         if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินเวลาที่ทำงาน"
         b, _ = jobs_usage()
@@ -410,7 +451,8 @@ class App(tk.Tk):
                 nxt = k == first_todo and live.get("state") != "running"
                 dot.configure(text="○", fg=AMBER if nxt else GREY)
                 txt.configure(fg=AMBER if nxt else SUB, font=("Tahoma", 9, "bold") if nxt else F)
-                info.configure(text=("คลิกเมื่อผ่าน" if k == "user_ok" else "ถัดไป") if nxt else "", fg=AMBER)
+                ap = ai_pct(story, n, k) if nxt else None
+                info.configure(text=("คลิกเมื่อผ่าน" if k == "user_ok" else (f"{ap[0]}%  ถัดไป" if ap else "ถัดไป")) if nxt else "", fg=AMBER)
         # detail lines under rows
         lv = load(J / "live.json", {})
         plan = load(PROG / f"{story}_{n}_motions.json", [])
@@ -419,11 +461,14 @@ class App(tk.Tk):
             if states[k] == "run" and lv.get("step") == k and time.time() - lv.get("time", 0) < 600:
                 p = max(0, min(100, int(lv.get("pct", 0))))
                 text = "█" * (p // 5) + "░" * (20 - p // 5) + f" {p}%" + chr(10) + str(lv.get("text", ""))[:60]; col = BLUE
+            elif states[k] == "todo" and k == first_todo and ai_pct(story, n, k):
+                p, t = ai_pct(story, n, k)
+                text = "█" * (p // 5) + "░" * (20 - p // 5) + f" {p}%" + chr(10) + t; col = AMBER
             elif k == "motion_plan" and plan:
                 text = chr(10).join(("⚠ " if m.get("warn") or not m.get("ok") else "   ") + f"{m['who']} ← {m['motion']} ×{m['speed']}" + (f"  หน้า: {m['face']}" if m.get('face') else "") for m in plan)
                 col = AMBER if any(m.get("warn") or not m.get("ok") for m in plan) else SUB
             running = states[k] == "run"
-            show = bool(text) and (running or k in getattr(self, "opened", set()))
+            show = bool(text) and (running or col == AMBER and k == first_todo or k in getattr(self, "opened", set()))
             tog.configure(text="" if not text or running else ("−" if show else "+"), fg=AMBER if col == AMBER else SUB)
             if show:
                 sub.configure(text=text, fg=col); sub.pack(fill="x", padx=(26, 0), after=row)

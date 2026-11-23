@@ -85,9 +85,9 @@ def gui(*a):
     what = "%s %s" % (a[0], os.path.basename(str(a[1])) if len(a) > 1 else "")
     if "iClone.exe" not in subprocess.run(["tasklist", "/FI", "IMAGENAME eq iClone.exe", "/NH"], capture_output=True, text=True).stdout:
         fail("iClone is not running (open iClone 8 first, then run again): %s not started" % what)
-    say("รอ iClone: %s (หยุดเองถ้าเกิน %d วินาที)" % (what, lim))
+    ailog.log("รอ iClone: %s (หยุดเองถ้าเกิน %d วินาที)" % (what, lim), count=False)
     p = subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a])
-    t0 = time.time(); nxt = 30
+    t0 = time.time(); nxt = 10
     try:
         while p.poll() is None:
             el = time.time() - t0
@@ -97,13 +97,13 @@ def gui(*a):
             if time.time() - lv.get("time", 0) > 5 and a[0] != "render":   # no real % from the job itself: say what we wait for
                 ailog.wait(ailog.T0["step"] or a[0], "รอ iClone %s %.0f/%d วินาที" % (what, el, lim))
             if el >= nxt:
-                wt = ailog.screen(); nxt += 30   # fresh read every 30 s, picture deleted at once
-                say("ยังรอ iClone: %s %.0f วินาที (สูงสุด %d) | หน้าจอ: %s" % (what, el, lim, wt[:300]))
+                wt = ailog.screen(); nxt += 10   # fresh read every 10 s (loading % on screen), picture deleted at once
+                ailog.log("ยังรอ iClone: %s %.0f วินาที (สูงสุด %d) | หน้าจอ: %s" % (what, el, lim, wt[:300]), count=False)
                 m = re.findall(r"(\d{1,3})\s*%", wt)
                 if m: live(ailog.T0["step"] or a[0], int(m[-1]), "iClone บอก %s%% (%s)" % (m[-1], what))
             time.sleep(1)
         r = p
-        say("iClone เสร็จ: %s ใน %.0f วินาที" % (what, time.time() - t0))
+        ailog.op("iClone %s" % what); ailog.log("iClone เสร็จ: %s ใน %.0f วินาที" % (what, time.time() - t0), count=False)
     except subprocess.TimeoutExpired:
         p.kill()
         fail("iClone did not finish %s in %d s: stopped (see the iClone windows' text below)" % (what, lim))
@@ -882,4 +882,4 @@ if __name__ == "__main__":
             else: STEPS[s](S, base)
         except BaseException:
             _now(s, "failed"); raise
-        _now(s, "done"); ailog.clean_fails()
+        _now(s, "done"); ailog.done(); ailog.clean_fails()

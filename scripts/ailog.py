@@ -18,12 +18,57 @@ NOWIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 T0 = {"step": "", "t": time.time()}   # the step now running and when it started
 
 
+OPS = os.path.join(PROG, "step_ops.json")   # how many actions each step took the last time it passed
+W = {"ops": 0, "expect": 0, "own": False}
+
+
 def start(step):
+    """a step begins: % = actions done / actions this step took last time (measured, not a guess)."""
     T0["step"], T0["t"] = step, time.time()
+    try: W["expect"] = json.load(open(OPS, encoding="utf-8")).get(step, 0)
+    except Exception: W["expect"] = 0
+    if not W["expect"]: W["expect"] = _from_log(step)
+    W["ops"], W["own"] = 0, False
 
 
-def log(s, echo=True):
+def _from_log(step):
+    """no record yet: count the lines this step printed the last time it ran to the end (progress/now_log.txt)."""
+    try: L = open(LOG, encoding="utf-8").read().splitlines()
+    except OSError: return 0
+    best = 0
+    for i, l in enumerate(L):
+        if "===== %s " % step in l or l.endswith("===== %s =====" % step):
+            seg = []
+            for m in L[i + 1:]:
+                if "=====" in m: break
+                seg.append(m)
+            if any(" OK" in x or x.split(" ", 1)[-1].startswith("OK") for x in seg) and not any("FAIL" in x for x in seg):
+                best = sum(1 for x in seg if "[" not in x.split(" ", 2)[-1][:2] and "รอ iClone" not in x and "ยังรอ" not in x)
+    return best
+
+
+def op(text):
+    """one real action finished (an iClone job, a GUI action, a result line)."""
+    W["ops"] += 1
+    if W["own"] or not T0["step"]: return   # the step counts its own work (characters, shots...): use that
+    if W["expect"]: _put(T0["step"], min(99, 100.0 * W["ops"] / W["expect"]), "%d/%d งาน: %s" % (W["ops"], W["expect"], text))
+    else: _put(T0["step"], 0, "งานที่ %d (ครั้งแรก ยังไม่รู้ว่ามีกี่งาน): %s" % (W["ops"], text))
+
+
+def done():
+    """the step passed: remember how many actions it took (next time = 100 %)."""
+    if not T0["step"]: return
+    try: d = json.load(open(OPS, encoding="utf-8"))
+    except Exception: d = {}
+    d[T0["step"]] = W["ops"]
+    try: json.dump(d, open(OPS, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    except Exception: pass
+    _put(T0["step"], 100, "เสร็จ %d งาน ใน %.0f วินาที" % (W["ops"], time.time() - T0["t"]))
+
+
+def log(s, echo=True, count=True):
     s = str(s)
+    if count and s.strip() and not s.startswith(("[", "รอ iClone", "ยังรอ")): op(s.strip().splitlines()[0][:60])
     if echo: print(s, flush=True)
     if not s.strip(): return
     try:
@@ -43,7 +88,12 @@ def wait(step, text):
 
 
 def live(step, pct, text):
-    """real % of one step (e.g. 3 of 7 characters = 43%). Logs a line each time it crosses 10 %."""
+    """real % of one step counted by the step itself (e.g. 3 of 7 characters = 43%)."""
+    W["own"] = True; _put(step, pct, text)
+
+
+def _put(step, pct, text):
+    """write live.json; a log line each time the % crosses 10."""
     pct = max(0, min(100, pct)); _pct[step] = pct
     try:
         os.makedirs(J, exist_ok=True)
@@ -52,7 +102,7 @@ def live(step, pct, text):
     except Exception: pass
     k = int(pct // 10)
     if _last.get(step) != k or pct >= 100:
-        _last[step] = k; log("[%3d%%] %s: %s" % (pct, step, text))
+        _last[step] = k; log("[%3d%%] %s: %s" % (pct, step, text), count=False)
 
 
 def count(step, i, n, text):
