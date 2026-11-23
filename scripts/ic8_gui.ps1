@@ -131,7 +131,8 @@ function PressButton([string]$rx){
     if($b){ try{$b.GetCurrentPattern([Windows.Automation.InvokePattern]::Pattern).Invoke()}catch{ $q=$b.Current.BoundingRectangle; Click ($q.X+$q.Width/2) ($q.Y+$q.Height/2) }; return $true } }
   $false
 }
-function CurrentFile { $t=Title; if($t -match 'iClone 8 - (.+?)( \*)?$'){ $n=$Matches[1]; Get-ChildItem 'E:\ไฟล์งาน\ไฟล์ Save' -Recurse -Filter $n -ErrorAction SilentlyContinue|sort LastWriteTime -Desc|select -First 1 } }
+function SaveRoot { try { (Get-Content (Join-Path $env:LOCALAPPDATA 'Tidmunz Studio\snapgen_data\ic8_jobs\paths.json') -Raw -Encoding UTF8 | ConvertFrom-Json).SAVE } catch { Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'iClone Story Save' } }   # this PC's {SAVE} (scripts/paths.py)
+function CurrentFile { $t=Title; if($t -match 'iClone 8 - (.+?)( \*)?$'){ $n=$Matches[1]; Get-ChildItem (SaveRoot) -Recurse -Filter $n -ErrorAction SilentlyContinue|sort LastWriteTime -Desc|select -First 1 } }
 # user 2026-11-22: hidden timestamped backups in ic8_jobs\backup filled the disk (90+ GB). Now ONE visible copy
 # NEXT TO the project in the save folder: <name>.backup.iProject = the project before the last save, overwritten
 # each save. Old timestamped copies of this project in ic8_jobs\backup are deleted.

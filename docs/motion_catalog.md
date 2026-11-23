@@ -2,7 +2,7 @@
 
 User (2026-11-10): do NOT reuse the same few motions every part; the library is huge. Pick something new when it fits, and record what it looks like here so the next pick is informed. Verify by a still before trusting a name.
 
-Library roots: `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\โมชั่น\` (CC MixMove 03_Male / 04_Female) and `G:\ไดรฟ์ของฉัน\.ไฟล์ต่างๆ (ห้ามลบ)\โมชั่น\` (MixMoves Communication 200, MographMotion *_Sad, Daily Life, Studio Mocap...). Hand poses: `C:\Users\Public\Documents\Reallusion\Reallusion Templates\Animation\Gesture\{Hold,Sign}\*.iHand`.
+Library roots: `{MOTION}\โมชั่น\` (CC MixMove 03_Male / 04_Female) and `{DRIVE}\.ไฟล์ต่างๆ (ห้ามลบ)\โมชั่น\` (MixMoves Communication 200, MographMotion *_Sad, Daily Life, Studio Mocap...). Hand poses: `C:\Users\Public\Documents\Reallusion\Reallusion Templates\Animation\Gesture\{Hold,Sign}\*.iHand`.
 
 | Motion | Looks like (verified by stills) | Good for | Avoid when | Used in |
 |---|---|---|---|---|
@@ -24,7 +24,7 @@ Also: Look-at keys turn the head 50-80 deg toward the target; face clip "Look fr
 
 
 ## คลังโมชั่นที่ค้นพบและจะใช้กับท่อน 3 (สำรวจ 2026-11-11)
-Root: `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น` — 4,742 .rlMotion, 1,286 .iMotion, 129 .iMotionPlus, 270 .italk, 8 .iFace
+Root: `{MOTION}` — 4,742 .rlMotion, 1,286 .iMotion, 129 .iMotionPlus, 270 .italk, 8 .iFace
 
 | บีต | คลิปที่จะใช้ (ยังไม่ verified ด้วย still) | เหตุผล |
 |---|---|---|

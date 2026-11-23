@@ -4,7 +4,7 @@
 - ท่อน 1: DONE, rendered {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน1_20261120.mp4
 - ท่อน 2 (โรงอิฐ, 76.07 s): DONE. Saved via GUI to {SAVE}/นิทาน/ชัยชนะของคนไม่ยอมแพ้/ท่อน2_โรงอิฐ_20261121.iProject. Rendered {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน2_20261121.mp4 (1080p60, sound, video_check OK). Spec: parts/ชัยชนะของคนไม่ยอมแพ้_2.json (good template for part 3: landmark-relative cast, in-place motions, subject auto-aim, face_light_multiplier 0.15).
 - ท่อน 3 (บ้าน, 83.72 s): DONE. Rendered {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน3_20261121.mp4 (re-render with textures, OCR texture wait before render).
-- ท่อน 4 (บ้านนายชัยยศ / ร้านชำหน้าบ้าน, 84.90 s, master 225.92-310.82): RENDERED 2026-11-22 (user ผ่าน): E:/Video/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน4_20261121.mp4, 84.9 s 1080p60, video_check OK. Camera bounce left for later parts. Only อัมพร + ชัยยศ (no siblings). Spec parts/ชัยชนะของคนไม่ยอมแพ้_4.json; project {SAVE}/ชัยชนะของคนไม่ยอมแพ้/ท่อน4_บ้านชัยยศ_20261121.iProject. All motions slow 0.65-0.7, heroine calm/modest poses, smile keys (couple 0.7), clips back to back with 2 s transition (no overlap), face_light_multiplier 0.2. iClone crashed 2026-11-22 after the 22:14 save; reopened, cams re-run. 2026-11-22 added TV shot (user): 62.68-68.12 อัมพร_ทีวี sits on a stool (PRK_Bench_Sit_Relax_01A_F 0.65) watching an old CRT TV, camera behind her shoulder, TV blank. Props via spec "props" (Tidmunz old_crt_tv + wood_stool, fbx scale 100). Newspaper shot now 47.7-62.68. Saved 07:37. Stills: docs/review/p4_cams_v4_tv.jpg, docs/review/p4_tv_shot.png. 2026-11-22 09:4x full re-run with the new face flow (blink + Digital Soul face clips 70% + smile ramp 10->max 80%, thinking face) and clip joins (clips only on screen, 1 s gap, crossing X); อัมพร_ร้าน motion_from 0 (calm phase of the cashier motion). All checks pass. Stills: docs/review/p4_cams_v5.jpg. Next: user ผ่าน -> ready -> render --approved -> video_check.
+- ท่อน 4 (บ้านนายชัยยศ / ร้านชำหน้าบ้าน, 84.90 s, master 225.92-310.82): RENDERED 2026-11-22 (user ผ่าน): {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน4_20261121.mp4, 84.9 s 1080p60, video_check OK. Camera bounce left for later parts. Only อัมพร + ชัยยศ (no siblings). Spec parts/ชัยชนะของคนไม่ยอมแพ้_4.json; project {SAVE}/ชัยชนะของคนไม่ยอมแพ้/ท่อน4_บ้านชัยยศ_20261121.iProject. All motions slow 0.65-0.7, heroine calm/modest poses, smile keys (couple 0.7), clips back to back with 2 s transition (no overlap), face_light_multiplier 0.2. iClone crashed 2026-11-22 after the 22:14 save; reopened, cams re-run. 2026-11-22 added TV shot (user): 62.68-68.12 อัมพร_ทีวี sits on a stool (PRK_Bench_Sit_Relax_01A_F 0.65) watching an old CRT TV, camera behind her shoulder, TV blank. Props via spec "props" (Tidmunz old_crt_tv + wood_stool, fbx scale 100). Newspaper shot now 47.7-62.68. Saved 07:37. Stills: docs/review/p4_cams_v4_tv.jpg, docs/review/p4_tv_shot.png. 2026-11-22 09:4x full re-run with the new face flow (blink + Digital Soul face clips 70% + smile ramp 10->max 80%, thinking face) and clip joins (clips only on screen, 1 s gap, crossing X); อัมพร_ร้าน motion_from 0 (calm phase of the cashier motion). All checks pass. Stills: docs/review/p4_cams_v5.jpg. Next: user ผ่าน -> ready -> render --approved -> video_check.
 - WORK THROUGH THE PREVIEW (user 2026-11-22): run every change as ic8_part.py steps so progress_app.py shows the true state; after any iClone (re)open, OCR-check until no popup / Texture Loading is left.
 - Pipeline (ic8_part.py) ORDER: check, motion_plan, open, cast, pose, sound, lip, cams, motion_check, light_check, switch -> user says ผ่าน -> ready (GUI save) -> render --approved (+video_check). Preview (progress_app.py) shows every step with live %.
 - New since 2026-11-21: Thai keyboard breaks Ctrl+S (ic8_gui.ps1 switches to English); per-cast shadowless face spotlight linked to the head (untested in iClone yet); render wait limit 2 h.
@@ -31,9 +31,9 @@
 - สเต็ป 3 ยังไม่ผ่าน approval gate: story.json เก็บ spot 3 ชื่อ + cam 3 ชื่อ ทุกชื่อ approved=false; ไม่มีการคีย์มุมเหล่านี้เป็น production
 - Scene scan จริง 48 props + 4 avatars + 2 cameras, errors=0.
 - ภาพสำรวจ 4 มุมจาก iClone: 
-C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overview\wide_scene_overview_sheet.jpg
+%USERPROFILE%\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overview\wide_scene_overview_sheet.jpg
 - ภาพตรวจตัวละครกล้อง 80/100mm 4 มุมจาก iClone: 
-C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overview\scene_camera_candidates_sheet.jpg
+%USERPROFILE%\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overview\scene_camera_candidates_sheet.jpg
 - QA: A1/A2 มองหน้าแบบ 3/4 ได้ แต่ยังต้องแก้ช่องว่างเหนือหัว/โมชั่น/พร็อพ; B1/B2 เป็น profile ใช้ไม่ได้; overview 01 มีต้นไม้บัง ไม่อนุมัติเป็น shot
 - คลังเรื่องนี้ไม่มีอัมพรเด็ก; มีโมเดลหญิงวัยประถมในเรื่องอื่น เช่น กรงกตัญญู/อรวรรณ วัยประถม และ ดวงเมียน้อย/นาวีวัยประถม แต่ยังไม่ได้รับอนุมัติให้ใช้แทน
 - ห้ามเปิดท่อนใหม่, วางโมชั่น, ใช้ภาพเป็น final, ลิปซิงก์ หรือเรนเดอร์ จนได้รับคำอนุมัติจุดยืน/กล้องและโมเดลอัมพรเด็ก
@@ -64,9 +64,9 @@ C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overvie
 - Project Sound remains ท่อน1 at time0; 66.13s, stage ProjectLength/End 71.1167s. Qt viewport set to Switch and 7 switcher keys present.
 - FIX: ic8_part.py job staging moved out of watched run/ to prevent race, ic8_cams.py accepts no_dof for architectural inserts; both compiled.
 ## 2026-11-20 - 480p trial rendered and verified on NTFS
-- Source project separately saved using GUI as E:\ไฟล์งาน\ไฟล์ Save\นิทาน\ชัยชนะของคนไม่ยอมแพ้\GPT_ท่อน1_ทดลอง480p_20261120.iProject (1,805,399,205 bytes).
+- Source project separately saved using GUI as {SAVE}\ชัยชนะของคนไม่ยอมแพ้\GPT_ท่อน1_ทดลอง480p_20261120.iProject (1,805,399,205 bytes).
 - Native 480p60 iClone rendering finished and the clean original audio was muxed. Native export was 852x480, encoded preview scaled to exact 854x480.
-- Verified output E:\Video\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_ทดลอง.mp4, 10,142,564 bytes, H.264 854x480 at 60fps, 66.133333 seconds, AAC.
+- Verified output {VIDEO}\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_ทดลอง.mp4, 10,142,564 bytes, H.264 854x480 at 60fps, 66.133333 seconds, AAC.
 - Full decode success. Audio volume mean -22.3 dB, max -2.6 dB.
 - SHA256 9B476CF1867D8CB75C99F9A8A889F2662193A2800370D0BEEE766AF8345E267D.
 - The user requested a TEST video, not approval of the visual QA. Temporary child actor and weak-looking work motions remain unapproved for final.
@@ -75,7 +75,7 @@ C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overvie
 - User explicitly requested delivery to ntfy; confirmed topic Pic-Gptz from project rules dated 2026-11-10.
 - Notification attachment uploaded successfully, HTTP 200, id mUJ6Wkv2hIRg, link https://ntfy.sh/file/mUJ6Wkv2hIRg.mp4.
 - ntfy size-limited copy: 1,714,224 bytes, H.264 854x480 at 20 fps, AAC mono, 66.15 seconds; compressed to fit ntfy attachment size limit.
-- Original full-quality test remains E:\Video\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_ทดลอง.mp4, 10,142,564 bytes, 854x480 at 60fps, 66.13s.
+- Original full-quality test remains {VIDEO}\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_ทดลอง.mp4, 10,142,564 bytes, 854x480 at 60fps, 66.13s.
 - Receipt saved %LOCALAPPDATA%\Tidmunz Studio\snapgen_data\ic8_jobs\part1_480p_ntfy_receipt.json. Do not send duplicate notification.
 - Delivery does not mean story Visual QA is approved or final.
 
@@ -84,16 +84,16 @@ C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\ic8_jobs\scene_overvie
 - Surveyed all sides using iClone RenderImage; true FRONT is NORTH with broad staircase and entry porch.
 - Selected clean north-front camera [-2000,-1350,950], target [-1710,-4600,530], focal 36; northwest views rejected due foreground decorative roof obstruction.
 - Camera actual still QA passed 54 images, seven shots. Reopened new saved iProject, verified Cam_A at 1.9s (-2000,-1355,949), focal36, Switch viewport with seven keys.
-- Source saved separately: E:\ไฟล์งาน\ไฟล์ Save\นิทาน\ชัยชนะของคนไม่ยอมแพ้\GPT_ท่อน1_หน้าบ้านจริง_แก้คอ_20261121.iProject 1,772,540,919 bytes.
+- Source saved separately: {SAVE}\ชัยชนะของคนไม่ยอมแพ้\GPT_ท่อน1_หน้าบ้านจริง_แก้คอ_20261121.iProject 1,772,540,919 bytes.
 - Character work tracking disabled and saved: father/mother/child trial face clips=0, both LookAt weights=0. Child motion still has maximum 8.65 degree change in one 60fps frame. Do not claim final smoothness or re-rendering.
 - Correct before/after image and seven contact sheets in Desktop\ชัยชนะของคนไม่ยอมแพ้\ภาพตรวจ\ท่อน1\แก้เป็นหน้าบ้านจริง_20261121.
 - Earlier 480p ntfy video was NOT replaced and still contains the rejected opening angle.
 
 ## 2026-11-21 — Delivered new color 480p front-house revision
 - User requested corrected Part 1 video in color at 480p; reused saved/verified GPT_ท่อน1_หน้าบ้านจริง_แก้คอ_20261121.iProject.
-- Native iClone render saved at E:\Video\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_หน้าบ้านจริง_20261121_raw.mp4 (14,783,896 bytes, 852x480 at 60 fps, initial 71.136s including tail).
-- Final color 480p with clean WAV trimmed 66.1333s: E:\Video\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_สี480p_หน้าบ้านจริง_20261121.mp4 (10,077,069 bytes; H.264 yuv420p 854x480 60fps AAC), full frame decode checked.
-- ntfy 2MB-size copy: E:\Video\ชัยชนะของคนไม่ยอมแพ้\part1_color_480p_front_house_ntfy.mp4 (1,641,991 bytes; color H.264 854x480 at 20fps; AAC; 66.15 sec).
+- Native iClone render saved at {VIDEO}\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_480p_หน้าบ้านจริง_20261121_raw.mp4 (14,783,896 bytes, 852x480 at 60 fps, initial 71.136s including tail).
+- Final color 480p with clean WAV trimmed 66.1333s: {VIDEO}\ชัยชนะของคนไม่ยอมแพ้\ท่อน1_สี480p_หน้าบ้านจริง_20261121.mp4 (10,077,069 bytes; H.264 yuv420p 854x480 60fps AAC), full frame decode checked.
+- ntfy 2MB-size copy: {VIDEO}\ชัยชนะของคนไม่ยอมแพ้\part1_color_480p_front_house_ntfy.mp4 (1,641,991 bytes; color H.264 854x480 at 20fps; AAC; 66.15 sec).
 - ntfy Pic-Gptz confirmed HTTP 200, event id 6JQy28tHY7Dg, attachment https://ntfy.sh/file/6JQy28tHY7Dg.mp4. Receipt saved part1_color_front_house_ntfy_receipt.json; NEVER duplicate on retry.
 - Independently extracted 7 representative frames from the FINAL 60fps video and inspected visibly in color; shot1 truly shows stair-front view of node_0. Other shots show working father/mother/child but work poses are not final QA-approved.
 - IMPORTANT: this is a preview and does not supersede user approval for 1080p final. Previous rejected 480p ntfy video remains separate and must not be mistaken for current.

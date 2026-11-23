@@ -1,7 +1,12 @@
 # Only save Part 8 after still review. No video.
-import os,traceback,RLPy
+import os,json,traceback,RLPy
 from PySide2 import QtWidgets
-J=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs');T=lambda s:RLPy.RTime.FromValue(int(round(s*6000)))
+J=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs');
+def X(p):  # {SAVE}/{MOTION}/... -> this PC's folder (scripts/paths.py writes <jobs>/paths.json)
+ m=json.load(open(os.path.join(J,'paths.json'),encoding='utf-8'))
+ for k,v in m.items():p=p.replace('{'+k+'}',v)
+ return p
+T=lambda s:RLPy.RTime.FromValue(int(round(s*6000)))
 log=[]
 try:
  RLPy.RGlobal.Stop();RLPy.RScene.ClearSelectObjects();RLPy.RGlobal.SetTime(RLPy.RTime.FromValue(0))
@@ -18,7 +23,7 @@ try:
  for c in RLPy.RScene.GetCameras():
   if c.GetName() in ('Cam41_A','Cam41_B'):log.append(c.GetName()+' transform keys='+str(c.GetControl('Transform').GetKeyCount()))
  RLPy.RGlobal.SetTime(T(0));QtWidgets.QApplication.processEvents();RLPy.RGlobal.ForceViewportUpdate()
- out=r'E:\ไฟล์งาน\ไฟล์ Save\นิทาน\9.iProject'
+ out=X(r'{SAVE}\9.iProject')
  log.append('SAVE_START');open(os.path.join(J,'p9_save3.txt'),'w',encoding='utf-8').write('\n'.join(log))
  status=RLPy.RFileIO.SaveProject(out)
  log.append('save_status='+str(status));log.append('bytes='+str(os.path.getsize(out)));log.append('DONE')

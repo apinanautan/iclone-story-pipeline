@@ -1,7 +1,7 @@
 import bpy, sys
 v = sys.argv[-1]
 bpy.ops.wm.read_factory_settings(use_empty=True)
-bpy.ops.import_scene.fbx(filepath=r"C:\Users\Apinan\Documents\Reallusion\DataLink\CC4 - CC3_Base_Plus_2\exports\CC3_Base_Plus\CC3_Base_Plus.fbx")
+bpy.ops.import_scene.fbx(filepath=os.path.join(os.path.expanduser("~"), "Documents", "Reallusion", "DataLink", "CC4 - CC3_Base_Plus_2", "exports", "CC3_Base_Plus", "CC3_Base_Plus.fbx"))
 T=[o for o in bpy.data.objects if o.type=='ARMATURE'][0]
 T.animation_data_create(); T.animation_data.action=bpy.data.actions.new("rest")
 for f in (0,90):

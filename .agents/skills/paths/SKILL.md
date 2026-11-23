@@ -10,10 +10,10 @@ python scripts/paths.py "{MOTION}\Digital Soul 100+\Sad\01_Sad_Lo.italk"    # ex
 ```
 | placeholder | what | on this PC (example) | new PC if missing |
 |---|---|---|---|
-| `{MOTION}` | motion library (has `motions.csv` + `Digital Soul 100+`) | `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น` | searched on every drive |
-| `{DRIVE}` | Google Drive "ไดรฟ์ของฉัน / My Drive": story audio, scripts, scenes, avatars. **READ ONLY** (except publishing the final video) | `G:\ไดรฟ์ของฉัน` | searched on every drive |
-| `{SAVE}` | saved .iProject parts | `E:\ไฟล์งาน\ไฟล์ Save\นิทาน` | `Documents\iClone Story Save` (created) |
-| `{VIDEO}` | rendered videos | `E:\Video` | `Videos\iClone Story` (created) |
+| `{MOTION}` | motion library (has `motions.csv` + `Digital Soul 100+`) | `{MOTION}` | searched on every drive |
+| `{DRIVE}` | Google Drive "ไดรฟ์ของฉัน / My Drive": story audio, scripts, scenes, avatars. **READ ONLY** (except publishing the final video) | `{DRIVE}` | searched on every drive |
+| `{SAVE}` | saved .iProject parts | `{SAVE}` | `Documents\iClone Story Save` (created) |
+| `{VIDEO}` | rendered videos | `{VIDEO}` | `Videos\iClone Story` (created) |
 | `{DESKTOP}` | this user's Desktop (cut audio) | `C:\Users\<user>\Desktop` | same |
 
 - Write placeholders in part specs (`parts/*.json`), story files (`stories/*.json`) and skills: `"motion": "{MOTION}\\04_CC MixMove_Female\\Stand03.iMotion"`. `ic8_part.py` and `cut_audio.py` expand them automatically.

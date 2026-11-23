@@ -1,30 +1,30 @@
 [
  {
   "part": 1,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\1.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\1.mp3",
   "seconds": 37.4,
   "timeline_seconds": 42.4,
-  "status": "done: E:\\Video\\1.mp4",
+  "status": "done: {VIDEO}\\1.mp4",
   "scene_suggestion": "",
   "segments": [],
   "speakers": "see docs/part1_plan.md"
  },
  {
   "part": 2,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\2.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\2.mp3",
   "seconds": 81.5,
   "timeline_seconds": 86.5,
-  "status": "done: E:\\Video\\2.mp4",
+  "status": "done: {VIDEO}\\2.mp4",
   "scene_suggestion": "",
   "segments": [],
   "speakers": "see docs/part2_plan.md"
  },
  {
   "part": 3,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\3.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\3.mp3",
   "seconds": 72.8,
   "timeline_seconds": 77.8,
-  "status": "built: E:\\FileSave\\3.iProject (user renders)",
+  "status": "built: {SAVE}\\3.iProject (user renders)",
   "scene_suggestion": "",
   "segments": [
    {
@@ -132,10 +132,10 @@
  },
  {
   "part": 4,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\4.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\4.mp3",
   "seconds": 41.1,
   "timeline_seconds": 46.1,
-  "status": "built: E:\\FileSave\\4.iProject (user renders)",
+  "status": "built: {SAVE}\\4.iProject (user renders)",
   "scene_suggestion": "",
   "segments": [
    {
@@ -173,7 +173,7 @@
  },
  {
   "part": 5,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\5.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\5.mp3",
   "seconds": 20.4,
   "timeline_seconds": 25.4,
   "status": "todo",
@@ -214,7 +214,7 @@
  },
  {
   "part": 6,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\6.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\6.mp3",
   "seconds": 35.7,
   "timeline_seconds": 40.7,
   "status": "todo",
@@ -275,7 +275,7 @@
  },
  {
   "part": 7,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\7.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\7.mp3",
   "seconds": 23.0,
   "timeline_seconds": 28.0,
   "status": "todo",
@@ -346,7 +346,7 @@
  },
  {
   "part": 8,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\8.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\8.mp3",
   "seconds": 32.1,
   "timeline_seconds": 37.1,
   "status": "todo",
@@ -392,7 +392,7 @@
  },
  {
   "part": 9,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\9.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\9.mp3",
   "seconds": 26.1,
   "timeline_seconds": 31.1,
   "status": "todo",
@@ -428,7 +428,7 @@
  },
  {
   "part": 10,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\10.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\10.mp3",
   "seconds": 27.0,
   "timeline_seconds": 32.0,
   "status": "todo",
@@ -449,7 +449,7 @@
  },
  {
   "part": 11,
-  "audio": "C:\\Users\\Apinan\\Downloads\\audio_output\\11.mp3",
+  "audio": "%USERPROFILE%\\Downloads\\audio_output\\11.mp3",
   "seconds": 51.1,
   "timeline_seconds": 56.1,
   "status": "todo",

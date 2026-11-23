@@ -2,9 +2,9 @@
  "name": "ท่อน 7",
  "mode": "setup",
  "length": 26.6,
- "audio": "C:/Users/Apinan/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/part7.wav",
- "out": "C:/Users/Apinan/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/render7.mp4",
- "motion_root": "G:/ไดรฟ์ของฉัน/.ไฟล์ต่างๆ (ห้ามลบ)/โมชั่น",
+ "audio": "%USERPROFILE%/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/part7.wav",
+ "out": "%USERPROFILE%/AppData/Local/Tidmunz Studio/snapgen_data/ic8_jobs/render7.mp4",
+ "motion_root": "{DRIVE}/.ไฟล์ต่างๆ (ห้ามลบ)/โมชั่น",
  "beats": "7.txt (6 ช็อต): 0-4.2 วีนาเริ่มมัธยม | 4.2-10.3 วันดีแต่งกับทหาร | 10.3-14.2 ไปอยู่ค่ายทหาร (เดินซ้ายไปขวา) | 14.2-18.3 OTS วีนามองพี่สาวสองคน | 18.3-22.1 CU วีนา | 22.1-26.6 MCU วีนาหันออก คางเชิด",
  "actors": {
   "วีนา วัยสาว": {

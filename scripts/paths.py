@@ -3,8 +3,8 @@ r"""paths.py - never hardcode a drive letter (user 2026-11-17: drives differ per
 Write library/story paths in specs and skills with placeholders:
   {MOTION}  = the motion library folder (has motions.csv + "Digital Soul 100+")
   {DRIVE}   = the Google Drive "My Drive" folder (ไดรฟ์ของฉัน / My Drive) with the story folders (READ ONLY)
-  {SAVE}    = where .iProject parts are saved (here E:\ไฟล์งาน\ไฟล์ Save\นิทาน; new PC: Documents\iClone Story Save)
-  {VIDEO}   = rendered videos (here E:\Video; new PC: Videos\iClone Story)
+  {SAVE}    = where .iProject parts are saved (new PC default: Documents\iClone Story Save)
+  {VIDEO}   = rendered videos (new PC default: Videos\iClone Story)
   {DESKTOP} = this user's Desktop (cut audio: {DESKTOP}\<story>\เสียงที่ตัดแล้ว)
 Resolution order per name: env var IC_<NAME>  ->  paths.local.json (repo root, not in git)  ->  auto-search
 all drive letters once, then saved to paths.local.json.
@@ -69,7 +69,23 @@ def root(name):
     if not p: raise SystemExit("paths.py: cannot find {%s} on any drive. Set env IC_%s or put it in %s" % (name, name, LOCAL))
     _cache[name] = p
     json.dump(_cache, open(LOCAL, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    mirror()
     return p
+
+JOBS = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Tidmunz Studio", "snapgen_data", "ic8_jobs")
+def mirror():
+    """Copy this PC's roots (+ REPO = this folder) to <jobs>/paths.json, the one place iClone-side scripts,
+    the OpenPlugin loader and the .ps1 helpers read them from (no drive letter is ever written in git)."""
+    try: m = json.load(open(LOCAL, encoding="utf-8"))
+    except (OSError, ValueError): m = {}
+    m = {k: v for k, v in m.items() if k in REL}; m["REPO"] = HERE
+    f = os.path.join(JOBS, "paths.json")
+    try:
+        if json.load(open(f, encoding="utf-8")) == m: return
+    except (OSError, ValueError): pass
+    try:
+        os.makedirs(JOBS, exist_ok=True); json.dump(m, open(f, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
+    except OSError: pass
 
 def expand(x):
     """Replace {MOTION}/{DRIVE} in a str, or in every str inside dicts/lists."""
@@ -110,3 +126,4 @@ if __name__ == "__main__":
     elif len(sys.argv) > 1: print(expand(sys.argv[1]))
     else:
         for n in REL: print("{%s} = %s" % (n, root(n)))
+        mirror()

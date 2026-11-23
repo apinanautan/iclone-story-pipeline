@@ -1,18 +1,22 @@
 # Part 8 cast: load real Sunee, Look front, visibility, nod/blink/smile, timeline 52.1 s. No save.
-import os,random,traceback,RLPy
+import os,json,random,traceback,RLPy
 J=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs')
+def X(p):  # {SAVE}/{MOTION}/... -> this PC's folder (scripts/paths.py writes <jobs>/paths.json)
+ m=json.load(open(os.path.join(J,'paths.json'),encoding='utf-8'))
+ for k,v in m.items():p=p.replace('{'+k+'}',v)
+ return p
 T=lambda s:RLPy.RTime.FromValue(int(round(s*6000)))
 END=52.1;log=[]
 def fl():open(os.path.join(J,'p8_cast.txt'),'w',encoding='utf-8').write('\n'.join(log))
 try:
  RLPy.RGlobal.Stop();RLPy.RScene.ClearSelectObjects();RLPy.RGlobal.SetTime(T(0))
  before={a.GetName() for a in RLPy.RScene.GetAvatars()}
- RLPy.RFileIO.LoadFile(r"E:\ไฟล์งาน\ไฟล์ Save\นิทาน\สุนีย์_local.iAvatar")
+ RLPy.RFileIO.LoadFile(X(r"{SAVE}\สุนีย์_local.iAvatar"))
  new=[a for a in RLPy.RScene.GetAvatars() if a.GetName() not in before];log.append('new avatars '+str([a.GetName() for a in new]));fl()
  su=new[0];c=su.GetControl('Transform');tr=RLPy.RTransform();c.GetValue(T(0),tr)
  tr.T().x,tr.T().y,tr.T().z=-284.7,470.5,0;tr.R().x,tr.R().y,tr.R().z,tr.R().w=0,0,1,0;c.SetValue(T(0),tr)
  RLPy.RScene.ClearSelectObjects();RLPy.RScene.SelectObject(su)
- log.append('lookfront ret '+str(RLPy.RFileIO.LoadFile(r"E:\ไฟล์งาน\ไฟล์ Save\นิทาน\Look_front_local.iTalk")));RLPy.RScene.ClearSelectObjects();fl()
+ log.append('lookfront ret '+str(RLPy.RFileIO.LoadFile(X(r"{SAVE}\Look_front_local.iTalk"))));RLPy.RScene.ClearSelectObjects();fl()
  av={a.GetName():a for a in RLPy.RScene.GetAvatars()};th=av['ธีภพ'];nv=av['นาวี18'];pr=av['ปรียา']
  RLPy.RScene.Hide(pr);pr.SetVisible(T(0),False)
  su.SetVisible(T(0),False);su.SetVisible(T(32.6),True)

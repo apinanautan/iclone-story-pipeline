@@ -1,5 +1,5 @@
 {
-  "motion": "G:\\คอมพิวเตอร์เครื่องอื่นๆ\\คอมพิวเตอร์ของฉัน\\โมชั่น\\Stand00.iMotion",
+  "motion": "{MOTION}\\Stand00.iMotion",
   "focal": 50,
   "target": [
     -860,
@@ -21,8 +21,8 @@
     450,
     0
   ],
-  "avatar": "G:\\ไดรฟ์ของฉัน\\มหาอกหัก (นิทาน)\\มหาอกหัก\\1. พระมหาสมชาติ\\พระมหาสมชาติ เจ้าอาวาส วัย 48.iAvatar",
-  "out": "C:\\Users\\Apinan\\AppData\\Local\\Tidmunz Studio\\snapgen_data\\ic8_jobs\\render1.mp4",
-  "audio": "C:\\Users\\Apinan\\AppData\\Local\\Tidmunz Studio\\snapgen_data\\ic8_jobs\\part1.wav",
+  "avatar": "{DRIVE}\\มหาอกหัก (นิทาน)\\มหาอกหัก\\1. พระมหาสมชาติ\\พระมหาสมชาติ เจ้าอาวาส วัย 48.iAvatar",
+  "out": "%USERPROFILE%\\AppData\\Local\\Tidmunz Studio\\snapgen_data\\ic8_jobs\\render1.mp4",
+  "audio": "%USERPROFILE%\\AppData\\Local\\Tidmunz Studio\\snapgen_data\\ic8_jobs\\part1.wav",
   "audio_host": "3.ตาบุญ เจ้าของควายอีฉ่ำ"
 }

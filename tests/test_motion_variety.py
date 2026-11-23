@@ -47,7 +47,7 @@ class Variety(unittest.TestCase):
         self.assertTrue(any("already in parts 1, 2" in x for x in e))
 
     def test_shared_in_part(self):
-        e, _ = self.run_check({"แม่": {"motions": [TKI, S00]}, "พ่อ": {"motions": ["G:/x/MographMotion/01_Male/StandTKI.iMotion"]}})
+        e, _ = self.run_check({"แม่": {"motions": [TKI, S00]}, "พ่อ": {"motions": ["{MOTION}/x/MographMotion/01_Male/StandTKI.iMotion"]}})
         self.assertTrue(any("share the standing clip" in x for x in e))
 
     def test_two_folded_arms(self):

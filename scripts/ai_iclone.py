@@ -337,6 +337,9 @@ def main(a):
         if new:   # run the command with the NEW code
             return subprocess.run([PY, str(SCR / "ai_iclone.py")] + list(a), cwd=ROOT,
                                   env=dict(os.environ, AIICLONE_NO_UPDATE="1")).returncode
+    try:
+        import paths; paths.mirror()   # <jobs>/paths.json: iClone-side scripts, OpenPlugin and .ps1 read this PC's folders there
+    except Exception: pass
     if c in ("", "help", "-h", "--help"): manual(); return 0
     if c in ("version", "--version"): out("Ai-iclone " + VERSION); return 0
     if c == "status": return 0 if show_status() else 1

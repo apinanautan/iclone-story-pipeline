@@ -4,9 +4,11 @@
 import json, os, random, subprocess, sys
 import numpy as np
 n, av, s0, s1 = sys.argv[1], sys.argv[2], float(sys.argv[3]), float(sys.argv[4])
-FF = r"C:\Users\Apinan\AppData\Local\Tidmunz Studio\snapgen_data\tools\ffmpeg\ffmpeg.exe"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+from paths import ffmpeg as _ff
+FF = _ff("ffmpeg")
 J = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "ic8_jobs")
-raw = subprocess.run([FF, "-v", "error", "-i", (n if n.lower().endswith((".wav", ".mp3")) else rf"C:\Users\Apinan\Downloads\audio_output\{n}.mp3"), "-af", "highpass=f=200,lowpass=f=3500",
+raw = subprocess.run([FF, "-v", "error", "-i", (n if n.lower().endswith((".wav", ".mp3")) else os.path.join(os.path.expanduser("~"), "Downloads", "audio_output", n + ".mp3")), "-af", "highpass=f=200,lowpass=f=3500",
                       "-f", "s16le", "-ac", "1", "-ar", "16000", "-"], capture_output=True, check=True).stdout
 a = np.frombuffer(raw, np.int16).astype(float)
 STEP = 0.06

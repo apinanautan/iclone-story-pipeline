@@ -45,8 +45,8 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 สั่งผ่าน MyComp Bot (เครื่องไหนก็ได้) หรือ PowerShell (ครั้งละปุ่ม):
 
 ```powershell
-py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli status
-py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli do_next_step "{\"dry\": true}"
+py -3 "%USERPROFILE%\Documents\iClone Story Pipeline\mcp_server\server.py" --cli status
+py -3 "%USERPROFILE%\Documents\iClone Story Pipeline\mcp_server\server.py" --cli do_next_step "{\"dry\": true}"
 ```
 
 ถ้าใช้ MCP client แบบ stdio ให้ดูการตั้งค่าที่ `mcp_server/mcp.local.json` ส่วน `--http` เปิดได้แค่ที่ 127.0.0.1:8766 และไม่มีรหัสผ่าน ห้ามเปิดให้เข้าจากอินเทอร์เน็ต

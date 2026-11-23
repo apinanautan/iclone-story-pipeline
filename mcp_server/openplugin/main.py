@@ -13,7 +13,12 @@ def initialize_plugin():
     local = os.environ.get("LOCALAPPDATA", "")
     jobs = os.path.join(local, "Tidmunz Studio", "snapgen_data", "ic8_jobs")
     run = os.path.join(jobs, "run")
-    watcher = r"C:\Users\Apinan\Documents\iClone Story Pipeline\scripts\ic8_watch.py"
+    try:   # the project folder of THIS PC, written by scripts/paths.py (never a fixed path)
+        import json
+        repo = json.load(open(os.path.join(jobs, "paths.json"), encoding="utf-8"))["REPO"]
+    except Exception:
+        repo = os.environ.get("IC_REPO", "")
+    watcher = os.path.join(repo, "scripts", "ic8_watch.py")
     status = ""
     try:
         pending = glob.glob(os.path.join(run, "*.py"))

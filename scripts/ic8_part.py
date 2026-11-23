@@ -20,9 +20,9 @@ Spec (parts/<story>_<N>.json):
 {
  "story": "รักลำเอียง", "part": "11",
  "wav": "C:/.../ท่อน11.wav",
- "from": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/รักลำเอียง/ท่อน10.iProject",   # scene to continue from
- "project": "E:/ไฟล์งาน/ไฟล์ Save/นิทาน/รักลำเอียง/ท่อน11.iProject",
- "video": "E:/Video/รักลำเอียง/11.mp4",
+ "from": "{SAVE}/รักลำเอียง/ท่อน10.iProject",   # scene to continue from
+ "project": "{SAVE}/รักลำเอียง/ท่อน11.iProject",
+ "video": "{VIDEO}/รักลำเอียง/11.mp4",
  "publish": "{DRIVE}/รักลำเอียง (นิทาน 3D)/วีดีโอ/บีม",         # optional
  "scene": "โรงพยาบาล",                                                # name in the story file -> spots/cams/room
  "lines": [ {"who": "สุดา", "t": [0.53, 19.18], "text": "..."},        # who = avatar name or "บรรยาย"

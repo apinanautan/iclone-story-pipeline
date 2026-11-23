@@ -23,7 +23,7 @@ Verified at update time:
 - iClone is running and responsive.
 - Main window: iClone 8 - 3.1.iProject
 - Current event project on disk:
-  E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.1.iProject
+  {SAVE}\3.1.iProject
 - File size: 2,379,053,085 bytes
 - Saved: 2026-11-11 03:13:05
 - No pending watcher queue jobs at the earlier live status check.
@@ -101,7 +101,7 @@ Exist but are NOT current desired event-clip deliverables:
 - 3_master_full_20261111.iProject — full-timeline master/reference, not final event workflow
 - ดวงเมียน้อย_3_rebuild_v2_preview480.mp4 — previous long-timeline preview; user rejected it as still broken / not following event-clip instruction
 
-An old E:\Video\3.1.mp4 also exists, dated 2026-10-31. It predates the current event-clip rebuild and must NOT be treated as the current 3.1 review output.
+An old {VIDEO}\3.1.mp4 also exists, dated 2026-10-31. It predates the current event-clip rebuild and must NOT be treated as the current 3.1 review output.
 
 ## Current event project existence
 
@@ -141,7 +141,7 @@ First make 3.1 a true event-only project:
 **Dedicated multi-camera redesign saved and static-frame QA passed.**
 
 Current camera project:
-E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.1_multicam_v3.iProject
+{SAVE}\3.1_multicam_v3.iProject
 Size: 2,379,078,106 bytes.
 
 Camera objects (6):
@@ -163,7 +163,7 @@ Camera manifest: data/part3_3.1_camera_plan.json.
 ## 3.1 GAZE / OCCLUSION UPDATE — 2026-11-11
 
 Saved project:
-E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.1_gaze_multicam_v4.iProject
+{SAVE}\3.1_gaze_multicam_v4.iProject
 Size: 2,379,096,691 bytes. Timeline end: 43.00 s.
 
 Actual iClone Look At was added to Head-bone targets:
@@ -194,10 +194,10 @@ This passes gaze-aware static framing and sampled moving-occlusion QA. Full play
 User accepted the gaze-aware multi-camera camera version and ordered direct 1080p render without further QA.
 
 Canonical project:
-E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.1.iProject
+{SAVE}\3.1.iProject
 
 Rendered video:
-E:\Video\3.1.mp4
+{VIDEO}\3.1.mp4
 
 Render settings: 1920x1080, 30fps, MP4, audio export enabled, 0–43 s event range.
 Render job completed successfully and output file exists (about 24.88 MB).
@@ -219,11 +219,11 @@ Per explicit user instruction, no additional visual/audio QA was performed on th
 
 - Original Part 3 WAV is 67.40s, 48kHz, stereo, 3,235,200 sample frames; never split its audio for the final master.
 - Target master video is 2022 frames at 30fps, exactly 67.40s. Visual clips only are joined; their individual audio tracks are discarded and original WAV is laid once over full master.
-- Existing E:\Video\3.1.mp4 is 2173 video frames / 72.433333s (NOT the intended 1290 frames / 43s). Preserve it, but select only source frames 0..1289 when assembling the master.
+- Existing {VIDEO}\3.1.mp4 is 2173 video frames / 72.433333s (NOT the intended 1290 frames / 43s). Preserve it, but select only source frames 0..1289 when assembling the master.
 - Current approved visual 3.1 time window [0,1290) at 30fps.
 - Source narration 43.00–52.94s was previously accidentally omitted in the proposed 3.2 walk-only version. This must never be omitted.
 - Corrected working event 3.2 now covers global 43.00–59.133s [1290,1774), starting with children's expectation, mother's acceptance, father's response, then father+mistress walking near 52.94s.
-- Corrected iClone WIP project saved at E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.2_continuity_wip.iProject. Seven dedicated cameras and seven Switcher keys. **NOT yet approved or rendered.**
+- Corrected iClone WIP project saved at {SAVE}\3.2_continuity_wip.iProject. Seven dedicated cameras and seven Switcher keys. **NOT yet approved or rendered.**
 - Full 30fps / every-frame non-video still QA of all 484 frames of event 3.2 is being performed; 30 consecutive frames per internal storyboard sheet.
 - Candidate 3.3 [1774,1910), 3.4 [1910,2022); no new render authorized.
 - Main references: docs/part3_audio_continuity.md, data/part3_frame_edl.json, scripts/part3_continuity_guard.py, scripts/ic8_dense_frame_review.py.
@@ -233,11 +233,11 @@ Current 3.2 WIP must be visually rechecked; not call it complete and do not rend
 ## 3.2 SAVED FOR REVIEW — 2026-11-11 06:10
 
 The current 3.2 iClone project is SAVED and OPEN:
-E:\ไฟล์งาน\ไฟล์ Save\นิทาน\3.2.iProject
+{SAVE}\3.2.iProject
 File size 2,379,177,223 bytes. Scene responds.
 Global window 43.000–59.133 seconds; 7 independent cameras / 7 Switcher keys.
 Father–mistress spatial correction measured head separation approximately 40–58 cm in reviewed walk samples (was 65–104 cm). Body walk clips remain intact. Cam32_Walk / Cam32_Exit use tracking movement to hold both characters, and 6 representative final stills were reviewed.
-Older 3.2 versions stored under E:\ไฟล์งาน\ไฟล์ Save\นิทาน\_archive.
+Older 3.2 versions stored under {SAVE}\_archive.
 NOT rendered, explicitly pending user's iClone playback approval. Original 67.40s WAV source remains the master audio for complete Part 3.
 ## ACTION-SPLIT CORRECTION 3.2 / 3.3 — 2026-11-11
 
@@ -261,21 +261,21 @@ Action EDL at 30fps:
 - 3.4 [1774,1910): mother tears / actual child-hug mocap, two cameras; saved, unrendered.
 - 3.5 [1910,2022): mother and both children walk starting first frame; saved, unrendered.
 
-All iProjects are saved in E:/ไฟล์งาน/ไฟล์ Save/นิทาน/3.1.iProject ... 3.5.iProject.
+All iProjects are saved in {SAVE}/3.1.iProject ... 3.5.iProject.
 3.4 used Hug Kid 01_M retargeted to mother and Hug Kid 01_K on first child; second child repositioned alongside. Camera cut at 62.30s avoids cropped mother face. Real textures verified after iClone completed async streaming.
 3.5 walk: within first 0.4s actual travel 33.90cm,31.43cm,20.55cm. Camera tracks group throughout and final camera holds last 0.15s to avoid wall. Verified final stills 67.26–67.40 all good.
 
 Original audio is single 67.40s WAV source, 3,235,200 sample frames @48kHz. Final video target 2022 visual frames @30fps, no gap/overlap; video from event clips only, original WAV once as master audio. Existing 3.1.mp4 has excess tail; select first 1290 frames during master assembly. No 3.2–3.5 video renders or master assembly completed because event-specific user approval is not recorded. Never claim final Part 3 MP4 complete.
 Canonical frame plan: data/part3_frame_edl.json.
 
-**STALE VIDEO 3.MP4 CAUTION — 2026-11-11:** E:/Video/3.mp4 is an OLD unrelated/incomplete render: ffprobe says 77.824 seconds @60fps (4669 video frames, 32kHz AAC). It is NOT the 67.40s / 30fps Part3 master. Do not confuse file existence with finished current part. 3.2–3.5 event videos are still missing awaiting user review/render approval.
+**STALE VIDEO 3.MP4 CAUTION — 2026-11-11:** {VIDEO}/3.mp4 is an OLD unrelated/incomplete render: ffprobe says 77.824 seconds @60fps (4669 video frames, 32kHz AAC). It is NOT the 67.40s / 30fps Part3 master. Do not confuse file existence with finished current part. 3.2–3.5 event videos are still missing awaiting user review/render approval.
 
 ## LATEST PART 4.1+4.2 VERIFIED UPDATE — 2026-11-11
 
 This supersedes stale Part 3-only overall/current status above.
 
 - iClone is open at iClone 8 - 4.1.iProject and responsive.
-- Current file E:/ไฟล์งาน/ไฟล์ Save/นิทาน/4.1.iProject, 1,775,772,305 bytes, saved 2026-11-11 18:22:24.
+- Current file {SAVE}/4.1.iProject, 1,775,772,305 bytes, saved 2026-11-11 18:22:24.
 - 4.1 + 4.2 are intentionally ONE factory working event. Local source audio 0.0–30.3s, iClone working tail through 35.3s. 4.2 corresponds to 15.3–30.3s and should not become a duplicate iProject.
 - Read-only live scene/timeline succeeded: real Sunee red-floral blouse, hidden placeholder Sunee, 28 props including bowls, 2 cameras Cam41_A/B, 6 Switcher keys (0,6,11.5,17.5,23.5,29s), 4 lights, 60fps and 35.3s timeline end.
 - 18 actual iClone sample stills of 4.2 captured at 15.3–30.2s; chronological contact sheet checked, calm working hands and bowl/counter visible. QA report docs/part4_2_qa_20261111.md.

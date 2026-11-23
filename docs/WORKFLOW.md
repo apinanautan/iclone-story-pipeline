@@ -44,7 +44,7 @@ Data you get for free (no need to re-derive):
 - Delete the old Sound clip (click it on the Sound row → Delete). Clear selection by script, then Ctrl+I → full path of N.mp3.
   Confirm "N (100.00%)" on the Sound row.
 - `SetProjectLength` + `SetEndTime` = seconds + 5. Zoom the timeline to show the whole length.
-- Save As `E:\FileSave\N.iProject` and CHECK the file time on disk.
+- Save As `{SAVE}\N.iProject` and CHECK the file time on disk.
 
 ## 3. Characters (script, one avatar per job)
 - `scripts/ic8_part3_build.py` pattern: CAST dict, ONLY='<key>' per job (loading all at once froze iClone).
@@ -65,7 +65,7 @@ Data you get for free (no need to re-derive):
 - Save (File > Save Project), check file time.
 
 ## 6. Render — ONLY when the user says. User currently renders themselves.
-- If asked: `scripts/ic8_render2.py` (whole project, 60 fps) → ffmpeg mux N.mp3 → `E:\Video\N.mp4`. Check the raw file exists
+- If asked: `scripts/ic8_render2.py` (whole project, 60 fps) → ffmpeg mux N.mp3 → `{VIDEO}\N.mp4`. Check the raw file exists
   before muxing (part 3 script render returned without a file once).
 
 - Step 3b (after chained clips exist): run scripts/ic8_blend_clips.py so every chained face/body clip crossfades (no head snap).

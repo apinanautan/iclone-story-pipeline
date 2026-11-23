@@ -10,7 +10,7 @@
     "running": true,
     "responsive": true,
     "window_title": "iClone 8 - 4.1.iProject",
-    "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\4.1.iProject",
+    "project_path": "{SAVE}\\4.1.iProject",
     "project_bytes": 1775772305,
     "saved_at": "2026-11-11 18:22:24",
     "avatars_total": 2,
@@ -52,15 +52,15 @@
         "moving 10-pass QA not complete",
         "no current event-specific review video"
       ],
-      "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3.1.iProject",
-      "final_1080_render": "E:\\Video\\3.1.mp4",
+      "project_path": "{SAVE}\\3.1.iProject",
+      "final_1080_render": "{VIDEO}\\3.1.mp4",
       "render_job_done": true,
       "render_quality_qa_skipped_by_user_request": true,
       "cleanup_note": "Removed generated 3.1 variant iProjects, old 3.1 mp4 previews, and p31 QA still images; kept canonical 3.1.iProject."
     },
     "3.2": {
       "status": "SAVED_SEPARATE_EVENT_USER_REVIEW_PENDING",
-      "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3.2.iProject",
+      "project_path": "{SAVE}\\3.2.iProject",
       "source_global_start_sec": 43.0,
       "source_global_end_sec": 54.2,
       "event": "LOOK / REACTION ONLY",
@@ -69,7 +69,7 @@
     },
     "3.3": {
       "status": "SAVED_SEPARATE_EVENT_USER_REVIEW_PENDING",
-      "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3.3.iProject",
+      "project_path": "{SAVE}\\3.3.iProject",
       "source_global_start_sec": 54.2,
       "source_global_end_sec": 59.13333333333333,
       "event": "WALK ONLY",
@@ -78,7 +78,7 @@
     },
     "3.4": {
       "status": "PROJECT_SAVED_USER_REVIEW_PENDING",
-      "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3.4.iProject",
+      "project_path": "{SAVE}\\3.4.iProject",
       "rendered": false,
       "notes": {
         "saved": true,
@@ -92,7 +92,7 @@
     },
     "3.5": {
       "status": "PROJECT_SAVED_USER_REVIEW_PENDING",
-      "project_path": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3.5.iProject",
+      "project_path": "{SAVE}\\3.5.iProject",
       "rendered": false,
       "notes": {
         "saved": true,
@@ -106,11 +106,11 @@
     }
   },
   "rejected_or_historical": [
-    "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3_rebuild_v1.iProject",
-    "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3_rebuild_v2.iProject",
-    "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\3_master_full_20261111.iProject",
-    "E:\\Video\\ดวงเมียน้อย_3_rebuild_v2_preview480.mp4",
-    "E:\\Video\\3.1.mp4"
+    "{SAVE}\\3_rebuild_v1.iProject",
+    "{SAVE}\\3_rebuild_v2.iProject",
+    "{SAVE}\\3_master_full_20261111.iProject",
+    "{VIDEO}\\ดวงเมียน้อย_3_rebuild_v2_preview480.mp4",
+    "{VIDEO}\\3.1.mp4"
   ],
   "next_action": "Build independent 4.3 after 4.1+4.2 inspection; do not create duplicate 4.2 and do not render before approval.",
   "canonical_docs": [
@@ -130,17 +130,17 @@
     "edl": "data/part3_frame_edl.json"
   },
   "old_video_3_mp4": {
-    "path": "E:\\Video\\3.mp4",
+    "path": "{VIDEO}\\3.mp4",
     "duration_seconds": 77.824,
     "fps": 60,
     "note": "STALE prior render, not valid Part 3 final WAV duration 67.4s; do not report delivered"
   },
   "part3_final_video_ready": false,
   "part4": {
-    "audio_source": "C:\\Users\\Apinan\\Desktop\\ดวงเมียน้อย_ดาต้าเสียง\\เสียงที่ตัดแล้ว\\ท่อน4.wav",
+    "audio_source": "{DESKTOP}\\ดวงเมียน้อย_ดาต้าเสียง\\เสียงที่ตัดแล้ว\\ท่อน4.wav",
     "audio_duration_sec": 53.4,
     "event4_1_and_4_2_merged": true,
-    "project": "E:\\ไฟล์งาน\\ไฟล์ Save\\นิทาน\\4.1.iProject",
+    "project": "{SAVE}\\4.1.iProject",
     "main_action_end_seconds": 30.3,
     "timeline_end_seconds": 35.3,
     "part4_2_local_range_seconds": [

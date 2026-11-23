@@ -4,7 +4,7 @@
       "command": "C:\\Windows\\py.exe",
       "args": [
         "-3",
-        "C:\\Users\\Apinan\\Documents\\iClone Story Pipeline\\mcp_server\\server.py"
+        "%USERPROFILE%\\Documents\\iClone Story Pipeline\\mcp_server\\server.py"
       ]
     }
   }

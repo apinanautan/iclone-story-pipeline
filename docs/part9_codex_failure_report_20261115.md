@@ -39,7 +39,7 @@ Codex ควรตรวจเส้นทางควบคุมจริง�
 
 ## สิ่งที่ทำได้จริง ณ จุดเขียนรายงาน
 
-- มีไฟล์ checkpoint: `E:\ไฟล์งาน\ไฟล์ Save\นิทาน\รักลำเอียง\ท่อน9_working.iProject`
+- มีไฟล์ checkpoint: `{SAVE}\รักลำเอียง\ท่อน9_working.iProject`
 - ไฟล์บนดิสก์มีขนาด 454,484,550 bytes และเวลาแก้ไขล่าสุด 15:19:29
 - เสียง `ท่อน9.wav` อยู่ใน Project Sound จริง: ตรวจด้วย `RGlobal.RenderAudio` ได้ WAV ยาว 64.8 วินาที, 48 kHz stereo, ไม่เงียบ (mean volume ประมาณ -24.1 dB)
 - Timeline ยาว 64.8 วินาที

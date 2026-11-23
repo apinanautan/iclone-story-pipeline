@@ -3,7 +3,7 @@
 import json, os, sys
 from faster_whisper import WhisperModel
 
-AUD = r"C:\Users\Apinan\Downloads\audio_output"
+AUD = os.path.join(os.path.expanduser("~"), "Downloads", "audio_output")
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
 from paths import ffmpeg as _ff
 FF = _ff("ffmpeg")

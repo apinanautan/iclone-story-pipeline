@@ -76,9 +76,10 @@ function Windows {   # small visible top-level windows of iClone (popups), not t
   foreach ($h in $script:hw) { $r = New-Object W.U+RECT; [void][W.U]::GetWindowRect($h, [ref]$r); $wd = $r.R - $r.L; $ht = $r.B - $r.T
     if ($h -ne $p.MainWindowHandle -and $wd -gt 150 -and $ht -gt 80 -and $wd -lt 1300 -and $ht -lt 1000) { @{ h = $h; r = $r } } }
 }
+function SaveRoot { try { (Get-Content (Join-Path $env:LOCALAPPDATA 'Tidmunz Studio\snapgen_data\ic8_jobs\paths.json') -Raw -Encoding UTF8 | ConvertFrom-Json).SAVE } catch { Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'iClone Story Save' } }   # this PC's {SAVE} (scripts/paths.py)
 function Fresh([int]$sec) {   # the open project was written < sec seconds ago
   $t = (Get-Process iClone).MainWindowTitle; if ($t -notmatch 'iClone 8 - (.+?)( \*)?$') { return $false }
-  $f = Get-ChildItem 'E:\ไฟล์งาน\ไฟล์ Save' -Recurse -Filter $Matches[1] -ErrorAction SilentlyContinue | sort LastWriteTime -Desc | select -First 1
+  $f = Get-ChildItem (SaveRoot) -Recurse -Filter $Matches[1] -ErrorAction SilentlyContinue | sort LastWriteTime -Desc | select -First 1
   $f -and ((Get-Date) - $f.LastWriteTime).TotalSeconds -lt $sec
 }
 $seen = @{}

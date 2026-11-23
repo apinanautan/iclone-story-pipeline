@@ -63,16 +63,16 @@ After poses and after every camera pass: render stills and combine them with `sc
 | ic8_ui.ps1 / ic8_open.ps1 | click iClone buttons / fill file dialogs without the mouse |
 
 ## Paths
-- Story folders: `G:\ไดรฟ์ของฉัน\<story>\` (characters in `<story>\<story>\`, scenes in `<story>\ฉาก\`). **Never write into G:.**
-- Audio parts: `C:\Users\Apinan\Downloads\audio_output\N.mp3`; transcript `audio_output\ถอดเสียง\N.txt`.
-- Motions: `G:\คอมพิวเตอร์เครื่องอื่นๆ\คอมพิวเตอร์ของฉัน\โมชั่น\` (face clips: `Digital Soul 100+`).
-- Save project: `E:\FileSave\N.iProject` only. Video: `E:\Video\N.mp4` only, 1920×1080 **60 fps**.
-- ffmpeg: `C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe`.
+- Story folders: `{DRIVE}\<story>\` (characters in `<story>\<story>\`, scenes in `<story>\ฉาก\`). **Never write into G:.**
+- Audio parts: `%USERPROFILE%\Downloads\audio_output\N.mp3`; transcript `audio_output\ถอดเสียง\N.txt`.
+- Motions: `{MOTION}\` (face clips: `Digital Soul 100+`).
+- Save project: `{SAVE}\N.iProject` only. Video: `{VIDEO}\N.mp4` only, 1920×1080 **60 fps**.
+- ffmpeg: `%USERPROFILE%\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe`.
 
 ## Status (2026-11-07)
-- Part 1 (มหาอกหัก): done → `E:\FileSave\1.iProject`, `E:\Video\1.mp4`.
-- Part 2: done in `E:\FileSave\2.iProject` (poses, face, blink, lip sync trimmed per speaker, 9 moving cameras
-  incl. a villager group shot). Rendered to `E:\Video\2_raw.mp4` → audio muxed from 2.mp3 → `E:\Video\2.mp4`.
+- Part 1 (มหาอกหัก): done → `{SAVE}\1.iProject`, `{VIDEO}\1.mp4`.
+- Part 2: done in `{SAVE}\2.iProject` (poses, face, blink, lip sync trimmed per speaker, 9 moving cameras
+  incl. a villager group shot). Rendered to `{VIDEO}\2_raw.mp4` → audio muxed from 2.mp3 → `{VIDEO}\2.mp4`.
 - Part 3: shot plan approved → `docs/part3_plan.md`. Times are estimates (no 3.txt); check the monk's line and the statues.
 
 ## Lessons from part 2 (reuse for every part)
@@ -103,7 +103,7 @@ Current workflow is event-clip render-first. Do not infer completion from filena
 - **BEFORE ANY DELIVERY read docs/DELIVERY_CHECKLIST.md and show it as a task list; do every item without being asked (user, 2026-11-11).**
 
 ## PART4_2_MERGE_AND_STATIC_COMFORT_20261111
-- 4.1 + 4.2 is ONE continuous factory-working event in E:/ไฟล์งาน/ไฟล์ Save/นิทาน/4.1.iProject. Part4 local 0.0-30.3s, 35.3s iClone timeline including tail. 4.2 work is local 15.3-30.3s. DO NOT create duplicate 4.2.iProject or split merely at camera switches.
+- 4.1 + 4.2 is ONE continuous factory-working event in {SAVE}/4.1.iProject. Part4 local 0.0-30.3s, 35.3s iClone timeline including tail. 4.2 work is local 15.3-30.3s. DO NOT create duplicate 4.2.iProject or split merely at camera switches.
 - Use the real สุนีย์ (red floral blouse, hair bun), not scene placeholder Sunee; keep placeholder hidden. Factory work: slow, small natural movement, no gratuitous turn/walk/drama.
 - Latest user rule for 3.4 comfort: FAKE EMBRACE by camera composition; characters grouped and almost still, only very small head/breathing motion. NO exaggerated Hug Kid mocap, no required literal arm contact, no forced transitions, and NO Look At on 3.4. Existing 3.4 is NOT verified updated to this direction.
 - Do not render 4.1/4.2 before user approval; contact-sheet QA is not a finished MP4. Story WAV must be continuous across 4.1+4.2 to 4.3.
