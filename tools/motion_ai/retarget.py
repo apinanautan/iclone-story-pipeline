@@ -38,6 +38,10 @@ upd()
 Rs0 = {a: rot(wmat(S, a)) for a, _ in MAP}
 for a, b in MAP:
     if a == "Hips": continue
+    # NOSWING_SPINE=1 (video_to_bvh motions): keep the CC spine/neck rest; swinging it tilts the whole chain above it
+    # (user 2026-11-23: the body leaned back, hands did not reach the knees)
+    if os.environ.get("NOSWING_SPINE") == "1" and b in ("CC_Base_Waist", "CC_Base_Spine01", "CC_Base_Spine02",
+                                                         "CC_Base_NeckTwist01", "CC_Base_NeckTwist02", "CC_Base_Head"): continue
     pb = T.pose.bones[b]
     w = wmat(T, b); d_t = (w.to_3x3() @ mathutils.Vector((0, 1, 0))).normalized()
     sb = S.pose.bones[a]; ws = wmat(S, a); d_s = (ws.to_3x3() @ mathutils.Vector((0, 1, 0))).normalized()
