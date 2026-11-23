@@ -9,8 +9,10 @@ The user is not a programmer. Always answer in short, plain, everyday Thai.
 - The first run downloads the program files to `%LOCALAPPDATA%\Ai-iclone` and updates itself from GitHub by itself. Never download or copy program files yourself.
 - Needs Python 3 on the PC (`py -3`). If the exe says Python is missing, tell the user to install Python 3 from python.org (tick "Add to PATH").
 
-## How you run it: MyComp Bot's `shell` tool
-You reach the user's PC through **MyComp Bot** (its MCP tools). Use its `shell` tool, one Ai-iclone command per call, and wait for the result:
+## How you run it: MyComp Bot's `ai_iclone` tool (or `shell`)
+You reach the user's PC through **MyComp Bot** (its MCP tools).
+- **MyComp Bot 1.1.68+ has an `ai_iclone` tool: use it.** `command` = manual / status / steps / rules / do / use / new-story / range / approve / clean / version, plus `story`, `part`, `step`, `time_range`, `user_said`, `dry`, `retry`. It finds Ai-iclone.exe by itself and returns `exit` + `text`.
+- No `ai_iclone` tool? Use its `shell` tool, one Ai-iclone command per call, and wait for the result:
 - `executable`: `powershell`
 - `arguments`: `["-NoProfile", "-Command", "& \"$env:USERPROFILE\\Downloads\\Ai-iclone.exe\" do"]` (replace `do` with the command you need; no command = manual + status)
 - `timeout_seconds`: 600. iClone steps (open, cast, pose, render) can be slow. If the call times out, run `status` to see if the step finished. Never start the same step twice at once.
