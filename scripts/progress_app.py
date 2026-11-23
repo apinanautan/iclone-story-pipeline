@@ -159,6 +159,12 @@ def load_text(p):
         return ""
 
 
+NO_STORY = ("ยังไม่มีเรื่องในเครื่องนี้\n\n"
+            "บอก AI (ChatGPT / Claude) ว่า\n\"วันนี้ทำเรื่อง <ชื่อเรื่อง>\"\n"
+            "แล้วส่งบท (.docx) กับไฟล์เสียงเต็มให้มัน\n\n"
+            "พอมีเรื่องแล้ว หน้าต่างนี้จะแสดงขั้นตอนเองทันที")
+
+
 def stories():
     return sorted(p.stem for p in (ROOT / "stories").glob("*.json") if not p.stem.startswith("_"))
 
@@ -245,7 +251,8 @@ class App(tk.Tk):
             if name in stories(): self.story.set(name)
         except Exception:
             pass
-        ttk.Combobox(top, textvariable=self.story, values=stories(), state="readonly", font=F, width=22).pack(fill="x")
+        self.combo = ttk.Combobox(top, textvariable=self.story, values=stories(), state="readonly", font=F, width=22)
+        self.combo.pack(fill="x")
         self.story.trace_add("write", lambda *_: self.rebuild())
         # two pages, never mixed (user 2026-11-22): story setup (once per story) / one part at a time
         tabs = tk.Frame(self, bg=BG); tabs.pack(fill="x", padx=10, pady=(4, 2))
@@ -340,7 +347,15 @@ class App(tk.Tk):
 
     def refresh(self):
         story = self.story.get()
-        if not story: return
+        if not story:   # fresh install: no story yet (user 2026-11-23: the window was blank and looked broken)
+            have = stories()
+            if have:
+                self.log.configure(fg=SUB, font=("Consolas", 8), wraplength=250, text="")
+                self.combo.configure(values=have); self.story.set(have[-1]); return
+            if self.log.winfo_manager() != "pack":
+                self.log.pack(fill="both", expand=True, padx=10, pady=4)
+            self.log.configure(fg=TXT, font=F, wraplength=300, text=NO_STORY)
+            return
         n = current_part(story)
         states, live = step_states(story, n)
         ndone = sum(1 for s in states.values() if s in ("done", "skip"))
