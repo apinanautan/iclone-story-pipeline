@@ -57,7 +57,7 @@ NOTES = {
     "sheet": "สร้างใบงาน: {cmd} new-story <ชื่อเรื่อง> แล้วเติม name/folder ใน stories/<เรื่อง>.json (ภาพรวมเท่านั้น รายละเอียดอยู่ในแต่ละท่อน)",
     "source": "เติม script_docx (บท .docx) และ master_audio (เสียงเต็ม) ใน stories/<เรื่อง>.json ใช้ {DRIVE} ไม่เขียนชื่อไดรฟ์ ไฟล์ต้องมีจริง ห้ามเขียนลง {DRIVE}",
     "range": "STOP: เวลาที่ทำงานมาจากผู้ใช้เท่านั้น ห้ามเดา ให้ผู้ใช้คลิก 'เวลาที่ทำงาน' ในหน้าต่าง Ai-iclone หรือพิมพ์ในแชท แล้วรัน {cmd} range <m:ss-m:ss>",
-    "split": "แบ่งท่อนในช่วงเวลาที่ทำงาน (~1 นาที/ท่อน ตัดที่เงียบ) ใส่ parts[].master [s,e] ให้ต่อกันพอดีถึงปลายช่วง แล้วตัดเสียงทุกท่อนด้วย cut_audio.py ไปที่ audio_dir/ท่อนN.wav ใส่ --script "<script_docx>" ทุกครั้ง (คำจากบทจริง เวลาเดิม) ห้ามทดสอบการ์ดจอ/ลง Whisper เอง และใส่ parts[].transcript ทุกบรรทัดต้องมี who (บรรยาย หรือชื่อตัวละคร)",
+    "split": "แบ่งท่อนในช่วงเวลาที่ทำงาน (~1 นาที/ท่อน ตัดที่เงียบ) ใส่ parts[].master [s,e] ให้ต่อกันพอดีถึงปลายช่วง แล้วตัดเสียงทุกท่อนด้วย cut_audio.py ไปที่ audio_dir/ท่อนN.wav ใส่ --script <script_docx> ทุกครั้ง (คำจากบทจริง เวลาเดิม) ห้ามทดสอบการ์ดจอ/ลง Whisper เอง และใส่ parts[].transcript ทุกบรรทัดต้องมี who (บรรยาย หรือชื่อตัวละคร)",
     "chars": "เติม characters {ชื่อ avatar ใน iClone: {role, voice, avatar}} ทุกตัวในเรื่อง ไฟล์ avatar ต้องมีจริง",
     "scenes": "เติม scenes {ชื่อ: {type, file, room/area, spots, cams}} ไฟล์ฉากต้องมีจริง วัดฉากด้วย ic8_scene_scan.py ครั้งเดียว",
     "partplans": "เติม parts[].content (เนื้อเรื่อง) และ parts[].plan (แผนสั้นๆ) ทุกท่อน",
