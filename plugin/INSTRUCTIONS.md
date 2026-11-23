@@ -62,3 +62,4 @@ Run `do`, read the reply, act on the exit code:
 - A person who leaves the screen and comes back gets a new pose.
 - The `check` step refuses a part when: someone is on screen > 20 s with only one pose, two people share the same standing pose, a pose was already used in 2 other parts, or more than 1 person has folded arms.
 - If `check` fails for poses, choose different clips in the part file as the card says. Never pick folded arms just because the character is "calm".
+- ค้าง / FAIL / อยากรู้ว่าถึงไหน: รัน `Ai-iclone log` (MCP: `log`) อ่าน % จริง, เวลาแต่ละข้อ, FAIL REPORT (ข้อไหน กี่วินาที หน้าจอเขียนอะไร รูป) แล้วแก้ที่สาเหตุนั้นเท่านั้น ห้ามเดา ห้ามรอเปล่า

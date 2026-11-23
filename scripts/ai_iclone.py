@@ -14,6 +14,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone version                 program version (file VERSION)
   Ai-iclone update                  (exe) get the newest release from GitHub now
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
+  Ai-iclone log                     what runs now (real %), log with clock + seconds, last FAIL report (screen text, picture)
   Ai-iclone doctor                  check this PC's tools (ffmpeg, ffprobe, Python, Blender, iClone jobs folder)
   Ai-iclone video2motion <clip.mp4> [name] [--allow-install]
                                     a video of one person -> iClone motion FBX on CC3_Base_Plus (local, CPU, no iClone)
@@ -211,7 +212,8 @@ def do(dry=False, force=False):
     c = script_cmd(story, n, nxt)
     if not c:
         out("FAIL: ท่อน %s ไม่มีเวลา master ในใบงานเรื่อง (กลับไปทำ ① split)" % n); return 1
-    out("ข้อ %s: โปรแกรมทำเอง\n> %s" % (nxt, " ".join('"%s"' % x if " " in x else x for x in c)))
+    order = list(STORY_KIND if stage == "story" else PART_KIND)
+    out("ข้อ %s (%d/%d = %d%%): โปรแกรมทำเอง\n> %s" % (nxt, order.index(nxt) + 1, len(order), 100 * order.index(nxt) // len(order), " ".join('"%s"' % x if " " in x else x for x in c)))
     if dry: out("(--dry: ไม่ได้รันจริง)"); return 0
     t0 = time.time(); rc = subprocess.run(c, cwd=ROOT).returncode
     out("")
@@ -219,7 +221,7 @@ def do(dry=False, force=False):
         out("งานของ AI ข้อ %s: ทำตามข้อความด้านบน แล้ว %s do" % (nxt, CMD)); return 3
     if rc != 0:
         k = fails(nxt, True)
-        out("FAIL ข้อ %s (ครั้งที่ %d, %.0f วินาที). อ่านข้อความด้านบน%s" % (nxt, k, time.time() - t0,
+        out("FAIL ข้อ %s (ครั้งที่ %d, %.0f วินาที). อ่าน FAIL REPORT ด้านบน (ข้อไหน กี่วินาที หน้าจอเขียนอะไร) แก้ที่สาเหตุจริง ห้ามเดา%s" % (nxt, k, time.time() - t0,
             " แก้ที่สเปก/ไฟล์ แล้ว %s do อีก 1 ครั้ง" % CMD if k < 2 else " -> หยุด บอกผู้ใช้"))
         out("\n" + card(nxt)); return 1
     fails(nxt, False)
@@ -330,6 +332,8 @@ def main(a):
         if rc == 0: save_sel({"story": a[1]})
         return rc
     if c == "doctor": return doctor()
+    if c == "log":
+        import ailog; out(ailog.show()); return 0
     if c == "video2motion" and len(a) > 1:
         return subprocess.run([PY, str(SCR / "video2motion.py")] + a[1:], cwd=ROOT).returncode
     out(__doc__); return 1

@@ -52,14 +52,12 @@ NARR = ("บรรยาย", "narrator")
 ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
 
 
-def say(s):
-    print(s, flush=True)
-    try:   # last lines for the Preview program
-        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "progress", "now_log.txt"), "a", encoding="utf-8") as f:
-            f.write(time.strftime("%H:%M:%S ") + str(s).strip().splitlines()[0][:120] + chr(10) if str(s).strip() else "")
-    except Exception:
-        pass
-def fail(s): say("FAIL: " + s); sys.exit(1)
+import ailog   # real % + timing + fail report for GPT (user 2026-11-23)
+def say(s): ailog.log(s)   # also progress/now_log.txt (clock, +seconds in the step) for the Preview program
+def fail(s):
+    say("FAIL: " + s)
+    print(ailog.fail_report(s), flush=True)   # step, time, iClone dialogs' text, screenshot, last log -> progress/last_fail.txt
+    sys.exit(1)
 
 
 def ensure_watch():
@@ -84,17 +82,32 @@ def gui(*a):
     limits = {"render": 3600, "open": 300, "reopen": 300, "saveas": 300, "sound": 300, "lip": 300,
               "job": 320}  # The PowerShell job helper waits up to 300 s for the iClone watcher.
     lim = limits.get(a[0], 120)
+    what = "%s %s" % (a[0], os.path.basename(str(a[1])) if len(a) > 1 else "")
+    if "iClone.exe" not in subprocess.run(["tasklist", "/FI", "IMAGENAME eq iClone.exe", "/NH"], capture_output=True, text=True).stdout:
+        fail("iClone is not running (open iClone 8 first, then run again): %s not started" % what)
+    say("รอ iClone: %s (หยุดเองถ้าเกิน %d วินาที)" % (what, lim))
+    p = subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a])
+    t0 = time.time(); nxt = 30
     try:
-        r = subprocess.run(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a], timeout=lim)
+        while p.poll() is None:
+            el = time.time() - t0
+            if el > lim: raise subprocess.TimeoutExpired(GUI, lim)
+            try: lv = json.load(open(os.path.join(J, "live.json"), encoding="utf-8"))
+            except Exception: lv = {}
+            if time.time() - lv.get("time", 0) > 5 and a[0] != "render":   # no real % from the job itself: say what we wait for
+                ailog.wait(ailog.T0["step"] or a[0], "รอ iClone %s %.0f/%d วินาที" % (what, el, lim))
+            if el >= nxt:
+                wt = ailog.screen(); nxt += 30   # fresh read every 30 s, picture deleted at once
+                say("ยังรอ iClone: %s %.0f วินาที (สูงสุด %d) | หน้าจอ: %s" % (what, el, lim, wt[:300]))
+                m = re.findall(r"(\d{1,3})\s*%", wt)
+                if m: live(ailog.T0["step"] or a[0], int(m[-1]), "iClone บอก %s%% (%s)" % (m[-1], what))
+            time.sleep(1)
+        r = p
+        say("iClone เสร็จ: %s ใน %.0f วินาที" % (what, time.time() - t0))
     except subprocess.TimeoutExpired:
-        dlg = subprocess.run(["powershell", "-NoProfile", "-Command",
-            "Add-Type -AssemblyName UIAutomationClient; $A=[Windows.Automation.AutomationElement];"
-            "$p=(Get-Process iClone).Id; $A::RootElement.FindAll('Children',[Windows.Automation.Condition]::TrueCondition)|"
-            "?{$_.Current.ProcessId -eq $p -and $_.Current.Name -notmatch '^iClone 8 - '}|%{ $_.Current.Name + ': ' + "
-            "(($_.FindAll('Descendants',[Windows.Automation.Condition]::TrueCondition)|%{$_.Current.Name}|?{$_})-join ' | ') }"],
-            capture_output=True, text=True, timeout=30).stdout.strip()
-        fail("ic8_gui.ps1 %s took over %d s: stopped. Open iClone window(s): %s" % (a[0], lim, dlg or "none found"))
-    if r.returncode: fail("ic8_gui.ps1 %s" % a[0])
+        p.kill()
+        fail("iClone did not finish %s in %d s: stopped (see the iClone windows' text below)" % (what, lim))
+    if r.returncode: fail("ic8_gui.ps1 %s failed (exit %d) after %.0f s" % (what, r.returncode, time.time() - t0))
 
 
 def job(code, name):
@@ -408,12 +421,8 @@ def step_props(S):
         say("OK prop %s at %s yaw %s" % (got, c["pos"], yaw))
 
 
-def live(step, pct, text):   # same live.json the iClone jobs write; the Preview shows % + text
-    try:
-        with open(os.path.join(J, "live.json"), "w", encoding="utf-8") as f:
-            json.dump({"step": step, "pct": round(pct), "text": text, "time": time.time()}, f, ensure_ascii=False)
-    except Exception:
-        pass
+def live(step, pct, text): ailog.live(step, pct, text)
+def count(step, i, n, text): ailog.count(step, i, n, text)   # live.json (Preview %) + a log line every 10 %
 
 
 def face_desc(c):
@@ -548,7 +557,8 @@ def step_pose(S, base):
 
 
 def step_sound(S, base):
-    gui("sound", os.path.normpath(S["wav"]), "-Replace"); gui("save"); say("OK sound (check ic8_jobs/gui_tl.png: Sound row at frame 0)")
+    live("sound", 0, "ใส่เสียง"); gui("sound", os.path.normpath(S["wav"]), "-Replace")
+    live("sound", 50, "เซฟ"); gui("save"); live("sound", 100, "เสร็จ"); say("OK sound (check ic8_jobs/gui_tl.png: Sound row at frame 0)")
 
 
 def windows(S):
@@ -560,17 +570,19 @@ def windows(S):
 
 def step_lip(S, base):
     w = windows(S); wav = os.path.normpath(S["wav"])
-    for n, ws in w.items():
-        if ws: gui("lip", n, wav, ws[0][0], ws[-1][1])
+    talk = [n for n, ws in w.items() if ws]; tot = len(talk) + 3   # each talker + trim + check + save
+    for i, n in enumerate(talk):
+        count("lip", i, tot, "ปาก %s" % n); gui("lip", n, wav, w[n][0][0], w[n][-1][1])
+    count("lip", len(talk), tot, "ตัดปากให้ตรงช่วงพูด")
     job(pyjob("os.environ['LIPWIN']=%r\nexec(open(r'%s',encoding='utf-8').read())" % (json.dumps(w, ensure_ascii=False), os.path.join(SCR, "ic8_lip_trim.py"))), "zz_part_lip")
     say(rlog("lip_trim.txt"))
     job(open(os.path.join(SCR, "ic8_lip_check.py"), encoding="utf-8").read(), "zz_part_lipcheck")
-    chk = rlog("lip_check.txt"); say(chk)
+    count("lip", len(talk) + 1, tot, "ตรวจปาก"); chk = rlog("lip_check.txt"); say(chk)
     for n, ws in w.items():
         m = re.search(r"^%s visemes (\d+)" % re.escape(n), chk, re.M)
         if ws and (not m or int(m.group(1)) == 0): fail("%s speaks but has no visemes" % n)
     open(os.path.join(J, "lip.done"), "w").write(time.strftime("%H:%M:%S"))
-    gui("save"); say("OK lip")
+    count("lip", len(talk) + 2, tot, "เซฟ"); gui("save"); count("lip", tot, tot, "เสร็จ"); say("OK lip")
 
 
 def cams_args():
@@ -801,7 +813,8 @@ def step_ready(S, base):
     miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") != "บรรยาย" for l in S.get("lines", [])))]
     if miss: fail("ready: run these steps first, in order: " + ", ".join(miss))
     if not d.get("ok", {}).get("step5"): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
-    gui("switch"); gui("tozero"); gui("save"); gui("reopen")
+    for i, g in enumerate(("switch", "tozero", "save", "reopen")): count("ready", i, 4, g); gui(g)
+    count("ready", 4, 4, "เสร็จ")
     say("OK ready. STOP: tell the user to press Play in iClone (Switch, frame 0). Render only after they say ผ่าน.")
 
 
@@ -862,10 +875,11 @@ if __name__ == "__main__":
             pass
     import time
     for s in run:
-        _now(s, "running"); say("===== %s =====" % s)
+        _now(s, "running"); ailog.start(s)
+        say("===== %s (ข้อ %d/%d ของคำสั่งนี้ = %d%%) =====" % (s, run.index(s) + 1, len(run), 100 * run.index(s) // len(run)))
         try:
             if s == "render": step_render(S, base, "--approved" in sys.argv)
             else: STEPS[s](S, base)
         except BaseException:
             _now(s, "failed"); raise
-        _now(s, "done")
+        _now(s, "done"); ailog.clean_fails()

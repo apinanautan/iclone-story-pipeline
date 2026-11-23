@@ -33,7 +33,7 @@ def _run(*args: str) -> str:
         cp = subprocess.run([sys.executable, str(APP), *args], cwd=ROOT, env=env, capture_output=True, stdin=subprocess.DEVNULL,  # never share the MCP stdio pipe
                             text=True, encoding="utf-8", errors="replace", timeout=TIMEOUT)
     except subprocess.TimeoutExpired:
-        return "FAIL: Ai-iclone %s took over %d s (stopped). Tell the user." % (" ".join(args), TIMEOUT)
+        return "FAIL: Ai-iclone %s took over %d s (stopped). Tell the user.\n\n%s" % (" ".join(args), TIMEOUT, _run("log"))
     text = (cp.stdout + ("\n" + cp.stderr if cp.stderr.strip() else "")).strip()
     return text + "\n\n[Ai-iclone exit %d = %s]" % (cp.returncode, EXIT.get(cp.returncode, "FAIL"))
 
@@ -94,7 +94,13 @@ def version() -> str:
     return _run("version")
 
 
-TOOLS = [status, steps, rules, do_next_step, use_part, new_story, set_range, approve, clean_temp_files, version]
+def log() -> str:
+    """What runs now with its real %, the log (clock + seconds in the step) and the last FAIL report
+    (step, how long, text on screen read by UI Automation + OCR, picture path). Read it before fixing: fix the real cause."""
+    return _run("log")
+
+
+TOOLS = [log, status, steps, rules, do_next_step, use_part, new_story, set_range, approve, clean_temp_files, version]
 
 
 def main() -> None:
