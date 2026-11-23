@@ -462,7 +462,7 @@ def motion_variety(S, errs, warns):
     """User 2026-11-22: "ยืนกอดอกเกือบทั้งเรื่อง น่าเบื่อ เหมือนคนไม่มีสมองทำ". The same calm standing clip
     (MographMotion 02_Female/Stand03) was used 7 times over 4 parts. Standing clips must vary:
     - 2 characters in one part never share a standing clip;
-    - one standing clip in at most 2 parts of the whole story (pick another from the acting skill's pool);
+    - one standing clip in at most 2 parts of the whole story (`Ai-iclone motions --write` picks from the whole library);
     - arms folded: at most 1 character per part, only when the line calls for it;
     - a character standing the whole part (> 40 s) on 1 clip gets a WARN: chain 2-3 different calm clips."""
     import glob
@@ -489,7 +489,7 @@ def motion_variety(S, errs, warns):
                 if STANDY.search(os.path.basename(m)): other.setdefault(clip_key(m), set()).add(part)
     for k in used:
         if len(other.get(k, ())) >= 2:
-            errs.append("standing clip %s already in parts %s of this story: pick another one (acting skill: Standing pool, user 2026-11-22)" % (k, ", ".join(sorted(other[k], key=int))))
+            errs.append("standing clip %s already in parts %s of this story: run `Ai-iclone motions --write` (picks from the whole library, user 2026-11-23)" % (k, ", ".join(sorted(other[k], key=int))))
 
 
 WALKY = re.compile(r"walk|run|jog|chore|pick|weed|wander|turn|step|enter|exit|leave|approach", re.I)

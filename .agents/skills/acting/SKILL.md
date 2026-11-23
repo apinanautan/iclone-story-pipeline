@@ -5,7 +5,7 @@ description: Body motion placement and facial expression for iClone characters -
 # Acting = slow body motion + living face
 
 ## Where the motions are ({MOTION} is read only). Body and face are SEPARATE files.
-Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Full list of 1570 body motions: `M\motions.csv` (Name,Type,Folder,FullPath) - search it by keyword instead of walking folders.
+Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Search the acting clips: `python scripts/motion_pool.py find <words>` (index of the whole library; `M\motions.csv` is old and incomplete).
 - **Body (.iMotion / .rlMotion)** -> spec `cast.<name>.motion`:
   - Standing idle: `M\โมชั่น\03_CC MixMove_Male\` and `04_CC MixMove_Female\` (Stand00-04).
   - Talking / listening: `M\Studio Mocap - Conversation\`, `M\Motion_-_TalkListen\` (Listener_Agree/Curious/Apologize_F/M, Breathing_F/M .rlMotion - this folder also has face .iTalk: Amused, Comfortable_F...).
@@ -21,19 +21,14 @@ Root `M = {MOTION}\` (find it: `python scripts/paths.py`). Full list of 1570 bod
   - Feelings: `4.Feel_Like\1.Pleased`, `2.Excited`, `3.Tender`. Looping versions: `Expression_Loop\<Emotion>\`.
   - Pick per character from the script: e.g. greedy daughter -> `Happy_Lo` while gifts are given, `Disgust_Lo` when disappointed; sad old parents -> `Sad_Lo`/`Sad_Med`.
 
-## Standing pool: ROTATE, never the same clip all story (user 2026-11-22)
-The user, angry: one folded-arms standing clip almost the whole story looked "like no brain made it".
-`ic8_part.py check` now FAILs when 2 people in a part share a standing clip, when a standing clip is
-already in 2 other parts of the story, or when more than 1 person per part has folded arms. Pick by mood, mix packs:
-- Women, calm: `04_CC MixMove_Female\Stand00`, `Stand03`, `Stand04_Mirror`; `MographMotion\02_Female\Stand04_L_agree01`, `Stand04_L_agree02`.
-- Women, sad / worried: `MographMotion\02_Female\Stand04_L_Sad`, `StandTKI_Sad`, `Stand03_L_Fear01`.
-- Men, calm: `03_CC MixMove_Male\Stand00`, `Stand01`, `Stand03`, `Stand04_Mirror`; `MographMotion\01_Male\StandTKI`, `Stand02_L_Agree01`, `Stand02_L_Agree02`, `Stand03_L_Agree01`.
-- Men, worried: `MographMotion\01_Male\Stand02_L_Fear01`.
-- Talking (small hand moves, check first): `Motion\MixMoves Communication 200_Female|Male\Stand\Idle_Talk\Talk01-03`.
-- Listening (.rlMotion, not in motions.csv): `Motion_-_TalkListen\Listener_Agree_F|M`, `Listener_Curious_F`, `Listener_Focus_F|M`, `Listener_Relax_F`, `Breathing_F|M`.
-- Folded arms / hands on hips = stubborn, angry, bossy ONLY, max 1 person per part: `MographMotion\02_Female\Stand03` and `StandTKI` (both folded-armed in the part 5 video), `...Communication 200_*\Stand\Arms Crossed_Response\*`, `Hand(s) on Hips_Response\*`.
+## Pick motions from the WHOLE library, per line (user 2026-11-22 / 2026-11-23)
+The user, angry: one folded-arms clip (Stand03 / StandTKI) came back in almost every part - "ซ้ำๆ ไม่ได้อรรถรส".
+The old hand list of 25 clips was the cause. Do this instead, for every part:
+1. Add `"mood"` to lines where the feeling is clear: `calm` (default), `sad`, `angry`, `happy`, `fear`. Optional cast `"mood"`, `"sex": "F"|"M"` (else read from the story character's voice/role), `"posture": "sit"`.
+2. `Ai-iclone motions` (shows the plan) then `Ai-iclone motions --write`. It scans `{MOTION}` (~600 acting clips out of ~6000: MixMoves Communication 200, Motion_-_TalkListen, Studio Mocap Conversation, MixMove / Mograph Stand*/Sit*, Mocap Online LIFE Convos, City Life Chat, Mixamo talking/idle names) and, for each ~14 s a person is on screen, picks: speaks -> talk clip, someone else speaks -> listen clip, narrator -> idle clip, matching sex, posture and mood; least used in the story first; never a clip another person in this part has; never one already in 2 other parts; folded arms / hands on hips only for `angry` and 1 person per part.
+3. Work clips (Brick Laying, Sawing, Market_*, Bench_Sit_Read ...) are kept as they are. Search by hand: `python scripts/motion_pool.py find sad stand F`.
+- Folded arms / hands on hips = stubborn, angry, bossy ONLY, max 1 person per part (check FAILs otherwise).
 - Anyone on screen > 20 s: list 2-3 DIFFERENT clips in `motions` (check FAILs otherwise). `pose` switches to the next clip at the first camera cut 8-20 s into a clip (the change hides in the cut), max 20 s per clip; a person who leaves the screen and comes back starts on the next clip.
-Find exact paths: search `{MOTION}\motions.csv` by name.
 
 ## Body motion (set in the part spec `cast`, applied by `ic8_part.py pose`)
 - Library first: standing `Stand00.iMotion` (MixMove Male/Female); Female Stand01 (sometimes Stand00) has a raised-hand gesture, Stand02 = hand on hip, **Stand03/Stand04 are quiet**. Conversation mocap: MixMoves Communication / Studio Mocap Conversation.

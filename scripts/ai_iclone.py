@@ -16,6 +16,8 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
   Ai-iclone log                     what runs now (real %), log with clock + seconds, last FAIL report (screen text, picture)
   Ai-iclone doctor                  check this PC's tools (ffmpeg, ffprobe, Python, Blender, iClone jobs folder)
+  Ai-iclone motions [story] [part] [--write]
+                                    body motions per line from the WHOLE library (talk / listen / mood, never the same clip all story)
   Ai-iclone video2motion <clip.mp4> [name] [--allow-install]
                                     a video of one person -> iClone motion FBX on CC3_Base_Plus (local, CPU, no iClone)
 
@@ -363,6 +365,9 @@ def main(a):
     if c == "doctor": return doctor()
     if c == "log":
         import ailog; out(ailog.show()); return 0
+    if c == "motions":   # pick body motions per line from the whole library (scripts/motion_pool.py)
+        st = a[1] if len(a) > 2 else story_now(); pt = a[2] if len(a) > 2 else (a[1] if len(a) > 1 else part_now(st))
+        return subprocess.run([PY, str(SCR / "motion_pool.py"), "pick", st, str(pt)] + [x for x in a if x == "--write"], cwd=ROOT).returncode
     if c == "video2motion" and len(a) > 1:
         return subprocess.run([PY, str(SCR / "video2motion.py")] + a[1:], cwd=ROOT).returncode
     out(__doc__); return 1
