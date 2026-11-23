@@ -1,9 +1,10 @@
 """cut_audio.py - cut one part out of a story's master audio by time, at real silences, and transcribe it.
 
-  python scripts/cut_audio.py <master.wav|mp3> <start> <end> <out.wav> [--no-text]
+  python scripts/cut_audio.py <master.wav|mp3> <start> <end> <out.wav> [--no-text] [--allow-download]
   start/end: seconds or m:ss (e.g. 4:15 5:15). Each edge snaps to the nearest silence within +-3 s.
   Writes out.wav (48 kHz, same channels) and out.json {src, start, end, len, segments:[{t:[a,b], text}]}
-  (times in the json are LOCAL to out.wav). Transcript = the large-v3 already on the PC (Tidmunz's whisper.cpp first), Thai. Never downloads a model.
+  (times in the json are LOCAL to out.wav). Transcript (Thai, for TIMING): Tidmunz's whisper.cpp large-v3 if on the PC, else faster-whisper: GPU large-v3-turbo / CPU small.
+  Downloads a model only with --allow-download.
 Read-only on the master (G: is fine to read). Allowed for every AI without asking (user 2026-11-17).
 """
 import json, os, re, subprocess, sys
@@ -50,15 +51,37 @@ def transcribe(wav):
         return [{"t": [x["offsets"]["from"] / 1000, x["offsets"]["to"] / 1000], "text": x["text"].strip()} for x in j["transcription"]]
     from faster_whisper import WhisperModel
     import numpy as np   # decode with ffmpeg ourselves (faster-whisper's PyAV path breaks on some av versions)
-    try: m = WhisperModel("large-v3", device="cuda", compute_type="float16", local_files_only=True)
-    except Exception as e:
-        if "local" in str(e).lower() or "find" in str(e).lower():
-            sys.exit("No large-v3 model on this PC. Install Tidmunz Studio (has ggml-large-v3.bin), or allow a 3 GB download.")
-        m = WhisperModel("large-v3", device="cpu", compute_type="int8", local_files_only=True)
+    m = whisper_model(WhisperModel)
     pcm = subprocess.run([ffmpeg(), "-loglevel", "error", "-i", wav, "-ac", "1", "-ar", "16000", "-f", "f32le", "-"],
                          capture_output=True, check=True).stdout
-    segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True)
+    segs, _ = m.transcribe(np.frombuffer(pcm, np.float32), language="th", vad_filter=True, beam_size=1)
     return [{"t": [round(x.start, 2), round(x.end, 2)], "text": x.text.strip()} for x in segs]
+
+
+def whisper_model(WhisperModel):
+    """Fast enough on any PC (user 2026-11-23: transcription on another PC took far too long).
+    The text only gives TIMING (exact words come from the script .docx), so a fast model is enough:
+    NVIDIA GPU -> large-v3-turbo (float16); CPU only -> small (int8, all cores). A model already on the PC is used
+    first; a download (turbo ~1.6 GB / small ~0.5 GB) only with --allow-download (ask the user once)."""
+    try:
+        import ctranslate2
+        gpu = ctranslate2.get_cuda_device_count() > 0
+    except Exception:
+        gpu = False
+    dev, ct = ("cuda", "float16") if gpu else ("cpu", "int8")
+    order = ["large-v3-turbo", "large-v3", "medium", "small"] if gpu else ["small", "medium", "large-v3-turbo", "large-v3"]
+    kw = dict(device=dev, compute_type=ct) if gpu else dict(device=dev, compute_type=ct, cpu_threads=os.cpu_count() or 4)
+    for name in order:
+        try:
+            m = WhisperModel(name, local_files_only=True, **kw)
+            print("WHISPER %s on %s" % (name, dev)); return m
+        except Exception:
+            continue
+    if "--allow-download" not in sys.argv:
+        sys.exit("No Whisper model on this PC. Ask the user once, then re-run with --allow-download "
+                 "(downloads %s, %s)." % (order[0], "~1.6 GB" if gpu else "~0.5 GB"))
+    print("WHISPER downloading %s for %s ..." % (order[0], dev))
+    return WhisperModel(order[0], **kw)
 
 def main():
     a = sys.argv[1:]

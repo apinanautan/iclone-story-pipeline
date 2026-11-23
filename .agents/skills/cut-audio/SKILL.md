@@ -9,7 +9,8 @@ python scripts/cut_audio.py "<master wav/mp3>" <start> <end> "{DESKTOP}/<story>/
 ```
 - start/end in seconds or m:ss. Edges snap to the nearest silence within 3 s (printed as `CUT ... a-b`).
 - Output: `ท่อนN.wav` (48 kHz) + `ท่อนN.json` = {src, start, end, len, segments:[{t:[a,b], text}]}, times LOCAL to the wav.
-- Uses the large-v3 model already on the PC (Tidmunz Studio's whisper.cpp; Tidmunz need not be open). Never downloads a model. If it says no model, ask the user.
+- Model (user 2026-11-23, faster on other PCs): Tidmunz Studio's whisper.cpp large-v3 if on the PC; else faster-whisper, NVIDIA GPU -> large-v3-turbo, CPU only -> small (the text is only for timing). It prints `WHISPER <model> on <device>`. No model on the PC -> it says so: ask the user ONCE, then re-run with `--allow-download`.
+- Never test GPUs, benchmark, install other Whisper versions or try Vulkan yourself: just run this command. Run it for all parts in one go, not part by part with checks in between.
 - Allowed without asking (user 2026-11-17). Do not write other ffmpeg/whisper scripts; do not open Tidmunz for this.
 - Master audio paths: `docs/CURRENT_STORY.md` or the story folder in {DRIVE} (read only).
 - Whisper text is rough: use the script .docx for exact wording, the json for timing.
