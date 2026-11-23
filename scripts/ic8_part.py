@@ -44,8 +44,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SCR = os.path.join(ROOT, "scripts")
 GUI = os.path.join(SCR, "ic8_gui.ps1")
 J = os.path.join(os.environ["LOCALAPPDATA"], "Tidmunz Studio", "snapgen_data", "ic8_jobs")
-FF = r"C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe"
-FFP = FF.replace("ffmpeg.exe", "ffprobe.exe")
+from paths import ffmpeg as _ff
+FF, FFP = _ff("ffmpeg"), _ff("ffprobe")   # found on any PC (no one-PC path)
+os.environ["IC8_FF"], os.environ["IC8_FFP"] = FF, FFP   # ic8_gui.ps1 uses the same ones
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
 ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]

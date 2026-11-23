@@ -1,20 +1,21 @@
-r"""video2motion.py - a video clip of ONE person -> an iClone motion FBX on the CC3_Base_Plus body. Local, light (CPU).
+r"""video2motion.py - a video clip of ONE person -> an iClone motion FBX on the CC3_Base_Plus body. Runs on ANY PC (CPU or any GPU: NVIDIA/AMD/Intel).
 (user 2026-11-23: "AI video to motion that is not heavy on the PC")
 
   Ai-iclone video2motion <clip.mp4> [name] [--allow-install]
 
-Steps (no iClone): MediaPipe Pose (CPU) -> .bvh (scripts/video_to_bvh.py) -> Blender (background) -> CC_Base skeleton
+Steps (no iClone): RTMPose 2D + MotionBERT 3D (ONNX Runtime DirectML/CPU) -> .bvh (scripts/video_to_bvh.py) -> Blender (background) -> CC_Base skeleton
 (tools/motion_ai/bvh2blend.py + retarget.py NOSWING_SPINE=1) -> <clip folder>\<name>_motion\:
   <name>_CC.fbx + .fbxkey + .3dxProfile (keep the 3 together) = drag into iClone, Convert All
   <name>.bvh, <name>_check.mp4 (clip + skeleton | the BVH replayed: LOOK at it)
 Best clips: whole body with space below the feet, angled 20 deg (not side view), plain background, 16:9, static camera.
-One-time setup: a Python 3.9-3.12 venv with mediapipe in %LOCALAPPDATA%\Ai-iclone-tools\mocap (~150 MB download):
+One-time setup: a Python venv (rtmlib + onnxruntime-directml) + MotionBERT model in %LOCALAPPDATA%\Ai-iclone-tools\mocap2
+(~250 MB download, plus ~100 MB RTMPose models on the first clip):
 only with --allow-install (ask the user once).
 """
 import glob, os, re, subprocess, sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-TOOLS = os.environ.get("AI_ICLONE_MOCAP") or os.path.join(os.environ.get("LOCALAPPDATA", ""), "Ai-iclone-tools", "mocap")
+TOOLS = os.environ.get("AI_ICLONE_MOCAP") or os.path.join(os.environ.get("LOCALAPPDATA", ""), "Ai-iclone-tools", "mocap2")
 VPY = os.path.join(TOOLS, "Scripts", "python.exe")
 NOWIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
@@ -22,31 +23,42 @@ NOWIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 def say(s): print(s, flush=True)
 
 
+MB_URL = "https://github.com/apinanautan/iclone-story-pipeline/releases/download/models-1/motionbert_lite_243.onnx"
+MB = os.path.join(TOOLS, "motionbert_lite_243.onnx")
+
+
 def base_python():
-    """a Python 3.9-3.12 that really runs (mediapipe 0.10.21 has no wheels for 3.13+)."""
+    """a Python 3.10-3.13 that really runs (3.10-3.12 first: every wheel exists there)."""
     try: lines = subprocess.run(["py", "-0p"], capture_output=True, text=True, timeout=30).stdout.splitlines()
     except Exception: lines = []
-    exes = [l.split()[-1] for l in lines if l.strip().lower().endswith("python.exe")]
+    exes = [l.split()[-1] for l in lines if l.strip().lower().endswith("python.exe")] + [sys.executable]
+    found = []
     for exe in exes:
         if not os.path.isfile(exe): continue
         try:
             v = subprocess.run([exe, "-c", "import sys;print(sys.version_info[1])"], capture_output=True, text=True, timeout=30)
-            if v.returncode == 0 and 9 <= int(v.stdout.strip()) <= 12: return exe
+            if v.returncode == 0 and 10 <= int(v.stdout.strip()) <= 13: found.append((int(v.stdout.strip()) == 13, exe))
         except Exception: pass
-    return None
+    return min(found)[1] if found else None
 
 
 def ensure_venv():
-    ok = os.path.isfile(VPY) and subprocess.run([VPY, "-c", "import mediapipe"], capture_output=True, timeout=120).returncode == 0
+    ok = os.path.isfile(VPY) and os.path.isfile(MB) and subprocess.run(
+        [VPY, "-c", "import rtmlib, onnxruntime"], capture_output=True, timeout=120).returncode == 0
     if ok: return
     if "--allow-install" not in sys.argv:
-        say("STOP: video2motion needs a one-time setup (MediaPipe, ~150 MB download into %s).\n"
+        say("STOP: video2motion needs a one-time setup (~250 MB download into %s).\n"
             "Ask the user once, then run again with --allow-install." % TOOLS); sys.exit(2)
     py = base_python()
-    if not py: sys.exit("FAIL: needs Python 3.9-3.12 on this PC (3.13+ has no MediaPipe). Tell the user: install Python 3.11 from python.org.")
+    if not py: sys.exit("FAIL: needs Python 3.10-3.13 on this PC. Tell the user: install Python 3.12 from python.org.")
     say("SETUP venv with %s -> %s" % (py, TOOLS))
-    subprocess.run([py, "-m", "venv", TOOLS], check=True, timeout=600)
-    subprocess.run([VPY, "-m", "pip", "install", "-q", "mediapipe==0.10.21"], check=True, timeout=1800)
+    if not os.path.isfile(VPY): subprocess.run([py, "-m", "venv", TOOLS], check=True, timeout=600)
+    pip = [VPY, "-m", "pip", "install", "-q", "--disable-pip-version-check"]
+    subprocess.run(pip + ["numpy", "opencv-python", "tqdm", "onnxruntime-directml"], check=True, timeout=1800)
+    subprocess.run(pip + ["--no-deps", "rtmlib==0.0.16"], check=True, timeout=600)   # its deps pull CPU onnxruntime: skip
+    if not os.path.isfile(MB):
+        import urllib.request
+        urllib.request.urlretrieve(MB_URL, MB + ".part"); os.replace(MB + ".part", MB)
 
 
 def blender():
@@ -69,7 +81,7 @@ def cc_base():
 
 def run(cmd, env=None, limit=900):
     r = subprocess.run(cmd, capture_output=True, text=True, errors="replace", env=env, timeout=limit, creationflags=NOWIN)
-    keep = [l for l in (r.stdout + r.stderr).splitlines() if re.match(r"(BVH|CHECK|arm |BONES|BAKED|EXPORTED)", l)
+    keep = [l for l in (r.stdout + r.stderr).splitlines() if re.match(r"(DEVICE|BVH|CHECK|arm |BONES|BAKED|EXPORTED)", l)
             or "Error" in l or "Traceback" in l]
     for l in keep: say("  " + l)
     if r.returncode: sys.exit("FAIL: %s (exit %d)" % (os.path.basename(cmd[-3] if len(cmd) > 3 else cmd[0]), r.returncode))
@@ -91,13 +103,13 @@ def main():
     bvh, chk, fbx = os.path.join(out, name + ".bvh"), os.path.join(out, name + "_check.mp4"), os.path.join(out, name + "_CC.fbx")
     import tempfile
     blend = os.path.join(tempfile.mkdtemp(), "src.blend")
-    say("1/3 pose from the clip (CPU) ...")
-    run([VPY, os.path.join(ROOT, "scripts", "video_to_bvh.py"), clip, bvh, chk])
+    say("1/3 body from the clip (RTMPose + MotionBERT) ...")
+    run([VPY, os.path.join(ROOT, "scripts", "video_to_bvh.py"), clip, bvh, chk], env=dict(os.environ, MOTIONBERT_ONNX=MB))
     frames = int(re.search(r"Frames:\s*(\d+)", open(bvh).read()).group(1))
     say("2/3 BVH -> Blender ...")
     run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "bvh2blend.py"), "--", bvh, blend])
     say("3/3 onto the CC3_Base_Plus skeleton ...")
-    env = dict(os.environ, NOSWING_SPINE="1", LAST=str(frames), CC_BASE_FBX=CC)
+    env = dict(os.environ, NOSWING_SPINE="1", HAND_IK="1", LAST=str(frames), CC_BASE_FBX=CC)
     run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "retarget.py"), "--", blend, fbx], env=env)
     say("OK video2motion: %s\n  iClone: drag %s in (keep its .fbxkey + .3dxProfile next to it), Convert All, save as iMotion.\n"
         "  LOOK at %s first (left = clip + skeleton, right = the motion)." % (out, os.path.basename(fbx), os.path.basename(chk)))

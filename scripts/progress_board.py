@@ -10,14 +10,16 @@ python scripts/progress_board.py <story> <N> order "<text>"   -> add a user orde
 python scripts/progress_board.py <story> <N> done <i>   -> mark order i (1-based) done
 State (user approvals + orders) lives in progress/<story>_<N>.json.
 """
-import html, json, subprocess, sys, time
+import html, json, os, subprocess, sys, time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "scripts"))
 from paths import expand  # noqa: E402
 
-FFPROBE = r"C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffprobe.exe"
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+from paths import ffmpeg as _ff
+FFPROBE = _ff("ffprobe")
 
 
 def load(p, default):

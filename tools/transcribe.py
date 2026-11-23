@@ -4,7 +4,9 @@ import json, os, sys
 from faster_whisper import WhisperModel
 
 AUD = r"C:\Users\Apinan\Downloads\audio_output"
-FF = r"C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe"
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "scripts"))
+from paths import ffmpeg as _ff
+FF = _ff("ffmpeg")
 OUT_TXT = os.path.join(AUD, "ถอดเสียง")
 OUT_JSON = os.path.join(os.path.dirname(__file__), "..", "data", "parts")
 os.makedirs(OUT_TXT, exist_ok=True); os.makedirs(OUT_JSON, exist_ok=True)

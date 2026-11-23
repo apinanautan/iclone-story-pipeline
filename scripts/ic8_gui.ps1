@@ -23,8 +23,8 @@ $ErrorActionPreference='Stop'
 $J   = Join-Path $env:LOCALAPPDATA 'Tidmunz Studio\snapgen_data\ic8_jobs'
 $RUN = Join-Path $J 'run'
 $SCR = $PSScriptRoot
-$FF  = 'C:\Users\Apinan\AppData\Local\hermes\tools\ffmpeg-9.0.1-win32-x64\bin\ffmpeg.exe'
-$FFP = $FF -replace 'ffmpeg\.exe$','ffprobe.exe'
+$FF  = if ($env:IC8_FF) { $env:IC8_FF } else { (& py -3 (Join-Path $PSScriptRoot 'paths.py') ffmpeg) }   # found on any PC (paths.py), no one-PC path
+$FFP = if ($env:IC8_FFP) { $env:IC8_FFP } else { (& py -3 (Join-Path $PSScriptRoot 'paths.py') ffprobe) }
 $BAK = Join-Path $J 'backup'
 
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,UIAutomationClient,UIAutomationTypes,Microsoft.VisualBasic

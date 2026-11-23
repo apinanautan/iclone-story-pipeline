@@ -81,7 +81,32 @@ def expand(x):
     if isinstance(x, dict): return {k: expand(v) for k, v in x.items()}
     return x
 
+def ffmpeg(tool="ffmpeg"):
+    """ffmpeg.exe / ffprobe.exe on ANY PC (user 2026-11-23: other PCs failed, one PC's path was hardcoded).
+    Order: env FFMPEG_DIR -> PATH -> Tidmunz Studio's own copy -> any <app>\\tools\\ffmpeg*\\bin -> imageio-ffmpeg."""
+    import glob, shutil
+    exe = tool + ".exe"
+    d = os.environ.get("FFMPEG_DIR")
+    if d and os.path.isfile(os.path.join(d, exe)): return os.path.join(d, exe)
+    w = shutil.which(tool)
+    if w: return w
+    la = os.environ.get("LOCALAPPDATA", "")
+    for pat in (os.path.join(la, "Tidmunz Studio", "tools", "ffmpeg*", "bin", exe),
+                os.path.join(la, "Tidmunz Studio", "**", exe),
+                os.path.join(la, "*", "tools", "ffmpeg*", "bin", exe),
+                os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "ffmpeg*", "bin", exe)):
+        hit = sorted(glob.glob(pat, recursive="**" in pat), reverse=True)
+        if hit: return hit[0]
+    if tool == "ffmpeg":
+        try:
+            import imageio_ffmpeg
+            return imageio_ffmpeg.get_ffmpeg_exe()
+        except Exception: pass
+    sys.exit("FAIL: %s not found on this PC (install Tidmunz Studio, or put ffmpeg in PATH, or set FFMPEG_DIR)." % exe)
+
+
 if __name__ == "__main__":
-    if len(sys.argv) > 1: print(expand(sys.argv[1]))
+    if sys.argv[1:] in (["ffmpeg"], ["ffprobe"]): print(ffmpeg(sys.argv[1]))
+    elif len(sys.argv) > 1: print(expand(sys.argv[1]))
     else:
         for n in REL: print("{%s} = %s" % (n, root(n)))

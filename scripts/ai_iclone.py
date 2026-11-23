@@ -14,6 +14,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone version                 program version (file VERSION)
   Ai-iclone update                  (exe) get the newest release from GitHub now
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
+  Ai-iclone doctor                  check this PC's tools (ffmpeg, ffprobe, Python, Blender, iClone jobs folder)
   Ai-iclone video2motion <clip.mp4> [name] [--allow-install]
                                     a video of one person -> iClone motion FBX on CC3_Base_Plus (local, CPU, no iClone)
 
@@ -282,6 +283,27 @@ def steps():
     out("ai = AI คิดแล้วเติมไฟล์, script = โปรแกรมทำเอง, user = รอผู้ใช้")
 
 
+def doctor():
+    """user 2026-11-23: other PCs broke on ffmpeg/ffprobe. One command that says what this PC has; no installs."""
+    import glob, shutil
+    sys.path.insert(0, str(SCR)); import paths
+    bad = 0
+    for t in ("ffmpeg", "ffprobe"):
+        try:
+            exe = paths.ffmpeg(t)
+            r = subprocess.run([exe, "-version"], capture_output=True, text=True, timeout=30)
+            out("%s %s  %s" % ("OK  " if r.returncode == 0 else "FAIL", t, exe)); bad += r.returncode != 0
+        except SystemExit as e:
+            out("FAIL %s  %s" % (t, e)); bad += 1
+    out("OK   python  %s %s" % (sys.executable, sys.version.split()[0]))
+    bl = sorted(glob.glob(os.path.join(os.environ.get("ProgramFiles", r"C:\Program Files"), "Blender Foundation", "Blender*", "blender.exe")))
+    out(("OK   blender %s" % bl[-1]) if bl else "--   blender not installed (only video2motion needs it)")
+    out(("OK   " if os.path.isdir(P.J) else "FAIL ") + "iClone jobs folder " + str(P.J)); bad += not os.path.isdir(P.J)
+    out("doctor: %s" % ("all OK" if not bad else "%d problem(s). Fix = Ai-iclone update (newest version finds the tools by itself). "
+                         "Do NOT hardcode paths or install other ffmpeg copies." % bad))
+    return 1 if bad else 0
+
+
 def main(a):
     for s in (sys.stdout, sys.stderr):
         try: s.reconfigure(encoding="utf-8")
@@ -307,6 +329,7 @@ def main(a):
         rc = subprocess.run([PY, str(SCR / "ic8_story.py"), a[1], "init"], cwd=ROOT).returncode
         if rc == 0: save_sel({"story": a[1]})
         return rc
+    if c == "doctor": return doctor()
     if c == "video2motion" and len(a) > 1:
         return subprocess.run([PY, str(SCR / "video2motion.py")] + a[1:], cwd=ROOT).returncode
     out(__doc__); return 1

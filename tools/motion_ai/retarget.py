@@ -53,6 +53,38 @@ hip_t0 = wmat(T, "CC_Base_Hip").to_translation()
 hip_s0 = wmat(S, "Hips").to_translation()
 ratio = hip_t0.z / max(hip_s0.z, 1e-4)
 
+def hand_ik(f):
+    """HAND_IK=1 (video_to_bvh motions): a hand near a knee in the clip stays at the same place on the CC knee
+    (CC arms/legs have other lengths, so copied angles put the hand past the knee; user 2026-11-23)."""
+    for c, s in (("L", "Left"), ("R", "Right")):
+        if s + "Hand" not in S.pose.bones or s + "Shin" not in S.pose.bones: continue
+        sw, sk = wmat(S, s + "Hand").to_translation(), wmat(S, s + "Shin").to_translation()
+        d = (sw - sk).length / max(hip_s0.z, 1e-4)               # in hip heights (scale free)
+        wgt = max(0.0, min(1.0, (0.45 - d) / 0.2))               # full when the hand is on the knee, none when far
+        if wgt <= 0: continue
+        ua, fa, hd = (T.pose.bones["CC_Base_%s_%s" % (c, n)] for n in ("Upperarm", "Forearm", "Hand"))
+        hand_rot = rot(wmat(T, hd.name))
+        S0, E0, H0 = (wmat(T, b.name).to_translation() for b in (ua, fa, hd))
+        tgt = wmat(T, "CC_Base_%s_Calf" % c).to_translation() + (sw - sk) * ratio
+        tgt = H0.lerp(tgt, wgt)
+        a, b = (E0 - S0).length, (H0 - E0).length
+        to = tgt - S0; dist = max(abs(a - b) + 1e-4, min(a + b - 1e-4, to.length)); dirn = to.normalized()
+        pole = (E0 - S0) - dirn * (E0 - S0).dot(dirn)
+        pole = pole.normalized() if pole.length > 1e-6 else dirn.orthogonal().normalized()
+        x = (a * a - b * b + dist * dist) / (2 * dist); h = max(0.0, a * a - x * x) ** 0.5
+        E1 = S0 + dirn * x + pole * h
+        q = (E0 - S0).rotation_difference(E1 - S0); w = wmat(T, ua.name)
+        ua.matrix = T.matrix_world.inverted() @ (mathutils.Matrix.Translation(S0) @ q.to_matrix().to_4x4() @ w.to_3x3().to_4x4()); upd()
+        E, H = wmat(T, fa.name).to_translation(), wmat(T, hd.name).to_translation()
+        q = (H - E).rotation_difference(S0 + dirn * dist - E); w = wmat(T, fa.name)
+        fa.matrix = T.matrix_world.inverted() @ (mathutils.Matrix.Translation(E) @ q.to_matrix().to_4x4() @ w.to_3x3().to_4x4()); upd()
+        H = wmat(T, hd.name)
+        hd.matrix = T.matrix_world.inverted() @ (mathutils.Matrix.Translation(H.to_translation()) @ hand_rot.to_matrix().to_4x4()
+                                                 @ mathutils.Matrix.Diagonal(H.to_scale()).to_4x4()); upd()
+        for pb in (ua, fa, hd):
+            pb.keyframe_insert("rotation_quaternion" if pb.rotation_mode == "QUATERNION" else "rotation_euler", frame=f)
+
+
 # 2) bake
 for t, m in saved_nla: t.mute = m
 if S.animation_data: S.animation_data.action = act
@@ -77,6 +109,7 @@ for f in range(f0, f1 + 1):
         upd()
         pb.keyframe_insert("rotation_quaternion", frame=f) if pb.rotation_mode == "QUATERNION" else pb.keyframe_insert("rotation_euler", frame=f)
         if a == "Hips": pb.keyframe_insert("location", frame=f)
+    if os.environ.get("HAND_IK") == "1": hand_ik(f)
 print("BAKED", f0, f1, len(MAP), "bones ratio %.3f" % ratio)
 
 # 3) export CC armature + its meshes only
