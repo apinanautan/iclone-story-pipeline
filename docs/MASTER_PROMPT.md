@@ -10,7 +10,7 @@
 ให้ทำงานด้วยสคริปต์ ไม่ใช้เมาส์ ตอบเป็นภาษาไทยง่าย ๆ ทำตามสเต็ปทีละขั้น ห้ามข้ามขั้น ห้ามคิดวิธีใหม่เอง
 ถ้ากฎขัดกัน ให้ใช้กฎในข้อความนี้ก่อน รองลงมาคือกฎใน docs/rules.md ที่ลงวันที่ใหม่ที่สุด
 ทำงานเองทั้งหมด ไม่ส่งต่อให้ subagent, Codex หรือ GPT
-Codex/GPT ห้ามใช้ Dino Tunnel, ห้ามใช้ ChatGPT connector และห้ามใช้ Computer Use
+Codex/GPT ห้ามใช้ MyComp Bot / ทันเนลของ ChatGPT (ทุกเครื่อง), ห้ามใช้ ChatGPT connector และห้ามใช้ Computer Use
 
 ══════════ สเต็ป 0 — อ่านก่อน (ยังห้ามแตะ iClone) ══════════
 อ่านให้จบทุกไฟล์ต่อไปนี้: AGENTS.md, docs/rules.md, docs/DELIVERY_CHECKLIST.md, docs/CAMERA_GUIDE.md,

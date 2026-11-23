@@ -36,13 +36,13 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 
 # ChatGPT / MCP: ปุ่มเดียวกับ Ai-iclone (ทำใหม่ 2026-11-22)
 
-`mcp_server/server.py` คือตัวเชื่อมให้ ChatGPT (ผ่าน Dino Tunnel) หรือโปรแกรม AI ที่รองรับ MCP สั่งงาน Ai-iclone ได้
+`mcp_server/server.py` คือตัวเชื่อมให้ ChatGPT (ผ่าน MyComp Bot ของเครื่องไหนก็ได้ ชื่อเครื่องไม่สำคัญ) หรือโปรแกรม AI ที่รองรับ MCP สั่งงาน Ai-iclone ได้
 มี 10 ปุ่ม แต่ละปุ่มเรียกคำสั่ง Ai-iclone หนึ่งคำสั่ง และใช้ได้ทุกท่อน (ของเก่ามีประมาณ 20 ปุ่มตายตัว และหลายปุ่มใช้ได้แค่ท่อน 2):
 `status`, `steps`, `rules`, `do_next_step`, `use_part`, `new_story`, `set_range`, `approve`, `clean_temp_files`, `version`
 
 วิธีที่ AI ใช้: เรียก `status` แล้วเรียก `do_next_step` ซ้ำไปเรื่อยๆ ถ้าเจอ STOP ให้บอกผู้ใช้แล้วรอ ปุ่ม `approve` ต้องใส่คำที่ผู้ใช้พิมพ์มาจริงเท่านั้น
 
-สั่งผ่าน Dino Tunnel หรือ PowerShell (ครั้งละปุ่ม):
+สั่งผ่าน MyComp Bot (เครื่องไหนก็ได้) หรือ PowerShell (ครั้งละปุ่ม):
 
 ```powershell
 py -3 "C:\Users\Apinan\Documents\iClone Story Pipeline\mcp_server\server.py" --cli status

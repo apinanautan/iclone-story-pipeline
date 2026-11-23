@@ -1,4 +1,4 @@
-"""Ai-iclone MCP server: lets ChatGPT (via Dino Tunnel) or any MCP client run the same step 1..N flow as every AI.
+"""Ai-iclone MCP server: lets ChatGPT (via MyComp Bot on any of the user's PCs) or any MCP client run the same step 1..N flow as every AI.
 
 Each tool runs one Ai-iclone command (scripts/ai_iclone.py) and returns its text. There are no part-specific
 tools and no free Python: Ai-iclone decides the next step, stops at user steps, and needs the user's own words
@@ -98,7 +98,7 @@ TOOLS = [status, steps, rules, do_next_step, use_part, new_story, set_range, app
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="Ai-iclone MCP server (stdio). --cli runs one tool from a shell / Dino Tunnel.")
+    p = argparse.ArgumentParser(description="Ai-iclone MCP server (stdio). --cli runs one tool from a shell (e.g. MyComp Bot on any PC).")
     p.add_argument("--cli", action="store_true", help='one tool, e.g. --cli status  or  --cli do_next_step "{\\"dry\\": true}"')
     p.add_argument("--http", action="store_true", help="loopback HTTP 127.0.0.1:8766 (no auth: never expose)")
     p.add_argument("name", nargs="?")

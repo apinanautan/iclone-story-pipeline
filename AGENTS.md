@@ -14,7 +14,7 @@ The user speaks Thai; answer in Thai. They want work done one step at a time as 
 **written into this project immediately** (`docs/rules.md`) so they never have to repeat it.
 
 ## Codex / GPT: do NOT use GPT-side tools (user 2026-11-15)
-Dino Tunnel = "MyComp Bot for Windows" (OpenAI Tunnel over Tailscale) is the user's tool for ChatGPT (their Minecraft bot / PC control for GPT), NOT for Codex. Codex must not call Dino Tunnel or other ChatGPT-side tools (connectors, Computer Use, Agent Desktop, subagents) to drive iClone. Use only the local watcher (`ic8_jobs/run/*.py`) + `scripts/` + PowerShell. First message of every part: read docs/rules.md and docs/DELIVERY_CHECKLIST.md in full and make the checklist the task list.
+The ChatGPT tunnel ("MyComp Bot for Windows"; one per PC, each PC has its own name, e.g. Dino) (OpenAI Tunnel over Tailscale) is the user's tool for ChatGPT (their Minecraft bot / PC control for GPT), NOT for Codex. Codex must not call that tunnel (on any PC) or other ChatGPT-side tools (connectors, Computer Use, Agent Desktop, subagents) to drive iClone. Use only the local watcher (`ic8_jobs/run/*.py`) + `scripts/` + PowerShell. First message of every part: read docs/rules.md and docs/DELIVERY_CHECKLIST.md in full and make the checklist the task list.
 
 **STAGE 1 BEFORE PARTS (hard gate, 2026-11-22):** every new story starts with story setup (Preview tab ① เตรียมเรื่อง, 8 rows). No per-part work (plan, cast, pose, cams, render) until all 8 are green; `ic8_part.py` refuses every step otherwise. The teacher's range comes from the user only. Commit PROGRAM changes to git after each finished piece of work; story sheets/parts/progress are work data and stay out of git.
 
