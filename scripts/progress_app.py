@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 PROG = ROOT / "progress"
 BG, TXT, SUB, LINE = "#ffffff", "#222222", "#888888", "#e6e6e6"
 GREEN, BLUE, RED, GREY, AMBER = "#2ea043", "#1f6feb", "#d1242f", "#c8c8c8", "#bf8700"
-F = ("Tahoma", 9)
+F = ("Tahoma", 8)
 SPIN = "◐◓◑◒"
 
 # (key, Thai label). key = pipeline step name, or a check done here.
@@ -276,7 +276,7 @@ class App(tk.Tk):
     def __init__(self):
         super().__init__()
         self.title("Ai-iclone " + load_text(ROOT / "VERSION"))
-        self.geometry("440x820+0+0")   # top-left of the screen (user 2026-11-21)
+        self.geometry("330x770+0+0")   # small (user 2026-11-24: "ใหญ่เกินไป")   # top-left of the screen (user 2026-11-21)
         self.minsize(220, 300)
         self.attributes("-topmost", True)
         self.configure(bg=BG)
@@ -284,7 +284,7 @@ class App(tk.Tk):
         try: st.theme_use("clam")
         except Exception: pass
         st.configure("TCombobox", fieldbackground=BG, background=BG)
-        top = tk.Frame(self, bg=BG); top.pack(fill="x", padx=10, pady=(8, 2))
+        top = tk.Frame(self, bg=BG); top.pack(fill="x", padx=8, pady=(6, 2))
         self.story = tk.StringVar(value=(stories() or [""])[-1])
         try:
             line = next(l for l in (ROOT / "docs" / "CURRENT_STORY.md").read_text(encoding="utf-8").splitlines() if l.startswith("- เรื่อง:"))
@@ -296,38 +296,43 @@ class App(tk.Tk):
         self.combo.pack(fill="x")
         self.story.trace_add("write", lambda *_: self.rebuild())
         # two pages, never mixed (user 2026-11-22): story setup (once per story) / one part at a time
-        tabs = tk.Frame(self, bg=BG); tabs.pack(fill="x", padx=10, pady=(4, 2))
-        self.tab_story = tk.Label(tabs, font=("Tahoma", 9, "bold"), padx=8, pady=3, cursor="hand2")
-        self.tab_part = tk.Label(tabs, font=("Tahoma", 9, "bold"), padx=8, pady=3, cursor="hand2")
+        tabs = tk.Frame(self, bg=BG); tabs.pack(fill="x", padx=8, pady=(4, 2))
+        self.tab_story = tk.Label(tabs, font=("Tahoma", 8, "bold"), padx=8, pady=3, cursor="hand2")
+        self.tab_part = tk.Label(tabs, font=("Tahoma", 8, "bold"), padx=8, pady=3, cursor="hand2")
         self.tab_story.pack(side="left", fill="x", expand=True); self.tab_part.pack(side="left", fill="x", expand=True)
         self.tab_story.bind("<Button-1>", lambda e: self.set_page("story")); self.tab_part.bind("<Button-1>", lambda e: self.set_page("part"))
         # ONE progress bar for the whole page (user 2026-11-24: "โหลดที่ช่องเดียว" - no bar per step)
-        bar = tk.Frame(self, bg=BG); bar.pack(fill="x", padx=10, pady=(6, 2))
-        self.bar_txt = tk.Label(bar, bg=BG, fg=TXT, font=("Tahoma", 11, "bold"), anchor="w"); self.bar_txt.pack(fill="x")
+        bar = tk.Frame(self, bg=BG); bar.pack(fill="x", padx=8, pady=(4, 2))
+        self.bar_txt = tk.Label(bar, bg=BG, fg=TXT, font=("Tahoma", 10, "bold"), anchor="w"); self.bar_txt.pack(fill="x")
         self.bar = tk.Canvas(bar, height=8, bg="#e6e6e6", highlightthickness=0); self.bar.pack(fill="x", pady=(3, 0))
         self.page = None   # None = automatic: story setup until it is approved / parts have started, then parts
         self.pstory = tk.Frame(self, bg=BG)
-        self.shead = tk.Label(self.pstory, bg=BG, fg=TXT, font=("Tahoma", 11, "bold"), anchor="w")
+        self.shead = tk.Label(self.pstory, bg=BG, fg=TXT, font=("Tahoma", 8, "bold"), anchor="w")
         self.shead.pack(fill="x", pady=(6, 4))
         self.slist = tk.Frame(self.pstory, bg=BG); self.slist.pack(fill="x")
         self.srows = {}
         for k, label in STORY_STEPS:
             r = tk.Frame(self.slist, bg=BG); r.pack(fill="x", pady=1)
-            dot = tk.Label(r, text="●", bg=BG, fg=GREY, font=("Segoe UI Symbol", 10), width=2); dot.pack(side="left")
+            dot = tk.Label(r, text="●", bg=BG, fg=GREY, font=("Segoe UI Symbol", 8), width=2); dot.pack(side="left")
             txt = tk.Label(r, text=label, bg=BG, fg=SUB, font=F, anchor="w"); txt.pack(side="left", fill="x", expand=True)
             info = tk.Label(r, text="", bg=BG, fg=SUB, font=("Tahoma", 8)); info.pack(side="right")
             if k in ("range", "story_ok"):
                 for w in (dot, txt, info): w.configure(cursor="hand2"); w.bind("<Button-1>", lambda e, k=k: self.story_click(k))
             self.srows[k] = (dot, txt, info)
         self.ppart = tk.Frame(self, bg=BG)
-        self.head = tk.Label(self.ppart, bg=BG, fg=TXT, font=("Tahoma", 11, "bold"), anchor="w")
+        self.head = tk.Label(self.ppart, bg=BG, fg=SUB, font=("Tahoma", 8), anchor="w", justify="left", wraplength=310)
         self.head.pack(fill="x", pady=(6, 0))
         self.chips = tk.Frame(self.ppart, bg=BG); self.chips.pack(fill="x", pady=(2, 6))
         tk.Frame(self.ppart, bg=LINE, height=1).pack(fill="x")
         self.list = tk.Frame(self.ppart, bg=BG); self.list.pack(fill="x", pady=4)
+        # small log box at the bottom: the last 2 lines of what runs now (user 2026-11-24: "1-2 แถวก็พอ")
         self.sep = tk.Frame(self, bg=LINE, height=1)
-        self.log = tk.Label(self, bg=BG, fg=SUB, font=("Consolas", 8), anchor="nw", justify="left", wraplength=250)
-        self.log.pack(fill="both", expand=True, padx=10, pady=4)
+        self.logbox = tk.Frame(self, bg="#f6f8fa", highlightbackground=LINE, highlightthickness=1)
+        tk.Label(self.logbox, text="บันทึกงาน", bg="#f6f8fa", fg=TXT, font=("Tahoma", 8, "bold"), anchor="w").pack(fill="x", padx=6, pady=(3, 0))
+        self.log = tk.Label(self.logbox, bg="#f6f8fa", fg=BLUE, font=("Consolas", 8), anchor="nw", justify="left", height=2, wraplength=300)
+        self.log.pack(fill="x", padx=6, pady=(0, 4))
+        self.logbox.pack(side="bottom", fill="x", padx=8, pady=6)
+        self.log.bind("<Configure>", lambda e: self.log.configure(wraplength=max(120, e.width - 4)))
         self.tick_n = 0
         self.rows = {}
         self.subs = {}
@@ -338,8 +343,8 @@ class App(tk.Tk):
         self.rows.clear(); self.subs = {}
         for w in self.list.winfo_children(): w.destroy()
         for k, label in STEPS:
-            r = tk.Frame(self.list, bg=BG); r.pack(fill="x", pady=1)
-            dot = tk.Label(r, text="●", bg=BG, fg=GREY, font=("Segoe UI Symbol", 10), width=2)
+            r = tk.Frame(self.list, bg=BG); r.pack(fill="x", pady=0)
+            dot = tk.Label(r, text="●", bg=BG, fg=GREY, font=("Segoe UI Symbol", 8), width=2)
             dot.pack(side="left")
             # +/- fold of the detail lines (user 2026-11-22: minimal screen; finished details stay folded)
             tog = tk.Label(r, text="", bg=BG, fg=SUB, font=("Consolas", 9, "bold"), width=2, cursor="hand2")
@@ -351,7 +356,7 @@ class App(tk.Tk):
             if k == "user_ok":
                 for w in (dot, txt): w.bind("<Button-1>", lambda e: self.tick_ok())
             # detail under the row: motion plan / live % bar + what the job is doing now
-            sub = tk.Label(self.list, text="", bg=BG, fg=SUB, font=("Tahoma", 8), anchor="w", justify="left")
+            sub = tk.Label(self.list, text="", bg=BG, fg=SUB, font=("Tahoma", 8), anchor="w", justify="left", wraplength=280)
             self.rows[k] = (dot, txt, info)
             self.subs[k] = (r, sub, tog)
         self.refresh()
@@ -395,11 +400,9 @@ class App(tk.Tk):
         if not story:   # fresh install: no story yet (user 2026-11-23: the window was blank and looked broken)
             have = stories()
             if have:
-                self.log.configure(fg=SUB, font=("Consolas", 8), wraplength=250, text="")
+                self.log.configure(fg=BLUE, font=("Consolas", 8), height=2, text="")
                 self.combo.configure(values=have); self.story.set(have[-1]); return
-            if self.log.winfo_manager() != "pack":
-                self.log.pack(fill="both", expand=True, padx=10, pady=4)
-            self.log.configure(fg=TXT, font=F, wraplength=300, text=NO_STORY)
+            self.log.configure(fg=TXT, font=F, height=0, text=NO_STORY)
             return
         n = current_part(story)
         states, live = step_states(story, n)
@@ -424,8 +427,7 @@ class App(tk.Tk):
         show, hide = (self.pstory, self.ppart) if pg == "story" else (self.ppart, self.pstory)
         if getattr(self, "_shown", None) != pg:   # repack only on a page change (no flicker every tick)
             self._shown = pg
-            hide.pack_forget(); self.sep.pack_forget(); self.log.pack_forget()
-            show.pack(fill="x", padx=10); self.sep.pack(fill="x", padx=10); self.log.pack(fill="both", expand=True, padx=10, pady=4)
+            hide.pack_forget(); show.pack(fill="both", expand=True, padx=8)
         col = {"done": GREEN, "todo": GREY, "warn": AMBER, "bad": RED}
         for k, _ in STORY_STEPS:
             s, inf = ss[k]; dot, t, info = self.srows[k]
@@ -444,15 +446,15 @@ class App(tk.Tk):
             elif s == "skip": dot.configure(text="●", fg=LINE); txt.configure(fg=SUB, font=F); info.configure(text="ไม่มีบทพูด", fg=SUB)
             elif s == "run":
                 secs = int(time.time() - live.get("time", time.time()))
-                dot.configure(text=SPIN[self.tick_n % 4], fg=BLUE); txt.configure(fg=BLUE, font=("Tahoma", 9, "bold"))
+                dot.configure(text=SPIN[self.tick_n % 4], fg=BLUE); txt.configure(fg=BLUE, font=("Tahoma", 8, "bold"))
                 late = k in LOAD_STEPS and secs > 180   # over the 3-minute load limit: must be looked at now
                 lv = load(J / "live.json", {})
                 info.configure(text=f"{'เกิน 3 นาที! ' if late else ''}{secs // 60}:{secs % 60:02d}", fg=RED if late else BLUE)
-            elif s == "fail": dot.configure(text="●", fg=RED); txt.configure(fg=RED, font=("Tahoma", 9, "bold")); info.configure(text="ล้มเหลว", fg=RED)
+            elif s == "fail": dot.configure(text="●", fg=RED); txt.configure(fg=RED, font=("Tahoma", 8, "bold")); info.configure(text="ล้มเหลว", fg=RED)
             else:
                 nxt = k == first_todo and live.get("state") != "running"
                 dot.configure(text="○", fg=AMBER if nxt else GREY)
-                txt.configure(fg=AMBER if nxt else SUB, font=("Tahoma", 9, "bold") if nxt else F)
+                txt.configure(fg=AMBER if nxt else SUB, font=("Tahoma", 8, "bold") if nxt else F)
                 info.configure(text=("คลิกเมื่อผ่าน" if k == "user_ok" else "ถัดไป") if nxt else "", fg=AMBER)
         # detail lines under rows
         lv = load(J / "live.json", {})
@@ -482,10 +484,10 @@ class App(tk.Tk):
             elif first_todo and ai_pct(story, n, first_todo): part = ai_pct(story, n, first_todo)[0] / 100
         self.draw_bar(nd, tot, part, any(v == "fail" for v in states.values()) and pg != "story")
         try:
-            lines = (PROG / "now_log.txt").read_text(encoding="utf-8").splitlines()[-4:]
+            lines = (PROG / "now_log.txt").read_text(encoding="utf-8").splitlines()[-2:]
         except Exception:
             lines = []
-        self.log.configure(text="\n".join(lines))
+        self.log.configure(text="\n".join(l[:70] for l in lines))
 
     def draw_bar(self, nd, tot, part, failed):
         p = round(100 * min(tot, nd + part) / max(1, tot))
