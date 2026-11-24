@@ -301,6 +301,10 @@ class App(tk.Tk):
         self.tab_part = tk.Label(tabs, font=("Tahoma", 9, "bold"), padx=8, pady=3, cursor="hand2")
         self.tab_story.pack(side="left", fill="x", expand=True); self.tab_part.pack(side="left", fill="x", expand=True)
         self.tab_story.bind("<Button-1>", lambda e: self.set_page("story")); self.tab_part.bind("<Button-1>", lambda e: self.set_page("part"))
+        # ONE progress bar for the whole page (user 2026-11-24: "โหลดที่ช่องเดียว" - no bar per step)
+        bar = tk.Frame(self, bg=BG); bar.pack(fill="x", padx=10, pady=(6, 2))
+        self.bar_txt = tk.Label(bar, bg=BG, fg=TXT, font=("Tahoma", 11, "bold"), anchor="w"); self.bar_txt.pack(fill="x")
+        self.bar = tk.Canvas(bar, height=8, bg="#e6e6e6", highlightthickness=0); self.bar.pack(fill="x", pady=(3, 0))
         self.page = None   # None = automatic: story setup until it is approved / parts have started, then parts
         self.pstory = tk.Frame(self, bg=BG)
         self.shead = tk.Label(self.pstory, bg=BG, fg=TXT, font=("Tahoma", 11, "bold"), anchor="w")
@@ -403,8 +407,7 @@ class App(tk.Tk):
         st = load(ROOT / "stories" / f"{story}.json", {})   # user 2026-11-22: real numbers from the central sheet (story.json teacher_range)
         tr = st.get("teacher_range") or [0, 0]; mm = lambda x: f"{int(x // 60)}:{int(x % 60):02d}"
         inr = [p for p in st.get("parts", []) if p.get("master") and p["master"][0] < tr[1] - 0.5]
-        pp = round(100 * ndone / len(STEPS))
-        txt = f"ท่อน {n} จาก {len(inr)} ({pp}%)   เวลาที่ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
+        txt = f"ท่อน {n} จาก {len(inr)}   เวลาที่ทำงาน {mm(tr[0])}–{mm(tr[1])}" if tr[1] > 0 else f"ท่อน {n}   (ยังไม่ได้ใส่เวลาที่ทำงาน)"
         cur = next((p for p in st.get("parts", []) if str(p.get("n")) == str(n)), None)
         if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินเวลาที่ทำงาน"
         b, _ = jobs_usage()
@@ -444,26 +447,22 @@ class App(tk.Tk):
                 dot.configure(text=SPIN[self.tick_n % 4], fg=BLUE); txt.configure(fg=BLUE, font=("Tahoma", 9, "bold"))
                 late = k in LOAD_STEPS and secs > 180   # over the 3-minute load limit: must be looked at now
                 lv = load(J / "live.json", {})
-                pct = f"{lv['pct']}%  " if lv.get("step") == k and time.time() - lv.get("time", 0) < 600 else ""
-                info.configure(text=f"{'เกิน 3 นาที! ' if late else pct}{secs // 60}:{secs % 60:02d}", fg=RED if late else BLUE)
+                info.configure(text=f"{'เกิน 3 นาที! ' if late else ''}{secs // 60}:{secs % 60:02d}", fg=RED if late else BLUE)
             elif s == "fail": dot.configure(text="●", fg=RED); txt.configure(fg=RED, font=("Tahoma", 9, "bold")); info.configure(text="ล้มเหลว", fg=RED)
             else:
                 nxt = k == first_todo and live.get("state") != "running"
                 dot.configure(text="○", fg=AMBER if nxt else GREY)
                 txt.configure(fg=AMBER if nxt else SUB, font=("Tahoma", 9, "bold") if nxt else F)
-                ap = ai_pct(story, n, k) if nxt else None
-                info.configure(text=("คลิกเมื่อผ่าน" if k == "user_ok" else (f"{ap[0]}%  ถัดไป" if ap else "ถัดไป")) if nxt else "", fg=AMBER)
+                info.configure(text=("คลิกเมื่อผ่าน" if k == "user_ok" else "ถัดไป") if nxt else "", fg=AMBER)
         # detail lines under rows
         lv = load(J / "live.json", {})
         plan = load(PROG / f"{story}_{n}_motions.json", [])
         for k, (row, sub, tog) in self.subs.items():
             text, col = "", SUB
             if states[k] == "run" and lv.get("step") == k and time.time() - lv.get("time", 0) < 600:
-                p = max(0, min(100, int(lv.get("pct", 0))))
-                text = "█" * (p // 5) + "░" * (20 - p // 5) + f" {p}%" + chr(10) + str(lv.get("text", ""))[:60]; col = BLUE
+                text = str(lv.get("text", ""))[:60]; col = BLUE      # what it does now; the % is in the ONE bar on top
             elif states[k] == "todo" and k == first_todo and ai_pct(story, n, k):
-                p, t = ai_pct(story, n, k)
-                text = "█" * (p // 5) + "░" * (20 - p // 5) + f" {p}%" + chr(10) + t; col = AMBER
+                text = ai_pct(story, n, k)[1]; col = AMBER
             elif k == "motion_plan" and plan:
                 text = chr(10).join(("⚠ " if m.get("warn") or not m.get("ok") else "   ") + f"{m['who']} ← {m['motion']} ×{m['speed']}" + (f"  หน้า: {m['face']}" if m.get('face') else "") for m in plan)
                 col = AMBER if any(m.get("warn") or not m.get("ok") for m in plan) else SUB
@@ -474,11 +473,26 @@ class App(tk.Tk):
                 sub.configure(text=text, fg=col); sub.pack(fill="x", padx=(26, 0), after=row)
             else:
                 sub.pack_forget()
+        if pg == "story":
+            nd, tot, part = sdone, len(STORY_STEPS), 0.0
+        else:
+            nd, tot = ndone, len(STEPS); part = 0.0
+            run = next((k for k, _ in STEPS if states[k] == "run"), None)
+            if run and lv.get("step") == run and time.time() - lv.get("time", 0) < 600: part = max(0, min(100, int(lv.get("pct", 0)))) / 100
+            elif first_todo and ai_pct(story, n, first_todo): part = ai_pct(story, n, first_todo)[0] / 100
+        self.draw_bar(nd, tot, part, any(v == "fail" for v in states.values()) and pg != "story")
         try:
             lines = (PROG / "now_log.txt").read_text(encoding="utf-8").splitlines()[-4:]
         except Exception:
             lines = []
         self.log.configure(text="\n".join(lines))
+
+    def draw_bar(self, nd, tot, part, failed):
+        p = round(100 * min(tot, nd + part) / max(1, tot))
+        self.bar_txt.configure(text=f"{nd}/{tot} ขั้น · {p}%", fg=RED if failed else TXT)
+        self.bar.update_idletasks(); w = self.bar.winfo_width()
+        self.bar.delete("all")
+        if p: self.bar.create_rectangle(0, 0, max(2, w * p / 100), 8, fill=RED if failed else (GREEN if p >= 100 else BLUE), width=0)
 
     def loop(self):
         self.tick_n += 1
