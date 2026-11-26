@@ -75,3 +75,7 @@ When the user adds a reusable production rule, update the installed skill and th
 
 - For a bright lightweight folk-tale interior, use modular floor and wall pieces with a small window opening, soft daylight, and restrained background blur. Keep the performance and faces clear. Use generated geometry for structure and reserve image-to-3D for small optional props. Check dimensions, apertures, materials and performance in the target editor before accepting generated assets.
 - Save iClone projects only through the visible File > Save Project or File > Save Project As menu. Never use a script, watcher, CLI or keyboard shortcut to save. Reopen through File > Open to verify the saved project before final delivery.
+
+## Texture-only PBR
+
+For texture-only PBR work, keep the mesh and UVs. Generate or extract one Base Color / Normal / Roughness / Metallic / Height set per material, with AO when supported. Keep plaster and ordinary wood nonmetallic. Supply separate maps for iClone and an ORM pack when using glTF. Use the normal convention required by the destination renderer. For an open window, leave the hole open so the scene artist can place their own exterior. Verify under neutral and angled light; identify approximate maps separately from model-derived or scanned maps.
