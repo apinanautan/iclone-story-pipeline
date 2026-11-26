@@ -1,0 +1,12 @@
+# Local extension prerequisite
+
+This guide is for the locally installed extension/relay. The public program release does not install or overwrite private relay keys, browser bindings or customized browser scripts. If the bridge is absent, inspect the actual installation; do not claim automatic delivery.
+
+# Chrome Preview Bridge / Goal Tracker — ใช้ทุกแชตและทุกท่อน
+
+- Chrome Extension iClone Preview to Chat คือเครื่องมือทำงานจริง ไม่ใช่แค่ปุ่มคัดลอก Prompt. เปิด Chrome ที่แชต CC5 เป้าหมายและกด “ผูกแชตนี้สำหรับส่งภาพ” หลังตรวจชื่อเรื่องปัจจุบัน; ต้องผูกใหม่เมื่อย้ายแชตหรือเปลี่ยนเรื่อง. ไม่ส่งภาพไปแชตเดิมโดยเดา URL. Relay: tools/chrome_preview_bridge/start-relay.cmd (ถ้าทำงานอยู่แล้วไม่เปิดซ้ำ).
+- ใช้ Dino Bot Tunnel shell จาก project root. ตรวจ progress/now.json และหน้าต่าง iClone ให้ตรงท่อนก่อนจับภาพ. คำสั่งจับภาพหน้าต่างจริงโดยไม่เรนเดอร์: py -3 -B tools/chrome_preview_bridge/capture_preview.py. เพิ่ม --send เพื่อส่งภาพหน้าต่างเข้าแชตที่ผูกไว้สำหรับตรวจงาน/หน้าต่าง Modify/ข้อผิดพลาด: py -3 -B tools/chrome_preview_bridge/capture_preview.py --send. ไม่ต้องจับภาพเดสก์ท็อปทั้งหมด ไม่ต้องให้ผู้ใช้กดส่งเอง. ถ้า iClone ยังไม่เปิดท่อนตรงกัน ให้แก้ที่สาเหตุ ไม่ส่งภาพเก่า.
+- ภาพตรวจกล้อง: ใช้ Ai-iclone.exe do ตาม rules card ขั้น cams; ic8_part.py สร้าง part_cams.jpg และเรียก queue_preview.py อัตโนมัติ. ไม่สร้างระบบซ้ำ ไม่เรนเดอร์วิดีโอเพื่อแคป. หากต้องจัดคิวภาพ JPEG ที่ตรวจว่าใหม่และตรงงานแล้ว: py -3 -B tools/chrome_preview_bridge/queue_preview.py "<path.jpg>" "<story>" "<part>". ตรวจว่าเป็น JPEG และชื่อเรื่อง/ท่อนตรงสถานะสด. ปุ่ม “แนบภาพกล้องล่าสุด” ใช้แนบ contact sheet ด้วยมือ ไม่กดส่งเอง.
+- อ่าน tools/preview_bridge_local/job.json เฉพาะสถานะ id/state/phase/result; pending = รอ, claimed = กำลังส่ง, sent = พบใบตอบรับ, needs_review = ต้องตรวจข้อความจริงก่อนตัดสินใจ ห้ามส่งซ้ำหรือปลอมใบตอบรับ. หลังเห็นภาพในแชต ให้ตรวจองค์ประกอบจริงและแก้เฉพาะส่วนที่ผิดตาม flow; ห้ามอนุมัติแทนผู้ใช้.
+- Goal Tracker: ปุ่มเริ่มติดตามทันที/พักติดตาม ใน popup หรือกล่องลอย. ใช้บริบทแชตปัจจุบันทุก 90 วินาที. รอ GPT ตอบจบ ไม่ทับ draft หรือรูปแนบของผู้ใช้; ภาพพรีวิวมีสิทธิ์ก่อนข้อความติดตาม. เมื่องานถึงเป้าหมายจริงหรือ gate ที่ผู้ใช้กำหนด ให้ตอบรหัส ACHIEVEMENT ที่ระบบส่งมาเป็นบรรทัดสุดท้ายเดี่ยว ๆ เท่านั้น; ไม่เดารหัส ไม่ใช้รหัสจากแชตเก่า ไม่พิมพ์ถ้ายังไม่ผ่าน. ถ้าระบบไม่หยุดให้พักก่อนและตรวจข้อผิดพลาด.
+- ใช้ได้ทั้งแชตเริ่มเรื่องใหม่และแชตทำท่อนต่อไป. หากไม่พบปุ่ม/Relay/การผูกแชต ให้ตรวจการติดตั้งและสถานะจริงก่อนสรุปว่าเครื่องมือไม่พร้อม. เก็บคีย์และ URL ผูกแชตไว้ในเครื่อง ไม่คัดลอกลง Prompt/GitHub.

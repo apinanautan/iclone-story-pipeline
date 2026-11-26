@@ -18,3 +18,8 @@ python scripts/ic8_part.py parts/<spec>.json cams     # Cam_A/B, switcher, auto 
 - Directional light colour uses normalized RRgb(1.0,0.92,0.84); the 255 scale washes out.
 - Never use your own stage/camera scripts. Never save by script.
 Next: `review-stills`.
+
+## Project Sound / Preview — 2026-11-27
+- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
+- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
+- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.

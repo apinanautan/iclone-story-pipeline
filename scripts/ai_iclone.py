@@ -47,7 +47,7 @@ except OSError: VERSION = "?"
 
 # who does each step: script = the program runs it; ai = the AI thinks and fills a file; user = STOP, the user decides
 PART_KIND = {"plan": "ai", "audio": "script", "check": "script", "motion_plan": "script", "open": "script",
-             "cast": "script", "pose": "script", "sound": "script", "lip": "script", "cams": "script", "cam_check": "script",
+             "cast": "script", "sound": "script", "pose": "script", "lip": "script", "cams": "script", "cam_check": "script",
              "motion_check": "script", "light_check": "script", "face_check": "script", "switch": "script",
              "user_ok": "user", "ready": "script", "render": "script", "video_check": "script"}
 STORY_KIND = {"sheet": "ai", "source": "ai", "range": "user", "split": "ai", "chars": "ai", "scenes": "ai",
@@ -79,9 +79,11 @@ HARD = """กฎเหล็ก (ห้ามผิด):
 - ทำตามที่โปรแกรมนี้บอกเท่านั้น ไม่ต้องอ่าน AGENTS.md / rules.md / docs อื่น เว้นแต่การ์ดกฎของข้อนั้นบอก
 - ห้ามเขียนสคริปต์ iClone เอง ห้ามข้ามข้อ ห้ามกด/อนุมัติแทนผู้ใช้ ห้ามเรนเดอร์ก่อนผู้ใช้ผ่าน
 - ห้ามเขียนลง {DRIVE} (Google Drive) ยกเว้นคัดลอกวิดีโอเสร็จไปที่ publish
-- เซฟผ่าน GUI เท่านั้น (ข้อ ready ทำให้) ห้าม RFileIO.SaveProject / RGlobal.RenderAudio
+- เซฟและเปิดไฟล์ซ้ำผ่านเมนู File ใน iClone เท่านั้น ข้อ ready ตรวจหลักฐาน; ห้าม RFileIO.SaveProject / RGlobal.RenderAudio
 - ข้อไหน FAIL: อ่านข้อความ แก้ที่สเปก/ไฟล์ แล้ว do ใหม่ได้ 1 ครั้ง ถ้า FAIL ซ้ำ หยุดแล้วบอกผู้ใช้เป็นภาษาไทย
-- ตอบผู้ใช้เป็นภาษาไทยง่ายๆ คำสั่งใหม่ของผู้ใช้ทุกข้อ เขียนต่อท้าย docs/rules.md ทันที"""
+- ตอบผู้ใช้เป็นภาษาไทยง่ายๆ คำสั่งใหม่ของผู้ใช้ทุกข้อ เขียนต่อท้าย docs/rules.md ทันที
+- Cast -> Sound ครั้งเดียว -> Pose -> Lip -> Cams; แก้ Pose, Motion, กล้อง หรือเพิ่มตัวละครในโปรเจกต์เดิม ไม่ต้องใส่ Project Sound ซ้ำ. เซฟ/เปิดซ้ำด้วยเมนู File ของ iClone เท่านั้น.
+"""
 CHAT = """ผู้ใช้พูดในแชท -> คำสั่ง:
   "วันนี้ทำเรื่อง X"            -> {cmd} use X   (ยังไม่มีเรื่อง -> {cmd} new-story X)
   "ทำช่วง 0:00 ถึง 7:14"         -> {cmd} range 0:00-7:14

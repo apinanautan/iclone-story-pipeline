@@ -49,7 +49,7 @@ docs/CURRENT_STORY.md, docs/rlpy_lessons.md, docs/iclone-key-SKILL.md และ�
 popup ให้ปิดด้วย scripts/ic8_startup_popup_guard.ps1 หรือ ic8_ui.ps1 ห้ามคลิกเอง
 ถ้า watcher ขึ้น BLOCKED ให้ลบไฟล์ .py ที่ค้างใน run\ แล้วเปิด iClone ใหม่
 รันทีละขั้น และตรวจ log ของแต่ละขั้นก่อนไปขั้นถัดไป:
-  ic8_part.py <spec> open → cast → pose → sound → cams   (เมื่อแก้ค่าแล้ว: `<step> --from`)
+  ic8_part.py <spec> open → cast → sound → pose → lip → cams   (เมื่อแก้ค่าแล้ว: `<step> --from`)
 หลังสั่ง open ให้เซฟผ่าน GUI ทันทีครั้งแรก (iClone ปิดตัวเองได้โดยไม่เตือน)
 
 ══════════ สเต็ป 5 — ตรวจภาพนิ่ง (บังคับทุกครั้ง) ══════════
@@ -188,3 +188,8 @@ Look front, Blink และ LoadAudioToObject ไม่ถือว่าเป�
 ```
 หยุด. อ่าน docs/MASTER_PROMPT.md ใหม่ทั้งไฟล์ แล้วบอกผม: ตอนนี้อยู่สเต็ปไหน, ทำผิดกฎข้อไหน (อ้างหัวข้อ+เลขข้อ), จะแก้ยังไง — ยังไม่ต้องลงมือ
 ```
+
+## Project Sound / Preview — 2026-11-27
+- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
+- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
+- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.

@@ -601,3 +601,8 @@ For texture-only PBR work, keep the mesh and UVs. Generate or extract one Base C
 - Follow the live render card. The current card specifies 1920×1080 (1080p), 60 fps. Resolve `{VIDEO}` from the active project's `paths.local.json`; final path is `{VIDEO}\\<story>\\<part>.mp4`.
 - Complete Preview `video_check` and verify exact path, resolution, frame rate, duration, and audio with ffprobe. A mismatch is a failed render; repair through Preview and never move or rename an incorrectly rendered file to disguise it.
 - Incident: `1.1` was rendered outside the Preview gate at 1280×720 and first saved outside `{VIDEO}`; this was incorrect. Treat the existing `1.1.mp4` as noncompliant until Preview's render and video_check steps succeed.
+
+## Project Sound / Preview — 2026-11-27
+- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
+- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
+- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.

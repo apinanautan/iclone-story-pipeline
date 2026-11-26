@@ -182,3 +182,8 @@
 | `tests/test_preview_gate.py` | ทดสอบ dispatch gate และการอนุญาต Preview | เครื่อง |
 | `tests/test_still_check.py` | ทดสอบตัวตรวจภาพนิ่งออฟไลน์ | ทั้งสอง |
 
+
+## Sound workflow release v1.7.7
+- scripts/workflow_state.py - pure dependency invalidation and Project Sound source receipt; keep sound during cast/pose/motion repair, revalidate on new project or changed WAV.
+- tests/test_sound_workflow.py - offline regression checks of real step order, one native import, sound retention and changed WAV.
+- docs/CHROME_PREVIEW_GUIDE.md - local Chrome extension/relay usage and safe chat binding. Browser key and local binding stay off GitHub.

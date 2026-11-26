@@ -12,7 +12,7 @@ Steps (in order; `all` = check..ready, never render):
   lip     AccuLips per speaker (GUI), keep only that speaker's line windows; non-speakers' mouths cleared
   cams    Cam_A/Cam_B, 2 keys per shot, switcher, 1 still per shot (quick; --shot 3,5 re-shoots only those, --full = ~1/s) -> ic8_jobs/part_cams.jpg (look at it!)
   cam_check ALL shots in ONE image (part_cams_all.jpg) + the AI fills progress/<story>_<N>_camcheck.json per shot; any fail = FAIL
-  ready   Switch, playhead 0, play range 0..end, GUI save, reopen  -> STOP: user presses Play
+  ready   Switch, playhead 0, play range 0..end, manual File-menu save/reopen -> STOP: user presses Play
   render  ONLY with --approved (user said ผ่าน): 1080p60 + clean wav + checks + publish
 `<step> --from` runs that step and every later one up to ready (fix a number in the spec, re-run from there).
 
@@ -49,7 +49,7 @@ FF, FFP = _ff("ffmpeg"), _ff("ffprobe")   # found on any PC (no one-PC path)
 os.environ["IC8_FF"], os.environ["IC8_FFP"] = FF, FFP   # ic8_gui.ps1 uses the same ones
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
-ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
+ORDER = ["check", "motion_plan", "open", "cast", "sound", "pose", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
 
 
 import ailog   # real % + timing + fail report for GPT (user 2026-11-23)
@@ -355,13 +355,14 @@ def title():
 def step_open(S, base):
     proj = os.path.normpath(S["project"]); t = title()
     if not t: fail("iClone is not running")
-    if t.rstrip(" *").endswith(os.path.basename(proj)): say("OK already open: " + t); return
-    # a '*' title is checked by ic8_gui.ps1 open (stale '*' right after a GUI save is fine, real changes fail)
+    if os.path.isfile(proj) and t.rstrip(" *").endswith(os.path.basename(proj)): say("OK already open: " + t); return
+    # Saving is deliberately a live menu action, never a script/helper action.
     if os.path.exists(proj): gui("open", proj)
     else:
-        gui("open", os.path.normpath(S["from"])); gui("saveas", proj)
+        gui("open", os.path.normpath(S["from"]))
+        say("AI WORK: create the new project through iClone File > Save Project As manually, then run Ai-iclone do again: " + proj)
+        sys.exit(3)
     say("OK open " + proj)
-
 
 def step_cast(S, base):
     """Load missing story avatars in iClone via watcher, one avatar per job, then verify names."""
@@ -558,8 +559,8 @@ def step_pose(S, base):
 
 def step_sound(S, base):
     live("sound", 0, "ใส่เสียง"); gui("sound", os.path.normpath(S["wav"]), "-Replace")
-    live("sound", 50, "เซฟ"); gui("save"); live("sound", 100, "เสร็จ"); say("OK sound (check ic8_jobs/gui_tl.png: Sound row at frame 0)")
-
+    live("sound", 100, "เสร็จ")
+    say("OK sound (check ic8_jobs/gui_tl.png: Sound row at frame 0). Keep Project Sound unchanged; save only at the ready gate.")
 
 def windows(S):
     w = {n: [] for n in S["cast"]}
@@ -570,7 +571,7 @@ def windows(S):
 
 def step_lip(S, base):
     w = windows(S); wav = os.path.normpath(S["wav"])
-    talk = [n for n, ws in w.items() if ws]; tot = len(talk) + 3   # each talker + trim + check + save
+    talk = [n for n, ws in w.items() if ws]; tot = len(talk) + 2   # each talker + trim + check
     for i, n in enumerate(talk):
         count("lip", i, tot, "ปาก %s" % n); gui("lip", n, wav, w[n][0][0], w[n][-1][1])
     count("lip", len(talk), tot, "ตัดปากให้ตรงช่วงพูด")
@@ -582,8 +583,8 @@ def step_lip(S, base):
         m = re.search(r"^%s visemes (\d+)" % re.escape(n), chk, re.M)
         if ws and (not m or int(m.group(1)) == 0): fail("%s speaks but has no visemes" % n)
     open(os.path.join(J, "lip.done"), "w").write(time.strftime("%H:%M:%S"))
-    count("lip", len(talk) + 2, tot, "เซฟ"); gui("save"); count("lip", tot, tot, "เสร็จ"); say("OK lip")
-
+    count("lip", tot, tot, "เสร็จ")
+    say("OK lip. Save only at the ready gate.")
 
 def cams_args():
     """cams [--shot 3,5] [--full]: default quick pass = 1 still (middle) per shot; --shot re-shoots only those
@@ -615,8 +616,16 @@ def step_cams(S, base):
                            capture_output=True, text=True)
         say(r.stdout)
         if r.returncode: fail("cams: stills jump/flip inside a shot = bad capture, not the real camera. Re-run cams --full; do not show these stills")
-    subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), os.path.join(J, "part_cams.jpg")])
-    say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % os.path.join(J, "part_cams.jpg"))
+    sheet = os.path.join(J, "part_cams.jpg")
+    prior = os.stat(sheet).st_mtime_ns if os.path.isfile(sheet) else None
+    result = subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), sheet])
+    if result.returncode or not os.path.isfile(sheet) or (prior is not None and os.stat(sheet).st_mtime_ns == prior):
+        fail("cams: fresh contact sheet not verified; do not send old preview")
+    bridge = os.path.join(ROOT, "tools", "chrome_preview_bridge", "queue_preview.py")
+    if os.path.isfile(bridge):
+        br = subprocess.run([sys.executable, "-B", bridge, sheet, str(S.get("story","")), str(S.get("part",""))], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+        say("Preview bridge: " + (br.stdout.strip() if not br.returncode else "queue failed"))
+    say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % sheet)
 
 
 MOTION_JOB = r'''
@@ -813,10 +822,25 @@ def step_ready(S, base):
     miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") != "บรรยาย" for l in S.get("lines", [])))]
     if miss: fail("ready: run these steps first, in order: " + ", ".join(miss))
     if not d.get("ok", {}).get("step5"): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
-    for i, g in enumerate(("switch", "tozero", "save", "reopen")): count("ready", i, 4, g); gui(g)
-    count("ready", 4, 4, "เสร็จ")
-    say("OK ready. STOP: tell the user to press Play in iClone (Switch, frame 0). Render only after they say ผ่าน.")
-
+    proj = os.path.normpath(S["project"])
+    proof = d.get("ready_menu_save")
+    if not proof:
+        for i, gate in enumerate(("switch", "tozero")): count("ready", i, 2, gate); gui(gate)
+        if not os.path.isfile(proj): fail("ready: project file is missing: " + proj)
+        d["ready_menu_save"] = {"baseline_mtime_ns": os.stat(proj).st_mtime_ns, "started": time.time()}
+        with open(g, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False, indent=1)
+        say("AI WORK: now click iClone File > Save Project manually, reopen the same file with File > Open, confirm it loads, then run Ai-iclone do again. No script or shortcut may save.")
+        sys.exit(3)
+    if not os.path.isfile(proj): fail("ready: project file is missing after the menu save: " + proj)
+    if os.stat(proj).st_mtime_ns <= int(proof.get("baseline_mtime_ns", 0)):
+        fail("ready: file timestamp did not advance after the manual File > Save Project; save and reopen it, then retry")
+    live_title = title()
+    if os.path.basename(proj) not in live_title or "*" in live_title:
+        fail("ready: reopen the saved project in iClone and confirm its title has the expected filename and no '*': " + live_title)
+    d.pop("ready_menu_save", None)
+    with open(g, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False, indent=1)
+    count("ready", 2, 2, "ตรวจเซฟเมนูและเปิดซ้ำ")
+    say("OK ready: manual File-menu save and reopen verified. STOP: tell the user to press Play in iClone (Switch, frame 0). Render only after they say ผ่าน.")
 
 def step_render(S, base, approved):
     if not approved: fail("render needs --approved (the user must say ผ่าน first)")
@@ -860,16 +884,19 @@ if __name__ == "__main__":
             if state == "running":
                 # every later step must run again (sound/lip only touch the save/render steps)
                 # check / motion_check / light_check / video_check only READ: they never grey out other steps
-                after = FULL[FULL.index(st) + 1:] if st in FULL and not st.endswith("check") else []
-                if st in ("sound", "lip"): after = [k for k in after if k in ("lip", "ready", "render", "video_check")]
-                if st == "render": after = ["video_check"]
-                if st == "motion_plan": after = FULL[FULL.index("pose"):]   # new motions: pose onward again
+                from workflow_state import invalidated_steps
+                invalidate = invalidated_steps(st, FULL)
                 try: os.remove(os.path.join(J, "live.json"))   # no stale % from the previous step
                 except OSError: pass
-                for k in [st] + after: sd.pop(k, None)
-                if st in ("cast", "pose", "cams", "open"): d.get("ok", {}).pop("step5", None)   # stills change -> user must look again
+                for k in invalidate: sd.pop(k, None)
+                if st in ("cast", "pose", "cams", "open", "sound", "lip", "motion_plan"): d.get("ok", {}).pop("step5", None)
+                if st != "ready" and "ready" in invalidate: d.pop("ready_menu_save", None)
+                if "sound" in invalidate: d.pop("sound_source", None)
             elif state == "done":
                 sd[st] = time.time()
+                if st == "sound":
+                    from workflow_state import sound_source
+                    d["sound_source"] = sound_source(S["wav"])
             json.dump(d, open(g, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         except Exception:
             pass

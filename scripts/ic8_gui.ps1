@@ -182,10 +182,8 @@ switch($Cmd){
             if(-not (Test-Path $log)){ Fail "prop load did not finish in 2 min (dialog on the other screen? gui shot)" }
             $t=Get-Content $log -Raw -Encoding UTF8; $t; if($t -notmatch "props \['"){ Fail 'no new prop appeared' }; Say "OK prop $A2" }
  'tozero' { Job (Py "RLPy.RGlobal.Stop();RLPy.RScene.ClearSelectObjects()`nL=RLPy.RGlobal.GetProjectLength()`nRLPy.RGlobal.SetStartTime(T(0));RLPy.RGlobal.SetEndTime(L);RLPy.RGlobal.SetPreviewStartTime(T(0));RLPy.RGlobal.SetPreviewEndTime(L)`nRLPy.RGlobal.SetTime(T(0))`nprint('len',L.ToFloat()/6000)") 'zz_gui_tozero' | Out-Null; Say 'OK playhead 0, play range = whole project' }
- 'save'   { $f=CurrentFile; if(-not $f){Fail "cannot find the saved file for title: $(Title) (use saveas)"}; Backup $f.FullName; $before=$f.LastWriteTime; Keys @($CTRL) 0x53; WaitSaved $f.FullName $before }
- 'saveas' { if($A1 -notmatch '\.iProject$'){Fail 'give the full path ending in .iProject'}; if($A1 -match '^G:'){Fail 'never save into G: (scene templates live there)'}
-            $before=$null; if(Test-Path $A1){ Backup $A1; $before=(Get-Item $A1).LastWriteTime }
-            Keys @($CTRL,$SHIFT) 0x53; FillDialog $A1; WaitLoaded (Split-Path $A1 -Leaf); WaitSaved $A1 $before }
+ 'save'   { Fail 'Use the visible iClone File > Save Project menu manually' }
+ 'saveas' { Fail 'Use the visible iClone File > Save Project As menu manually' }
  'open'   { $dirty=(Title) -match '\*$'
             # iClone keeps '*' after a good save: if the open file was written < 120 s ago, nothing is lost -> answer No
             $cf=CurrentFile; if($dirty -and $cf -and ((Get-Date)-$cf.LastWriteTime).TotalSeconds -lt 120){ $Discard=$true; Say 'file just saved: the * is stale' }

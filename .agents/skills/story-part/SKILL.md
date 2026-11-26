@@ -23,3 +23,8 @@ Hard rules (break none):
 - Do not write your own stage/camera scripts to bypass `ic8_part.py`. If a shared script lacks a feature, fix the shared script.
 - Every new user instruction -> append to `docs/rules.md` immediately.
 - Do not spend long on one step: if blocked (missing file, rule conflict), tell the user in Thai what blocks you and ask.
+
+## Project Sound / Preview — 2026-11-27
+- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
+- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
+- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.

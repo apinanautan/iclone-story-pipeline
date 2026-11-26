@@ -29,13 +29,13 @@ SPIN = "◐◓◑◒"
 STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ตัดเสียงท่อน"), ("check", "ตรวจสเปกท่อน"),
          ("motion_plan", "วางแผนโมชั่น (ใครใช้ท่าอะไร)"),
          ("open", "โหลดฉาก (≤3 นาที)"), ("cast", "วางตัวละครรอบแลนด์มาร์ก (≤3 นาที)"),
-         ("pose", "รอเท็กซ์เจอร์ แล้วใส่ท่าทาง"), ("sound", "ใส่เสียง (≤3 นาที)"), ("lip", "ลิปซิงก์"),
+         ("sound", "ใส่เสียงครั้งเดียว (≤3 นาที)"), ("pose", "รอเท็กซ์เจอร์ แล้วใส่ท่าทาง"), ("lip", "ลิปซิงก์"),
          ("cams", "ตั้งกล้อง 80/100 มม. + ไฟหน้า + ภาพนิ่ง"),
          ("cam_check", "AI ตรวจมุมกล้องทุกช็อต (รวมในรูปเดียว)"),
          ("motion_check", "ตรวจโมชั่น (ไม่เดินถอย/ไม่กระตุก)"), ("light_check", "ตรวจแสงหน้า (ไม่ขาว/ดำครึ่งซีก)"),
          ("face_check", "ตรวจหน้าทุกตัว: ①กระพริบ ②ท่าหน้า 65-75% ③ความรู้สึก + รอยต่อคลิปห่างและไขว้ X (อ่านจาก iClone)"),
          ("switch", "เปลี่ยนวิวเป็นกล้อง Switch"), ("user_ok", "ผู้ใช้ตรวจ (ผ่าน)"),
-         ("ready", "เซฟผ่านโปรแกรม (Ctrl+S)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
+         ("ready", "เตรียม Switch / เซฟเมนู + เปิดซ้ำ"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
 # Story setup: done ONCE per story, before any part (user 2026-11-22). All read from the central sheet
 # stories/<story>.json; nothing per part here.
 STORY_STEPS = [("sheet", "ใบงานกลาง (เรื่องอะไร)"),          # user 2026-11-22: BIG picture only; details belong to each part
@@ -261,6 +261,9 @@ def step_states(story, n):
     for k, _ in STEPS:
         if k == "plan": s = "done" if plan_complete(spec) else "todo"
         elif k == "audio": s = "done" if spec and Path(expand(spec.get("wav", ""))).exists() else "todo"
+        elif k == "sound":
+            from workflow_state import source_changed
+            s = "done" if k in done and spec and not source_changed(st.get("sound_source"), expand(spec.get("wav", ""))) else "todo"
         elif k == "motion_plan": s = "done" if k in done else "todo"
         elif k == "user_ok": s = "done" if ok.get("step5") else "todo"
         elif k == "render": s = "done" if k in done or (video_done(spec) and "render" not in live.get("step", "")) else "todo"

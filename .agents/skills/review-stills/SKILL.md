@@ -46,3 +46,8 @@ The step does not pass until every shot is filled and true. Never copy the plan 
 - For a bright lightweight folk-tale interior, use modular floor and wall pieces with a small window opening, soft daylight, and restrained background blur. Keep the performance and faces clear. Use generated geometry for structure and reserve image-to-3D for small optional props. Check dimensions, apertures, materials and performance in the target editor before accepting generated assets.
 - Save iClone projects only through the visible File > Save Project or File > Save Project As menu. Never use a script, watcher, CLI or keyboard shortcut to save. Reopen through File > Open to verify the saved project before final delivery.
 - When the user adds a reusable production rule, update the installed skill and the corresponding skill or rules in the canonical GitHub repository. Publish the scoped change and verify it appears upstream. Keep story assets, media, local paths and progress out of the commit.
+
+## Project Sound / Preview — 2026-11-27
+- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
+- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
+- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.
