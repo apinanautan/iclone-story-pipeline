@@ -63,3 +63,10 @@ Run `do`, read the reply, act on the exit code:
 - The `check` step refuses a part when: someone is on screen > 20 s with only one pose, two people share the same standing pose, a pose was already used in 2 other parts, or more than 1 person has folded arms.
 - If `check` fails for poses, choose different clips in the part file as the card says. Never pick folded arms just because the character is "calm".
 - ค้าง / FAIL / อยากรู้ว่าถึงไหน: รัน `Ai-iclone log` (MCP: `log`) อ่าน % จริง, เวลาแต่ละข้อ, FAIL REPORT (ข้อไหน กี่วินาที หน้าจอเขียนอะไร รูป) แล้วแก้ที่สาเหตุนั้นเท่านั้น ห้ามเดา ห้ามรอเปล่า
+
+## Reusable production rules
+
+- When cutting between shots of the same person or group, change the subject size visibly in the frame. Choose lens, camera distance and composition together, then compare the actual stills side by side. A reverse angle at the same scale does not satisfy this rule. Matching shot sizes are allowed when focus cuts between different people.
+- For a bright lightweight folk-tale interior, use modular floor and wall pieces with a small window opening, soft daylight, and restrained background blur. Keep the performance and faces clear. Use generated geometry for structure and reserve image-to-3D for small optional props. Check dimensions, apertures, materials and performance in the target editor before accepting generated assets.
+- Save iClone projects only through the visible File > Save Project or File > Save Project As menu. Never use a script, watcher, CLI or keyboard shortcut to save. Reopen through File > Open to verify the saved project before final delivery.
+- When the user adds a reusable production rule, update the installed skill and the corresponding skill or rules in the canonical GitHub repository. Publish the scoped change and verify it appears upstream. Keep story assets, media, local paths and progress out of the commit.

@@ -39,3 +39,10 @@ Send the page images to the user with one Thai line per shot. **STOP.** No lip-s
 `progress/<story>_<N>_camcheck.json`. Open the image, then per shot fill `see` (what is REALLY in the frame) and true/false for
 subject_face, framing, clean, differs. Any false -> write `fix`, change the spec, `cams --shot <N>`, run cam_check again.
 The step does not pass until every shot is filled and true. Never copy the plan into `see`.
+
+## Reusable production rules
+
+- When cutting between shots of the same person or group, change the subject size visibly in the frame. Choose lens, camera distance and composition together, then compare the actual stills side by side. A reverse angle at the same scale does not satisfy this rule. Matching shot sizes are allowed when focus cuts between different people.
+- For a bright lightweight folk-tale interior, use modular floor and wall pieces with a small window opening, soft daylight, and restrained background blur. Keep the performance and faces clear. Use generated geometry for structure and reserve image-to-3D for small optional props. Check dimensions, apertures, materials and performance in the target editor before accepting generated assets.
+- Save iClone projects only through the visible File > Save Project or File > Save Project As menu. Never use a script, watcher, CLI or keyboard shortcut to save. Reopen through File > Open to verify the saved project before final delivery.
+- When the user adds a reusable production rule, update the installed skill and the corresponding skill or rules in the canonical GitHub repository. Publish the scoped change and verify it appears upstream. Keep story assets, media, local paths and progress out of the commit.
