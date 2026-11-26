@@ -20,5 +20,6 @@ python scripts/ic8_part.py parts/<spec>.json render --approved
 - Output `{VIDEO}\<story>\<N>.mp4`. Copying it to the publish folder in {DRIVE} is the only write allowed there.
 - `scripts/ic8_gui.ps1 save/saveas` and `scripts/ic8_save.py` are disabled/removed. Never RFileIO.SaveProject, never RGlobal.RenderAudio. Check the video with ffprobe (60 fps, right length).
 
-## Current candidate workflow (1.7.8)
-Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.
+
+## Current integrated runtime
+Follow docs/CINEMATIC_SLEEP.md and live Preview cards. New camera and evidence rules supersede old 80/100-only and fixed-cut rules. Preserve sound and actual manual File-menu save/reopen. Normal and Sleep share QA; Sleep requires explicit scoped activation. Do not bypass real checks.

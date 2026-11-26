@@ -1,12 +1,10 @@
-﻿<#
-ic8_gui.ps1 - one command per iClone GUI chore, so no AI has to screenshot + click step by step.
+<#
+ic8_gui.ps1 - helper for non-save iClone GUI chores.
 Every command checks its own result and prints OK/FAIL lines. Run with:
   powershell -NoProfile -ExecutionPolicy Bypass -File scripts\ic8_gui.ps1 <command> [args]
 
   shot                         DPI-correct screenshot of the iClone screen -> ic8_jobs\gui_shot.png (+ timeline crop gui_tl.png)
   job <file.py>                run a Python file through the watcher, print its .log (refuses RFileIO.SaveProject)
-  save                         Ctrl+S, wait for title without '*', verify file time/size changed (backup first)
-  saveas <full .iProject path> Ctrl+Shift+S, fill the dialog, wait, verify on disk (backup if it exists)
   open <full .iProject path>   Ctrl+O, fill the dialog, wait until loaded
   reopen                       open the current project again = proof the saved file loads
   switch                       viewport camera dropdown -> Switch
@@ -15,7 +13,7 @@ Every command checks its own result and prints OK/FAIL lines. Run with:
   lip <avatar> <wav> <s> <e>   AccuLips: select avatar, Animation > Create Script > Audio File <wav>, keep visemes s..e only
   render <out.mp4> <end> <wav> [-Publish <folder>] [-Shots "t1,t2,.."]
                                render 0..end 1080p60 (Switch), mux clean wav, check fps/len/volume, frame per shot, raw -> Recycle Bin
-Saving is ALWAYS through the GUI (rules: script SaveProject made files that do not open).
+Project saving is intentionally disabled here. Use iClone's visible File > Save Project / Save Project As menu manually.
 #>
 param([Parameter(Position=0)][string]$Cmd='shot',[Parameter(Position=1)][string]$A1,[Parameter(Position=2)][string]$A2,
       [Parameter(Position=3)][string]$A3,[Parameter(Position=4)][string]$A4,[switch]$Replace,[switch]$Discard,[string]$Publish,[string]$Shots,[int]$Width=1920,[int]$Height=1080)
@@ -25,28 +23,9 @@ $RUN = Join-Path $J 'run'
 $SCR = $PSScriptRoot
 $FF  = if ($env:IC8_FF) { $env:IC8_FF } else { (& py -3 (Join-Path $PSScriptRoot 'paths.py') ffmpeg) }   # found on any PC (paths.py), no one-PC path
 $FFP = if ($env:IC8_FFP) { $env:IC8_FFP } else { (& py -3 (Join-Path $PSScriptRoot 'paths.py') ffprobe) }
-$BAK = Join-Path $J 'backup'
 
 Add-Type -AssemblyName System.Windows.Forms,System.Drawing,UIAutomationClient,UIAutomationTypes,Microsoft.VisualBasic
-Add-Type -Namespace IG -Name U -MemberDefinition @'
-[DllImport("user32.dll")] public static extern bool SetProcessDPIAware();
-[DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
-[DllImport("user32.dll")] public static extern bool ShowWindow(IntPtr h,int c);
-[DllImport("user32.dll")] public static extern bool GetWindowRect(IntPtr h,out RECT r);
-[DllImport("user32.dll")] public static extern bool SetCursorPos(int x,int y);
-[DllImport("user32.dll")] public static extern void mouse_event(int f,int x,int y,int d,int e);
-[DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr SendMessage(IntPtr h,int m,IntPtr w,string l);
-[DllImport("user32.dll")] public static extern IntPtr PostMessage(IntPtr h,int m,IntPtr w,IntPtr l);
-[DllImport("user32.dll")] public static extern void keybd_event(byte vk,byte sc,int f,int e);
-[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
-[DllImport("user32.dll",CharSet=CharSet.Unicode)] public static extern IntPtr LoadKeyboardLayout(string id,uint f);
-[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr w,out uint p);
-[DllImport("user32.dll",EntryPoint="GetWindowThreadProcessId")] public static extern uint ThreadOf(IntPtr w,IntPtr p);
-[DllImport("kernel32.dll")] public static extern uint GetCurrentThreadId();
-[DllImport("user32.dll")] public static extern bool AttachThreadInput(uint a,uint b,bool f);
-[DllImport("user32.dll")] public static extern bool BringWindowToTop(IntPtr h);
-public struct RECT{public int L,T,R,B;}
-'@
+Add-Type -Path (Join-Path $PSScriptRoot 'IG.Win32.dll')
 [IG.U]::SetProcessDPIAware()|Out-Null
 
 function Say($s){ Write-Output $s }
@@ -81,18 +60,49 @@ function WinRect { if(-not $script:WR){ $r=New-Object IG.U+RECT; [IG.U]::GetWind
 function Click([int]$x,[int]$y){ [IG.U]::SetCursorPos($x,$y)|Out-Null; Start-Sleep -Milliseconds 120; [IG.U]::mouse_event(2,0,0,0,0); [IG.U]::mouse_event(4,0,0,0,0); Start-Sleep -Milliseconds 300 }
 # click at a point measured on the maximized iClone window (layout of this PC), relative to the window's top-left
 function ClickRel([int]$rx,[int]$ry){ $r=WinRect; $x=$r.L+$rx; $y=$r.T+$ry; if($env:IC8_GUI_DEBUG){Say "click $x,$y"}; Click $x $y }
-# keys by virtual-key code. VK codes alone are NOT enough: with the Thai layout active iClone (Qt) ignores
-# Ctrl+S etc. (save failed 400 s on 2026-11-21). Switch iClone's input language to English (0409) first.
+# Keyboard events in this helper are only for non-save chores. Project saving uses the manually clicked File menu.
 function English { $h=MainH; $en=[IG.U]::LoadKeyboardLayout('00000409',1); [IG.U]::PostMessage($h,0x50,[IntPtr]::Zero,$en)|Out-Null; Start-Sleep -Milliseconds 300 }
 function Keys([byte[]]$mods,[byte]$vk){ English; Front|Out-Null; if(-not (FgIsIclone)){Fail "iClone lost focus; key not sent"}; foreach($m in $mods){[IG.U]::keybd_event($m,0,0,0)}; [IG.U]::keybd_event($vk,0,0,0); [IG.U]::keybd_event($vk,0,2,0); [array]::Reverse($mods); foreach($m in $mods){[IG.U]::keybd_event($m,0,2,0)}; Start-Sleep -Milliseconds 300 }
 $CTRL=0x11; $SHIFT=0x10
 
+# Mutating GUI commands must be single-flight and pass live screen checks.
+function WaitReady([switch]$NeedsWatcher){
+  $pending=@(Get-ChildItem -LiteralPath $RUN -Filter '*.py' -File -ErrorAction SilentlyContinue)
+  if($pending.Count){Fail ("pending iClone job; do not retry: "+($pending.Name -join ', '))}
+  if($NeedsWatcher){
+    $marker=Join-Path $RUN 'watcher.alive'
+    if(-not (Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne ("guard-v2:"+ (Proc).Id)){
+      Fail 'reload updated scripts/ic8_watch.py via Script > Load Python before sending jobs'
+    }
+  }
+  $check=Join-Path $SCR 'ic8_watch.ps1'
+  $stdout=Join-Path $J 'guard_check.out'; $stderr=Join-Path $J 'guard_check.err'
+  for($i=0;$i -lt 2;$i++){
+    $probeArgs=@('-NoProfile','-ExecutionPolicy','Bypass','-File',('"' + $check + '"'),'-ReadyCheck')
+    if($NeedsWatcher){$probeArgs+= '-BackgroundJob'}
+    $probe=Start-Process -FilePath 'powershell.exe' -ArgumentList $probeArgs -NoNewWindow -PassThru -RedirectStandardOutput $stdout -RedirectStandardError $stderr
+    if(-not $probe.WaitForExit(18000)){try{$probe.Kill()}catch{}; Fail 'screen readiness check timed out; no new command sent'}
+    $msg=Get-Content $stdout -Raw -ErrorAction SilentlyContinue
+    if(($null -ne $probe.ExitCode -and $probe.ExitCode -ne 0) -or $msg -notmatch '(?m)^GUARD_READY\s*$'){Fail ("screen not ready; no new command sent: "+$msg)}
+    Start-Sleep -Milliseconds 400
+  }
+  if(@(Get-ChildItem -LiteralPath $RUN -Filter '*.py' -File -ErrorAction SilentlyContinue).Count -or -not (Proc).Responding){Fail 'iClone changed state after screen check'}
+}
+function PublishJob([string]$f,[string]$code){
+  if(Test-Path -LiteralPath $f){Fail "job already pending: $f"}
+  $tmp=$f+'.'+$PID+'.tmp'
+  [IO.File]::WriteAllText($tmp,$code,(New-Object Text.UTF8Encoding $false))
+  [IO.File]::Move($tmp,$f)
+}
 function Job([string]$code,[string]$name='zz_gui',[int]$wait=300){
   if($code -match 'SaveProject\s*\('){ Fail 'refusing: RFileIO.SaveProject (script saves corrupt projects; save via GUI)' }
+  WaitReady -NeedsWatcher
   $f=Join-Path $RUN "$name.py"; foreach($x in 'done','log','err'){Remove-Item "$f.$x","$RUN\$name.$x" -ErrorAction SilentlyContinue}
-  [IO.File]::WriteAllText($f,$code,(New-Object Text.UTF8Encoding $false))
+  PublishJob $f $code
   for($i=0;$i -lt $wait*2 -and (Test-Path $f);$i++){Start-Sleep -Milliseconds 500}
   if(Test-Path $f){ Fail "watcher did not run $name.py in 5 min (watcher stopped? look at the screen: gui shot)" }
+  if(Test-Path (Join-Path $RUN "$name.err")){ Fail ("watcher job failed: "+(Get-Content (Join-Path $RUN "$name.log") -Raw -ErrorAction SilentlyContinue)) }
+  if(-not (Test-Path (Join-Path $RUN "$name.done"))){Fail "watcher job has no completion marker: $name"}
   $log=Join-Path $RUN "$name.log"; if(Test-Path $log){ Get-Content $log -Raw -Encoding UTF8 } else { '' }
 }
 function Py([string]$body){ "import RLPy,os`nJ=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs')`nT=lambda s:RLPy.RTime.FromValue(int(round(s*6000)))`n$body`n" }
@@ -118,12 +128,7 @@ function IcloneWindows { $script:pid2=[uint32](Proc).Id; $script:hw=New-Object '
   $cb=[IG.E+EnumProc]{ param($h,$l); [uint32]$p=0; [void][IG.E]::GetWindowThreadProcessId($h,[ref]$p); if($p -eq $script:pid2 -and [IG.E]::IsWindowVisible($h)){$script:hw.Add($h)}; $true }
   [void][IG.E]::EnumWindows($cb,[IntPtr]::Zero); $script:hw }
 # press a button in a small iClone popup (Qt dialogs are only reachable via EnumWindows + UIA FromHandle)
-Add-Type -Namespace IG -Name E -MemberDefinition @'
-public delegate bool EnumProc(IntPtr h,IntPtr l);
-[DllImport("user32.dll")] public static extern bool EnumWindows(EnumProc e,IntPtr l);
-[DllImport("user32.dll")] public static extern uint GetWindowThreadProcessId(IntPtr w,out uint p);
-[DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr w);
-'@
+# IG.Win32.dll already loaded above
 function PressButton([string]$rx){
   $A=[Windows.Automation.AutomationElement]
   foreach($h in (IcloneWindows)){ try{$w=$A::FromHandle($h)}catch{continue}; $r=$w.Current.BoundingRectangle; if($r.Width -gt 1300 -or $r.Height -gt 1000){continue}
@@ -136,17 +141,6 @@ function CurrentFile { $t=Title; if($t -match 'iClone 8 - (.+?)( \*)?$'){ $n=$Ma
 # user 2026-11-22: hidden timestamped backups in ic8_jobs\backup filled the disk (90+ GB). Now ONE visible copy
 # NEXT TO the project in the save folder: <name>.backup.iProject = the project before the last save, overwritten
 # each save. Old timestamped copies of this project in ic8_jobs\backup are deleted.
-function Backup($file){ if($file -and (Test-Path $file)){ $stem=[IO.Path]::GetFileNameWithoutExtension($file)
-    if(Test-Path $BAK){ Get-ChildItem -LiteralPath $BAK -Filter ($stem+"_*.iProject") -ErrorAction SilentlyContinue | Remove-Item -Force -ErrorAction SilentlyContinue }
-    $dest=Join-Path ([IO.Path]::GetDirectoryName($file)) ($stem+".backup.iProject"); Copy-Item -LiteralPath $file -Destination $dest -Force -ErrorAction Stop; Say "backup (1 per project, next to it): $dest" } }
-function WaitSaved($file,$before){
-  # done = the FILE on disk is newer than before and its size stopped changing (user 2026-11-21: check the
-  # result, not the window title; iClone can keep the * after a good save, which used to wait 400 s for nothing)
-  $last=-1; for($i=0;$i -lt 300;$i++){ Start-Sleep 1; $f=Get-Item $file -ErrorAction SilentlyContinue; if($f -and $f.Length -eq $last -and (-not $before -or $f.LastWriteTime -gt $before) -and -not (Busy)){break}; if($f){$last=$f.Length} }
-  $f=Get-Item $file -ErrorAction SilentlyContinue
-  if(-not $f -or ($before -and $f.LastWriteTime -le $before)){ Fail "file on disk did not change: $file" }
-  Say ("OK saved {0}  {1:N0} bytes  {2:HH:mm:ss}" -f $f.FullName,$f.Length,$f.LastWriteTime)
-}
 # a load/save shows iClone's progress window (CRLProgressDlg). Wait for it to come AND go, so "loaded" is real
 # (the title alone already matches before a reopen of the same file starts).
 function Busy { $A=[Windows.Automation.AutomationElement]; foreach($h in (IcloneWindows)){ try{ if($A::FromHandle($h).Current.ClassName -eq 'CRLProgressDlg'){ return $true } }catch{} }; $false }
@@ -156,6 +150,7 @@ function WaitLoaded([string]$name){
   for($i=0;$i -lt 600;$i++){ if(-not (Busy)){break}; Start-Sleep 1 }
   for($i=0;$i -lt 300;$i++){ $t=Title; if($t -match [regex]::Escape($name) -and $t -notmatch '\*$'){ break }; Start-Sleep 1 }
   Start-Sleep 3
+  if((Busy) -or -not (Proc).Responding){Fail "project load still busy: $(Title)"}
   if((Title) -notmatch [regex]::Escape($name)){ Fail "project did not load: $(Title)" }
   Say "OK loaded: $(Title)"
 }
@@ -165,6 +160,26 @@ function Shot { $s=[Windows.Forms.Screen]::AllScreens|?{$_.Bounds.X -le (WinRect
   $w=WinRect; $tl=$bmp.Clone((New-Object Drawing.Rectangle 0,([Math]::Max(0,$w.T+840-$r.Y)),$r.Width,130),$bmp.PixelFormat); $tl.Save((Join-Path $J 'gui_tl.png'))
   Say "shot: $out (timeline crop gui_tl.png)" }
 
+# Preview dispatch is required for mutating pipeline GUI commands.
+# Read-only screenshots and manual File-menu saves remain separate.
+if($Cmd -notin @('shot','save','saveas')){
+  $lease=Join-Path (Split-Path $PSScriptRoot) 'progress\preview_lease.json'
+  try {
+    $grant=Get-Content -LiteralPath $lease -Raw -Encoding UTF8 | ConvertFrom-Json
+    if(-not $env:AIICLONE_PREVIEW_TOKEN -or $grant.token -cne $env:AIICLONE_PREVIEW_TOKEN){throw 'no Preview permit'}
+    if(-not (Get-Process -Id $grant.pid -ErrorAction SilentlyContinue)){throw 'Preview controller exited'}
+    $allowed=@{open=@('open');cast=@('job');pose=@('job');sound=@('sound');lip=@('lip','job');cams=@('job');motion_check=@('job');face_check=@('job');switch=@('switch');ready=@('switch','tozero');render=@('render')}
+    if($Cmd -notin $allowed[[string]$grant.step]){throw "command $Cmd not allowed in step $($grant.step)"}
+  } catch { Fail ("Preview gate: "+$_.Exception.Message+"; use Ai-iclone do") }
+}
+$guardMutex=$null; $guardHeld=$false
+try {
+  if($Cmd -notin @('shot','press','save','saveas')){
+    $guardMutex=New-Object Threading.Mutex($false,'Local\AiIcloneGuiSingleFlight')
+    try{$guardHeld=$guardMutex.WaitOne(0)}catch [Threading.AbandonedMutexException]{$guardHeld=$true}
+    if(-not $guardHeld){Fail 'another iClone command is running; no overlapping command sent'}
+    if($Cmd -eq 'job'){WaitReady -NeedsWatcher}else{Front|Out-Null; WaitReady}
+  }
 switch($Cmd){
  'shot'   { Shot }
  'showsound' { $code=Py "from PySide2 import QtWidgets`napp=QtWidgets.QApplication.instance()`nmain=next(w for w in app.allWidgets() if w.objectName()=='iClone6 MainWindow')`nact=next(a for a in main.actions() if a.objectName()=='qtShowAllAudioTrackAction')`nact.trigger()"; Job $code 'zz_gui_showsound'|Out-Null; Shot|Out-Null; Say 'Shown all audio tracks: inspect gui_tl.png' }
@@ -176,14 +191,14 @@ switch($Cmd){
             $code=Py ("import math`nold=set(o.GetName() for o in RLPy.RScene.FindObjects(RLPy.EObjectType_Prop))`nprint('load',RLPy.RFileIO.LoadFile(r'''$A1'''))`nnew=[o for o in RLPy.RScene.FindObjects(RLPy.EObjectType_Prop) if o.GetName() not in old]`n" +
               "for i,o in enumerate(new):`n  o.SetName('$A2' if i==0 else '$A2_%d'%i)`n  c=o.GetControl('Transform');t=RLPy.RTransform();c.GetValue(T(0),t)`n  t.T().x,t.T().y,t.T().z=$($p[0]),$($p[1]),$($p[2])`n" +
               "  m=RLPy.RMatrix3();m.FromEulerAngle(RLPy.EEulerOrder_XYZ,math.radians($($r[0])),math.radians($($r[1])),math.radians($($r[2])));q=RLPy.RQuaternion();q.FromRotationMatrix(m)`n  t.R().x,t.R().y,t.R().z,t.R().w=q.x,q.y,q.z,q.w`n  c.ClearKeys();c.SetValue(T(0),t)`nprint('props',[o.GetName() for o in new])")
-            [IO.File]::WriteAllText($f,$code,(New-Object Text.UTF8Encoding $false))
+            WaitReady -NeedsWatcher; PublishJob $f $code
             $log=Join-Path $RUN "$n.log"; $pressed=$false
             for($i=0;$i -lt 240 -and -not (Test-Path $log);$i++){ Start-Sleep -Milliseconds 500; if(-not $pressed -and (PressButton '^Convert All$')){ $pressed=$true; Say 'pressed Convert All' } }
             if(-not (Test-Path $log)){ Fail "prop load did not finish in 2 min (dialog on the other screen? gui shot)" }
             $t=Get-Content $log -Raw -Encoding UTF8; $t; if($t -notmatch "props \['"){ Fail 'no new prop appeared' }; Say "OK prop $A2" }
  'tozero' { Job (Py "RLPy.RGlobal.Stop();RLPy.RScene.ClearSelectObjects()`nL=RLPy.RGlobal.GetProjectLength()`nRLPy.RGlobal.SetStartTime(T(0));RLPy.RGlobal.SetEndTime(L);RLPy.RGlobal.SetPreviewStartTime(T(0));RLPy.RGlobal.SetPreviewEndTime(L)`nRLPy.RGlobal.SetTime(T(0))`nprint('len',L.ToFloat()/6000)") 'zz_gui_tozero' | Out-Null; Say 'OK playhead 0, play range = whole project' }
- 'save'   { Fail 'Use the visible iClone File > Save Project menu manually' }
- 'saveas' { Fail 'Use the visible iClone File > Save Project As menu manually' }
+ 'save'   { Fail 'project saving is disabled in scripts: use the visible iClone File > Save Project menu manually' }
+ 'saveas' { Fail 'project saving is disabled in scripts: use the visible iClone File > Save Project As menu manually' }
  'open'   { $dirty=(Title) -match '\*$'
             # iClone keeps '*' after a good save: if the open file was written < 120 s ago, nothing is lost -> answer No
             $cf=CurrentFile; if($dirty -and $cf -and ((Get-Date)-$cf.LastWriteTime).TotalSeconds -lt 120){ $Discard=$true; Say 'file just saved: the * is stale' }
@@ -245,4 +260,9 @@ switch($Cmd){
             if($Publish){ New-Item -ItemType Directory -Force $Publish|Out-Null; Copy-Item $out $Publish -Force; Say "published to $Publish" }
             Job (Py "L=RLPy.RGlobal.GetProjectLength()`nRLPy.RGlobal.SetStartTime(T(0));RLPy.RGlobal.SetEndTime(L);RLPy.RGlobal.SetPreviewStartTime(T(0));RLPy.RGlobal.SetPreviewEndTime(L);RLPy.RGlobal.SetTime(T(0))") 'zz_gui_range'|Out-Null }
  default  { Get-Content $PSCommandPath -TotalCount 22 }
+}
+
+} finally {
+  if($guardHeld){$guardMutex.ReleaseMutex()}
+  if($guardMutex){$guardMutex.Dispose()}
 }

@@ -166,6 +166,32 @@ def face_lights():
         LOG.append("face light %s: %s Z=%.1f cm at %.2fs, light Z=%.1f cm, strength=%.2f, linked=%s" %
                    (a.GetName(), bone.GetName() if bone is not None else "bounds fallback", face[2],
                     visible_at, pos[2], multiplier, link))
+        side_strength = p.get("side_fill_overrides", {}).get(a.GetName(), 0)
+        if side_strength:
+            # Fill the cheek opposite the stage's main light, only for casts with observed half-shadow.
+            sid = src.Clone()
+            sid.SetName("FaceLight_" + a.GetName() + "_Side")
+            spos = (face[0] + fx * 100 + math.cos(yaw) * 90,
+                    face[1] + fy * 100 + math.sin(yaw) * 90, face[2] + 10)
+            if hasattr(RLPy.RScene, "Show"): RLPy.RScene.Show(sid)
+            if hasattr(sid, "SetActive"):
+                sid.SetActive(T(0), True); sid.SetActive(anchor, True)
+            sc = sid.GetControl("Transform")
+            st = RLPy.RTransform(); sc.GetValue(T(0), st)
+            st.T().x, st.T().y, st.T().z = spos
+            st.R().x, st.R().y, st.R().z, st.R().w = look(spos, face)
+            sc.SetValue(anchor, st)
+            sid.SetColor(T(0), RLPy.RRgb(1.0, 0.90, 0.81))
+            sid.SetMultiplier(T(0), side_strength)
+            sid.SetRange(T(0), 240)
+            sid.SetCastShadow(False)
+            try: sid.SetSpotLightBeam(T(0), 45.0, 90.0, 1.0)
+            except Exception: pass
+            if hasattr(sid, 'SetVisible'): sid.SetVisible(T(0), True)
+            try: sid.LinkTo(bone or a, RLPy.ELinkObjectAlignType__None, anchor)
+            except Exception as e: LOG.append("side fill link: %s" % e)
+            LOG.append("face side fill %s strength=%.3f" % (a.GetName(), side_strength))
+
     RLPy.RGlobal.SetTime(T(0))
 
 

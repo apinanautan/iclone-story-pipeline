@@ -22,7 +22,7 @@ ASK = {
     "subject_face": "the actual narrative subject/action/location is visible; speaking face readable when dialogue needs it; establishing/insert/action may show relevant props without a face",
     "framing": "no head cut at the top, nobody sliced by the frame edge, no big empty wall/sky/ground, no unmotivated full-body framing; contextual action/establishing permitted when it serves the story",
     "clean": "no body through a chair/table/bed, nobody floating, no missing/glitchy models, nothing blocking the face",
-    "differs": "meaningful change in visible scale, composition or narrative beat; small left-right changes or repetitive same-size faces do not count; shot 1 compare previous part",
+    "differs": "meaningful change in visible scale, composition or narrative beat; small left-right changes or repetitive same-size faces do not count; shot 1 compare previous part if evidence exists",
 }
 
 
@@ -46,10 +46,10 @@ def who_at(S, t):
 
 
 def stills(n_shots, jobs=J):
-    """{shot: middle still} from cams (cam_SS_KK_TTT.Ts.png)."""
+    """{shot: middle still} from cams (cam_SS_mid.png or sampled stills)."""
     by = {}
     for f in sorted(glob.glob(os.path.join(jobs, "cam_*.png"))):
-        m = re.match(r"cam_(\d+)_(\d+)_", os.path.basename(f))
+        m = re.match(r"cam_(\d+)_(?:mid\.png$|\d+_)", os.path.basename(f))
         if m: by.setdefault(int(m.group(1)), []).append(f)
     return {s: fs[len(fs) // 2] for s, fs in by.items() if 1 <= s <= n_shots}
 
@@ -79,7 +79,7 @@ def check(S, jobs=J, prog=os.path.join(ROOT, "progress")):
     if not n: return 1, "FAIL cam_check: the spec has no shots"
     pick = stills(n, jobs)
     miss = [i for i in range(1, n + 1) if i not in pick]
-    if miss: return 1, "FAIL cam_check: no still for shot %s -> run cams first (ic8_part.py <spec> cams)" % ",".join(map(str, miss))
+    if miss: return 1, "FAIL cam_check: no still for shot %s -> return to cams with Ai-iclone repair-cams, then Ai-iclone do" % ",".join(map(str, miss))
     out = os.path.join(jobs, SHEET); make_sheet(S, pick, out)
     vf = os.path.join(prog, "%s_%s_camcheck.json" % (S.get("story"), S.get("part")))
     old = {}
@@ -103,7 +103,7 @@ def check(S, jobs=J, prog=os.path.join(ROOT, "progress")):
     bad = [e for e in shots if not all(e[k] is True for k in ASK)]
     if bad:
         return 1, ("FAIL cam_check: shots %s do not pass:\n%s\nFix those shots in the spec, then "
-                   "ic8_part.py <spec> cams --shot %s, then cam_check again."
+                   "Ai-iclone repair-cams, then Ai-iclone do (failed shots: %s)."
                    % (",".join(str(e["shot"]) for e in bad),
                       "\n".join("  S%02d %s -> %s" % (e["shot"], ",".join(k for k in ASK if e[k] is not True), e["fix"] or "(write fix)")
                                 for e in bad),

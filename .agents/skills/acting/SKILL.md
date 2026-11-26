@@ -49,3 +49,10 @@ The old hand list of 25 clips was the cause. Do this instead, for every part:
 - Mood must read in close-ups: check face stills (skill `review-stills`); 3/4-front angles, short profile shots.
 - Mouths: only speakers, only in their line windows (skill `lip-sync`).
 - A motion that the library truly lacks -> propose Motion AI (skill `motion-ai`), wait for yes.
+
+## AccuPOSE-first — mandatory for static contact/holding (2026-11-27)
+Before choosing any body motion, consult docs/accupose_presets.md (420 poses) and docs/motion_catalog.md. For static holding, handing, seated or supported/contact poses, choose a suitable existing AccuPOSE preset first (e.g. Basic Stand for upright trophy holding), then adapt wrists, elbows and fingers. Do not layer an incompatible idle clip on top of the pose. Preserve the base pose; use subtle head motion and blink. Inspect actual contact through the shot. Gesture .iHand library: resolve the installed Reallusion Templates/Animation/Gesture folder on this PC; inspect suitable hand presets, not just filenames. For complex existing motion, inspect DataLink connection and linked avatar identity; send the current pose/motion to Blender, adjust the existing animation and send back only the intended actor/range. DataLink roundtrip is not yet verified in this story. Never invoke RFileIO.LoadFile on .rlDikPreset (known crash); use the AccuPOSE panel. Do not render before approval. If a relevant reference already exists, read and reuse it before writing a new helper. Do not treat this rule as evidence a pose was applied.
+
+
+## Current integrated runtime
+Follow docs/CINEMATIC_SLEEP.md and live Preview cards. New camera and evidence rules supersede old 80/100-only and fixed-cut rules. Preserve sound and actual manual File-menu save/reopen. Normal and Sleep share QA; Sleep requires explicit scoped activation. Do not bypass real checks.

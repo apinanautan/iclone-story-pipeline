@@ -6,7 +6,7 @@
 # Each pass: every small visible iClone window -> text by UIA; if UIA gives nothing, screenshot it and run
 # Windows OCR. Text matches a rule -> press the button (UIA Invoke, else click the OCR'd word). No rule -> save
 # png + txt to ic8_jobs/dialogs/ once and leave it (log: ic8_jobs/dialogs/watch.log).
-param([switch]$Once, [string]$Test, [switch]$Textures)
+param([switch]$Once, [string]$Test, [switch]$Textures, [switch]$ReadyCheck, [switch]$BackgroundJob)
 $ErrorActionPreference = 'Continue'
 Add-Type -AssemblyName UIAutomationClient, System.Drawing, System.Runtime.WindowsRuntime
 Add-Type -Namespace W -Name U -MemberDefinition @'
@@ -19,6 +19,10 @@ public delegate bool EnumProc(IntPtr h,IntPtr l);
 [DllImport("user32.dll")] public static extern bool SetCursorPos(int x,int y);
 [DllImport("user32.dll")] public static extern void mouse_event(int f,int x,int y,int d,int e);
 [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+[DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
+[DllImport("user32.dll")] public static extern bool IsIconic(IntPtr h);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetClassName(IntPtr h,System.Text.StringBuilder s,int n);
+[DllImport("user32.dll", CharSet=CharSet.Unicode)] public static extern int GetWindowText(IntPtr h,System.Text.StringBuilder s,int n);
 public struct RECT{public int L,T,R,B;}
 '@
 [W.U]::SetProcessDPIAware() | Out-Null
@@ -39,7 +43,8 @@ $ENG = $null; try { $ENG = [Windows.Media.Ocr.OcrEngine]::TryCreateFromLanguage(
 if (-not $ENG) { $ENG = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }
 function Ocr([string]$png) {   # -> @{text=...; words=@(@{t;x;y}...)} in image pixels
   # 3x upscale first: short button words ("OK", "No") are missed at screen size
-  $src = [Drawing.Image]::FromFile($png); $big = New-Object Drawing.Bitmap ($src.Width * 3), ($src.Height * 3); $g = [Drawing.Graphics]::FromImage($big)
+  $src = [Drawing.Image]::FromFile($png); $factor = [Math]::Min(3.0, [double][Windows.Media.Ocr.OcrEngine]::MaxImageDimension / [Math]::Max($src.Width,$src.Height))
+  $big = New-Object Drawing.Bitmap ([int][Math]::Floor($src.Width*$factor)), ([int][Math]::Floor($src.Height*$factor)); $g = [Drawing.Graphics]::FromImage($big)
   $g.InterpolationMode = 'HighQualityBicubic'; $g.DrawImage($src, 0, 0, $big.Width, $big.Height); $g.Dispose(); $src.Dispose()
   $up = $png -replace '\.png$', '_x3.png'; $big.Save($up); $big.Dispose()
   $f = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync($up)) ([Windows.Storage.StorageFile])
@@ -48,7 +53,7 @@ function Ocr([string]$png) {   # -> @{text=...; words=@(@{t;x;y}...)} in image p
   $b = Await ($d.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
   $r = Await ($ENG.RecognizeAsync($b)) ([Windows.Media.Ocr.OcrResult]); $s.Dispose()
   Remove-Item $up -ErrorAction SilentlyContinue
-  $w = foreach ($ln in $r.Lines) { foreach ($x in $ln.Words) { @{ t = $x.Text; x = ($x.BoundingRect.X + $x.BoundingRect.Width / 2) / 3; y = ($x.BoundingRect.Y + $x.BoundingRect.Height / 2) / 3 } } }
+  $w = foreach ($ln in $r.Lines) { foreach ($x in $ln.Words) { @{ t = $x.Text; x = ($x.BoundingRect.X + $x.BoundingRect.Width / 2) / $factor; y = ($x.BoundingRect.Y + $x.BoundingRect.Height / 2) / $factor } } }
   @{ text = (($r.Lines | % { $_.Text }) -join "`n"); words = @($w) }
 }
 function Same($a, $b) { ($a -replace "0", "O").Trim(".,:") -ieq ($b -replace "0", "O") }
@@ -58,6 +63,53 @@ if ($Test) { $o = Ocr (Resolve-Path $Test).Path; "OCR:`n$($o.text)"; $r = Rule $
   "RULE: " + $(if ($r) { "press '$($r.press)'" } else { 'none' })
   if ($r) { $w = $o.words | ? { (Same $_.t ($r.press -split ' ')[0]) } | select -Last 1; "BUTTON: " + $(if ($w) { "found at {0:N0},{1:N0}" -f $w.x, $w.y } else { 'not found by OCR' }) }
   exit 0 }
+
+if ($ReadyCheck) {
+  $ErrorActionPreference = 'Stop'
+  try {
+    $p = Get-Process iClone -ErrorAction Stop | Select-Object -First 1
+    # Native Python jobs do not use foreground input or screen pixels. The in-process
+    # Qt watcher waits for modal/progress dialogs and prevents reentrant jobs.
+    if ($BackgroundJob) {
+      if (-not $p.Responding) {throw 'iClone process is not responding'}
+      'GUARD_READY'; exit 0
+    }
+    $h = $p.MainWindowHandle
+    if (-not $h -or -not $p.Responding -or [W.U]::IsIconic($h)) { throw 'iClone not responsive or not visible' }
+    [uint32]$fg = 0
+    [void][W.U]::GetWindowThreadProcessId([W.U]::GetForegroundWindow(),[ref]$fg)
+    if (-not $BackgroundJob -and $fg -ne $p.Id) {
+      [void][W.U]::SetForegroundWindow($h); Start-Sleep -Milliseconds 400
+      [void][W.U]::GetWindowThreadProcessId([W.U]::GetForegroundWindow(),[ref]$fg)
+    }
+    if (-not $BackgroundJob -and $fg -ne $p.Id) { throw 'iClone screen not in foreground' }
+    $script:guardPid=[uint32]$p.Id; $script:guardWindows=New-Object 'System.Collections.Generic.List[System.IntPtr]'
+    $cb=[W.U+EnumProc]{param($w,$l); [uint32]$q=0; [void][W.U]::GetWindowThreadProcessId($w,[ref]$q); if($q -eq $script:guardPid -and [W.U]::IsWindowVisible($w)){$script:guardWindows.Add($w)}; $true}
+    [void][W.U]::EnumWindows($cb,[IntPtr]::Zero)
+    foreach($w in $script:guardWindows) {
+      $c=New-Object Text.StringBuilder 256; $n=New-Object Text.StringBuilder 512
+      [void][W.U]::GetClassName($w,$c,256); [void][W.U]::GetWindowText($w,$n,512)
+      $r=New-Object W.U+RECT; [void][W.U]::GetWindowRect($w,[ref]$r)
+      if($c.ToString() -match 'Progress|^#32770$' -or $n.ToString() -match 'Updating Scene|Please wait|Application Error|Loading|Saving|Rendering|Not Responding') {throw "busy window: $c $n"}
+      if($w -ne $h -and ($r.R-$r.L) -gt 150 -and ($r.B-$r.T) -gt 80 -and $r.R -gt 0 -and $r.B -gt 0) {throw "unresolved iClone window: $c $n"}
+    }
+    $r=New-Object W.U+RECT; [void][W.U]::GetWindowRect($h,[ref]$r)
+    if(($r.R-$r.L) -lt 300 -or ($r.B-$r.T) -lt 200) {throw 'invalid iClone screen bounds'}
+    $png=Join-Path $OUT 'guard_screen.png'
+    $bmp=New-Object Drawing.Bitmap ($r.R-$r.L),($r.B-$r.T)
+    $g=[Drawing.Graphics]::FromImage($bmp)
+    try {$g.CopyFromScreen($r.L,$r.T,0,0,$bmp.Size); $bmp.Save($png)} finally {$g.Dispose(); $bmp.Dispose()}
+    if(-not $ENG) {throw 'OCR unavailable'}
+    $txt=(Ocr $png).text
+    Set-Content (Join-Path $OUT 'guard_screen.txt') $txt -Encoding UTF8
+    if([string]::IsNullOrWhiteSpace($txt) -or $txt -notmatch 'iClone|Scene|Modify|Timeline') {throw 'screen not recognizable as iClone'}
+    if($txt -match '(?i)Texture\s*Load|Updating\s+Scene|Please\s+wait|Loading\s+(scene|project|asset)|Saving\s+(scene|project)|Rendering\s+\d|Application\s+Error|Not\s+Responding|\b\d{1,3}\s*%\s*(complete|loaded)') {throw 'screen indicates progress or error'}
+    $p.Refresh()
+    [uint32]$fg=0; [void][W.U]::GetWindowThreadProcessId([W.U]::GetForegroundWindow(),[ref]$fg)
+    if(-not $p.Responding -or (-not $BackgroundJob -and $fg -ne $p.Id)){throw 'iClone changed state during screen check'}
+    'GUARD_READY'; exit 0
+  } catch { 'GUARD_BLOCKED: '+$_.Exception.Message; exit 2 }
+}
 
 if ($Textures) {   # the viewport label "Texture Loading: 1631" is drawn by OpenGL (no UIA): read it with OCR
   $p = Get-Process iClone -ErrorAction SilentlyContinue | select -First 1; if (-not $p) { 'TEXLOAD 0'; exit 0 }

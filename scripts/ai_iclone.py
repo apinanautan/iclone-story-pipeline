@@ -53,8 +53,8 @@ PART_KIND = {"plan": "ai", "audio": "script", "check": "script", "motion_plan": 
 STORY_KIND = {"sheet": "ai", "source": "ai", "range": "user", "split": "ai", "chars": "ai", "scenes": "ai",
               "partplans": "ai", "output": "ai", "story_ok": "user"}
 # rules card of a step = these skill files (short, already written for AI) + the notes below
-SKILL_OF = {"prop_review":["blender-prop-production","cinematic-direction"],"scene_review":["cinematic-direction"],"camera_replan":["cinematic-direction"],"editorial_review":["cinematic-direction"],"final_review":["cinematic-direction"],"plan": ["plan-part", "acting"], "audio": ["cut-audio"], "check": ["plan-part"], "motion_plan": ["acting","motion-analysis"],
-            "open": ["build-part"], "cast": ["build-part"], "pose": ["build-part", "pose-bones"], "sound": ["build-part"],
+SKILL_OF = {"prop_review":["blender-prop-production","cinematic-direction"],"scene_review":["cinematic-direction"],"camera_replan":["cinematic-direction"],"editorial_review":["cinematic-direction"],"final_review":["cinematic-direction"],"plan": ["plan-part", "acting"], "audio": ["cut-audio"], "check": ["plan-part"], "motion_plan": ["acting","pose-bones","script-catalog","motion-analysis"],
+            "open": ["build-part"], "cast": ["build-part"], "pose": ["build-part", "pose-bones","script-catalog"], "sound": ["build-part"],
             "lip": ["lip-sync"], "cams": ["review-stills"], "cam_check": ["review-stills"], "motion_check": ["review-stills","motion-analysis"],
             "light_check": ["review-stills"], "face_check": ["review-stills", "acting"], "switch": ["iclone-control"],
             "ready": ["save-render"], "render": ["save-render"], "video_check": ["save-render"],
@@ -79,7 +79,7 @@ HARD = """กฎเหล็ก (ห้ามผิด):
 - ทำตามที่โปรแกรมนี้บอกเท่านั้น ไม่ต้องอ่าน AGENTS.md / rules.md / docs อื่น เว้นแต่การ์ดกฎของข้อนั้นบอก
 - ห้ามข้ามข้อหรือปลอมหลักฐาน โหมดปกติรอผู้ใช้อนุมัติ; Sleep Mode เปิดผ่านส่วนขยายโดยผู้ใช้เท่านั้นและใช้ sleep-approve หลัง QA จริง ห้ามใช้ approve --said แทนผู้ใช้
 - ห้ามเขียนลง {DRIVE} (Google Drive) ยกเว้นคัดลอกวิดีโอเสร็จไปที่ publish
-- เซฟและเปิดไฟล์ซ้ำผ่านเมนู File ใน iClone เท่านั้น ข้อ ready ตรวจหลักฐาน; ห้าม RFileIO.SaveProject / RGlobal.RenderAudio
+- เซฟและเปิดไฟล์ซ้ำผ่านเมนู File ใน iClone เท่านั้น ห้ามใช้สคริปต์/CLI/คีย์ลัดเซฟ ข้อ ready ตรวจหลักฐาน; ห้าม RFileIO.SaveProject / RGlobal.RenderAudio
 - ข้อไหน FAIL: อ่านข้อความ แก้ที่สเปก/ไฟล์ แล้ว do ใหม่ได้ 1 ครั้ง ถ้า FAIL ซ้ำ หยุดแล้วบอกผู้ใช้เป็นภาษาไทย
 - ตอบผู้ใช้เป็นภาษาไทยง่ายๆ คำสั่งใหม่ของผู้ใช้ทุกข้อ เขียนต่อท้าย docs/rules.md ทันที
 - Cast -> Sound ครั้งเดียว -> Pose -> Lip -> Scene Review -> Prop Review -> Camera Replan -> Cams -> Editorial Review; แก้ Pose, Motion, กล้อง หรือเพิ่มตัวละครในโปรเจกต์เดิม ไม่ต้องใส่ Project Sound ซ้ำ. เซฟ/เปิดซ้ำด้วยเมนู File ของ iClone เท่านั้น.
@@ -205,11 +205,14 @@ def PROG_NOW(story, n, step, state):
 
 def do(dry=False, force=False):
     from preview_gate import dispatch, Blocked
-    if dry: return _do(dry,force)
+    if dry:
+        return _do(dry, force)
     try:
-        with dispatch(): return _do(dry,force)
+        with dispatch():
+            return _do(dry, force)
     except Blocked as e:
-        out("STOP: "+str(e)); return 2
+        out("STOP: " + str(e)); return 2
+
 
 def _do(dry=False, force=False):
     r = show_status()
@@ -249,8 +252,8 @@ def _do(dry=False, force=False):
     t0 = time.time()
     if "ic8_part.py" in c[1]:
         from preview_gate import permit
-        with permit(story,n,nxt,c[2]) as env:
-            rc = subprocess.run(c, cwd=ROOT,env=env).returncode
+        with permit(story, n, nxt, c[2]) as env:
+            rc = subprocess.run(c, cwd=ROOT, env=env).returncode
     else:   # e.g. audio (cut_audio.py): % = its output lines / the lines it printed last time it passed
         import ailog
         ailog.start(nxt); now = PROG_NOW(story, n, nxt, "running")
@@ -275,6 +278,49 @@ def _do(dry=False, force=False):
         fb, fn = P.clean_jobs(); out("ลบไฟล์ชั่วคราวเก่า: %s (%d ไฟล์)" % (P.gb(fb), fn))
     if nxt in NOTES: out(NOTES[nxt].replace("{cmd}", CMD))
     out("ต่อ -> %s do" % CMD); return 0
+
+
+def repair_cams():
+    """Return to the camera stage only from a failed camera review."""
+    from preview_gate import dispatch, Blocked
+    try:
+        with dispatch():
+            r = show_status()
+            if not r or r[1] != "part" or r[3] != "cam_check" or fails("cam_check") < 1:
+                out("STOP: repair-cams requires a failed camera review"); return 2
+            story, _, n, _ = r
+            f = P.PROG / f"{story}_{n}.json"
+            d = P.load(f, {})
+            from workflow_state import invalidated_steps
+            for key in invalidated_steps("camera_replan",[k for k,_ in P.STEPS]): d.get("steps_done", {}).pop(key,None)
+            d.pop("sleep_approval",None);d.pop("ready_menu_save",None)
+            d.get("ok", {}).pop("step5", None)
+            f.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+            out("OK: camera stage reopened; run Ai-iclone do"); return 0
+    except Blocked as e:
+        out("STOP: " + str(e)); return 2
+
+
+def repair_pose(said=""):
+    """Reopen pose and dependent checks only from a failed camera, motion or face review."""
+    from preview_gate import dispatch, Blocked
+    try:
+        with dispatch():
+            r = show_status()
+            if not r or r[1] != "part" or not ((r[3] in ("cam_check", "motion_check", "face_check") and fails(r[3]) >= 1) or (r[3] == "user_ok" and said.strip())):
+                out("STOP: repair-pose requires a failed review or explicit user rejection at user_ok"); return 2
+            story, _, n, _ = r
+            f = P.PROG / f"{story}_{n}.json"
+            d = P.load(f, {})
+            for key in ("pose","lip","scene_review","prop_review","camera_replan","cams","cam_check","motion_check","light_check","face_check","editorial_review","switch","ready","render","video_check","final_review"):
+                  d.get("steps_done", {}).pop(key, None)
+            d.get("ok", {}).pop("step5", None)
+            d.pop("sleep_approval",None);d.pop("ready_menu_save",None)
+            if said.strip(): d.setdefault("orders", []).append({"user_rejection": said})
+            f.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
+            out("OK: pose stage reopened; downstream reviews invalidated; run Ai-iclone do"); return 0
+    except Blocked as e:
+        out("STOP: " + str(e)); return 2
 
 
 def approve(said):
@@ -376,6 +422,8 @@ def main(a):
         out("ลบไฟล์ชั่วคราวเก่ากว่า 2 วัน: %s (%d ไฟล์)  เหลือ %s ที่ %s" % (P.gb(fb), fn, P.gb(b1), P.J)); return 0
     if c == "rules" and len(a) > 1: out(card(a[1])); return 0
     if c == "do": return do("--dry" in a, "--force" in a)
+    if c == "repair-cams": return repair_cams()
+    if c == "repair-pose": return repair_pose(a[a.index("--said")+1] if "--said" in a and a.index("--said")+1<len(a) else "")
     if c == "repair" and len(a)==2:
         from preview_gate import dispatch,Blocked
         from workflow_state import invalidated_steps
@@ -422,7 +470,8 @@ def main(a):
     if c == "log":
         import ailog; out(ailog.show()); return 0
     if c == "motions":   # pick body motions per line from the whole library (scripts/motion_pool.py)
-        st = a[1] if len(a) > 2 else story_now(); pt = a[2] if len(a) > 2 else (a[1] if len(a) > 1 else part_now(st))
+        pos = [x for x in a[1:] if not x.startswith('--')]
+        st = pos[0] if len(pos) >= 2 else story_now(); pt = pos[1] if len(pos) >= 2 else (pos[0] if pos else part_now(st))
         return subprocess.run([PY, str(SCR / "motion_pool.py"), "pick", st, str(pt)] + [x for x in a if x == "--write"], cwd=ROOT).returncode
     if c == "video2motion" and len(a) > 1:
         return subprocess.run([PY, str(SCR / "video2motion.py")] + a[1:], cwd=ROOT).returncode

@@ -1,4 +1,4 @@
-# Cinematic and Sleep workflow (1.7.8 candidate)
+# Cinematic and Sleep workflow (1.7.9)
 
 Both modes use the same cinematic, prop and editorial standards. Normal mode keeps user approval; Sleep Mode changes only authorization and automatic chat handoff.
 
@@ -10,6 +10,9 @@ plan > audio > check > motion_plan > open > cast > sound > pose > lip > scene_re
 - Camera Replan: use real evidence, narrative purpose, meaningful framing and cut reasons. Character lenses 75–150 mm; contextual location/action/insert coverage 24–150 mm with story_beat. Normal hold 6–12 s, longer where useful; short cuts require reasons. No staccato cuts or repetitive same-scale faces. Preserve dialogue and story beats. See cinematic-direction.
 - Editorial Review is a second ordered visual check, plus native motion/light/face checks. Final Review needs actual rendered moving video and audio; stills alone do not certify playback. Both video/audio streams must cover original sound; no auto-publish before review.
 - Normal mode: real user approval at user_ok. Sleep: explicit scoped authorization via extension and sleep-approve after fresh QA. Never impersonate the user. Same File-menu save/reopen procedure. Pause stops new work; select a part manually to return to normal.
-- Extension candidate 0.4.7: configure.py creates local credentials. Never commit keys. Bind conversation in the exact project, select Sleep Mode and confirm scope. Controller opens a fresh project chat, sends scoped prompt, verifies posted receipt, rebinds tracker and preview, advances only after final QA and approved plan. Ambiguous sends do not retry blindly.
+- Extension 0.4.11: configure.py creates local credentials. Never commit keys. Bind conversation in the exact project, select Sleep Mode and confirm scope. Controller opens a fresh project chat, sends scoped prompt, verifies posted receipt, rebinds tracker and preview, advances only after final QA and approved plan. Ambiguous sends do not retry blindly.
 - Motion Analyzer candidate: use motion_analyze.py on a transferred animated .blend and explicit bone map. It samples evaluated skeleton per frame, local rest-relative rotation magnitude, angular speed/change, world-space position and speed, root drift and configured point contacts; report cache keyed by source bytes/settings/analyzer. This does not prove anatomical flexion, collision, realistic motion or DataLink transport. Recheck the actual staged actor. Never treat unverified transfer as passed.
 - Stable release requires isolated real tests of survey camera restore, FBX prop import, image attachment, fresh chat handoff, File save/reopen, actual video and DataLink round-trip. Offline tests are not evidence of those live integrations. Do not enable Sleep on a production story for testing.
+
+## Goal Tracker 0.4.11
+Local relay exposes an explicit stop latch and checks actual Preview authorization status for the bound chat. Stop is independent of text recognition; start manually to resume. Reload the unpacked extension after installing new files. The runtime release is available through ordinary Ai-iclone auto-update; a dirty Git checkout is deliberately excluded.

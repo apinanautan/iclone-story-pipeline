@@ -20,11 +20,19 @@ HOT, DARK, RATIO = 215, 60, 2.8
 
 
 def halves(path):
-    im = Image.open(path).convert("L"); W, H = im.size
-    bw, bh = int(W * BOX_W), int(H * BOX_H); x0, y0 = W // 2 - bw // 2, H // 2 - bh // 2
-    left = ImageStat.Stat(im.crop((x0, y0, x0 + bw // 2, y0 + bh))).mean[0]
-    right = ImageStat.Stat(im.crop((x0 + bw // 2, y0, x0 + bw, y0 + bh))).mean[0]
-    return left, right
+    # Ignore dark hair and the dark set when comparing the two halves of visible skin.
+    # A grayscale box falsely reported a half-dark face when one side was mostly hair.
+    import numpy as np
+    im = np.asarray(Image.open(path).convert("YCbCr"))
+    H, W = im.shape[:2]
+    bw, bh = int(W * BOX_W), int(H * BOX_H)
+    x0, y0 = W // 2 - bw // 2, H // 2 - bh // 2
+    def skin_mean(roi):
+        yy, cb, cr = roi[..., 0], roi[..., 1], roi[..., 2]
+        m = (yy > 18) & (cb >= 75) & (cb <= 130) & (cr >= 128) & (cr <= 175)
+        return (float(yy[m].mean()) if m.any() else 0.0, float(m.mean()))
+    return (skin_mean(im[y0:y0+bh, x0:x0+bw//2]),
+            skin_mean(im[y0:y0+bh, x0+bw//2:x0+bw]))
 
 
 def main():
@@ -36,9 +44,14 @@ def main():
         if not m: continue
         i = int(m.group(1)) - 1
         if i >= len(shots) or shots[i].get("wide"): continue
-        l, r = halves(f); hi, lo = max(l, r), min(l, r); n += 1
+        (l, lfrac), (r, rfrac) = halves(f); n += 1
+        if min(lfrac, rfrac) < 0.12:
+            print("WARN shot %d %s: one ROI half mostly hair/set (%.0f%%,%.0f%% skin); inspect the face visually" %
+                  (i + 1, os.path.basename(f), lfrac * 100, rfrac * 100))
+            continue
+        hi, lo = max(l, r), min(l, r)
         if (hi > HOT and lo < DARK) or (hi + 5) / (lo + 5) > RATIO:
-            bad.append("BAD shot %d %s: face left %.0f / right %.0f (half white/black)" % (i + 1, os.path.basename(f), l, r))
+            bad.append("BAD shot %d %s: skin left %.0f / right %.0f (half white/black)" % (i + 1, os.path.basename(f), l, r))
     for b in bad: print(b)
     print("light check: %d stills, %d bad" % (n, len(bad)))
     sys.exit(1 if bad else 0)

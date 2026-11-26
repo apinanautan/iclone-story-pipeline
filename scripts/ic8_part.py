@@ -12,7 +12,7 @@ Steps (in order; `all` = check..ready, never render):
   lip     AccuLips per speaker (GUI), keep only that speaker's line windows; non-speakers' mouths cleared
   cams    Cam_A/Cam_B, 2 keys per shot, switcher, 1 still per shot (quick; --shot 3,5 re-shoots only those, --full = ~1/s) -> ic8_jobs/part_cams.jpg (look at it!)
   cam_check ALL shots in ONE image (part_cams_all.jpg) + the AI fills progress/<story>_<N>_camcheck.json per shot; any fail = FAIL
-  ready   Switch, playhead 0, play range 0..end, manual File-menu save/reopen -> STOP: user presses Play
+  ready   Switch, playhead 0, play range 0..end; operator saves/reopens via the visible iClone File menu
   render  ONLY with --approved (user said ผ่าน): 1080p60 + clean wav + checks + publish
 `<step> --from` runs that step and every later one up to ready (fix a number in the spec, re-run from there).
 
@@ -200,7 +200,7 @@ def scene_checks(S, errs, warns):
     room = sc.get("room") or sc.get("area")   # [xmin, ymin, xmax, ymax]: indoor = walls, outdoor = where the action is
     # solid things from the scan (houses, trees, cars, beds). Skip ground/sky/terrain (huge) and tiny props.
     solid = {n: o for n, o in sc.get("objects", {}).items()
-             if 30 < o["max"][0] - o["min"][0] < 4000 and 30 < o["max"][1] - o["min"][1] < 4000 and o["max"][2] - o["min"][2] > 30}
+             if not o.get("interior_shell", False) and 30 < o["max"][0] - o["min"][0] < 4000 and 30 < o["max"][1] - o["min"][1] < 4000 and o["max"][2] - o["min"][2] > 30}
     inside = lambda p, o: all(o["min"][k] <= p[k] <= o["max"][k] for k in range(3))
     for i, s in enumerate(S["shots"]):
         for n, o in solid.items():
@@ -538,6 +538,58 @@ def wait_textures(limit=300):
 
 
 def step_pose(S, base):
+    if S.get("attach_only_pending"):
+        name, h = next((n,c["hold_prop"]) for n,c in S["cast"].items() if c.get("hold_prop",{}).get("attach"))
+        code = """import RLPy,json,os,math
+from PySide2 import QtWidgets
+name,h,end,refine=%r,%r,%r,%r
+T=lambda s:RLPy.RTime.FromValue(round(s*6000))
+a=next(x for x in RLPy.RScene.GetAvatars() if x.GetName()==name)
+p=next(x for x in RLPy.RScene.GetProps() if x.GetName()==h['name'])
+bone=next(x for x in a.GetSkeletonComponent().GetSkinBones() if x.GetName()==h['bone'])
+def settle(t):
+ RLPy.RGlobal.SetTime(T(t));QtWidgets.QApplication.processEvents();a.Update();p.Update();RLPy.RGlobal.ForceViewportUpdate()
+def xyz(tr):
+ v=tr.T();return [v.x,v.y,v.z]
+def tag(o):return o.GetName() if o is not None else None
+RLPy.RGlobal.Stop()
+if refine:
+ sk=a.GetSkeletonComponent(); head=next(x for x in sk.GetSkinBones() if x.GetName()=="CC_Base_Head")
+ for i in range(sk.GetClipCount()):
+  c=sk.GetClip(i);db=c.GetControl("Layer",head).GetDataBlock()
+  for axis,deg in zip("XYZ",refine["head"]):
+   ctrl=db.GetControl("Rotation/Rotation"+axis)
+   for tick in (T(0),c.GetClipLength()):ctrl.SetValue(tick,math.radians(deg))
+ a.Update()
+ fc=a.GetFaceComponent()
+ nm=["Mouth_Corner_Up_L","Mouth_Corner_Up_R","Mouth_Corner_Pull_L","Mouth_Corner_Pull_R","Eye_Cheek_Raise_L","Eye_Cheek_Raise_R","Eye_Look_Down_L","Eye_Look_Down_R","Eye_Look_Up_L","Eye_Look_Up_R","Eye_Look_Left_L","Eye_Look_Left_R","Eye_Look_Right_L","Eye_Look_Right_R"]
+ clips=sorted([(fc.GetClip(i).ClipTimeToSceneTime(T(0)).ToFloat()/6000.,fc.GetClip(i).GetClipLength().ToFloat()/6000.) for i in range(fc.GetClipCount())])
+ def kt(t):
+  for (s,l),(n,_) in zip(clips,clips[1:]):
+   if s+l-.02<t<n+.02:return T(s+l-.08 if t-s-l<n-t else n+.08)
+  return T(t)
+ fc.BeginKeyEditing()
+ for t in [0.]+[i*1.5 for i in range(1,int(end/1.5)+1)]+[end]:
+  w=refine["smile"]*(.7+.3*t/end)
+  vals=[.8*w,.8*w,.55*w,.55*w,.6*w,.6*w,refine["eyes"],refine["eyes"]]+[0.]*6
+  fc.AddExpressionKeys(kt(t),nm,vals,T(.5))
+ fc.EndKeyEditing()
+ a.Update()
+ print("Targeted head and expression edits only")
+info=[]
+for t in (0,end*.5,end-.05):
+ settle(t);link=p.GetLinkedObject(T(t));tr=RLPy.RTransform();tr.From(p.WorldTransform().Matrix()*bone.WorldTransform().Matrix().Inverse())
+ info.append(dict(time=t,link=tag(link),hand=xyz(bone.WorldTransform()),prop=xyz(p.WorldTransform()),relative=xyz(tr),distance=math.dist(xyz(p.WorldTransform()),xyz(bone.WorldTransform()))))
+settle(0)
+path=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs','link_verify.json')
+with open(path,'w',encoding='utf-8') as f:json.dump(info,f,ensure_ascii=False,indent=2)
+if any(x['link'] not in (name,h['bone']) or x['distance']>20 or math.dist(x['relative'],info[0]['relative'])>1.5 for x in info):raise RuntimeError('Link or relative grip failed: see link_verify.json')
+print('Verified linked object and stable grip at three times')
+""" % (name,h,duration(S["wav"]),S.get("face_refinement"))
+        job(code,"zz_part_attach_only")
+        say("OK pose repair: existing pose preserved; Link to hand verified")
+        return
+    if S.get("reposition_props_on_pose"): step_props(S)
     live("pose", 0, "รอเท็กซ์เจอร์โหลดเสร็จ")
     wait_textures()
     end = duration(S["wav"]); av = {}
@@ -545,6 +597,42 @@ def step_pose(S, base):
         av[n] = dict(c); av[n].setdefault("visible", [[0, 1]])
         if av[n].get("lookfront") is True: av[n]["lookfront"] = expand(os.path.join("{MOTION}", "Digital Soul 100+", "1.Watch", "Look front.iTalk"))
     for n in S.get("hide", []): av[n] = {"visible": [[0, 0]]}
+    for name, actor in av.items():
+        if not actor.get("external_motion"): continue
+        fbx = expand(actor["external_motion"])
+        if not all(os.path.isfile(os.path.splitext(fbx)[0]+x) for x in (".fbx", ".fbxkey", ".3dxProfile")):
+            fail("external motion or profile missing: "+fbx)
+        select_code = """import RLPy, os, json
+from PySide2 import QtWidgets
+name, fbx, end = %r, %r, %r
+a = next(x for x in RLPy.RScene.GetAvatars() if x.GetName()==name)
+sk=a.GetSkeletonComponent()
+zero=RLPy.RTime.FromValue(0)
+def clips():
+    return [(c.ClipTimeToSceneTime(zero).ToFloat(),c.GetClipLength().ToFloat()) for c in (sk.GetClip(i) for i in range(sk.GetClipCount()))]
+RLPy.RGlobal.Stop()
+RLPy.RScene.ClearSelectObjects()
+RLPy.RScene.SelectObject(a)
+RLPy.RGlobal.SetTime(zero)
+RLPy.RGlobal.SetTime(zero)
+before=clips()
+result=RLPy.RFileIO.LoadMotion(fbx,zero,a)
+a.Update()
+QtWidgets.QApplication.processEvents()
+RLPy.RGlobal.ForceViewportUpdate()
+after=clips()
+print('Direct FBX API: before='+str(before)+' after='+str(after)+' status='+str(result))
+if result is None or result.IsError(): raise RuntimeError('Direct FBX API rejected input')
+if before==after or not after or after[-1][1]<end*6000*.9:
+    raise RuntimeError('Direct FBX API did not verify a new full-length motion')
+if sk.GetClipCount()!=1: raise RuntimeError('Direct FBX loaded but clip count must be reviewed')
+""" % (name, fbx, end)
+        job(select_code, "zz_external_motion_direct")
+        actor["motions"]=[]
+        actor.pop("motion",None)
+        actor.pop("bones",None)
+        actor.pop("chest_grip",None)
+        actor.pop("upright_grip",None)
     wjson("pose_place.json", {"end": end, "avatars": av, "cuts": [sh["t"][0] for sh in S["shots"][1:]]})
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
     open(os.path.join(J, "pose.done"), "w").write(time.strftime("%H:%M:%S"))   # lip must run AFTER this (face clips cover the mouth)
@@ -555,7 +643,8 @@ def step_pose(S, base):
     # user 2026-11-22 (said many times): clips APART with a small gap, the transition fills the gap - never butted
     bad_gap = [l for l in re.findall(r"^.* gap (-?[\d.]+).*$", log, re.M) if not 0.3 <= float(l) <= 2.0]
     if bad_gap: fail("pose: clip gap not 0.3-2.0 s (clips touching/overlapping): " + ", ".join(bad_gap[:5]))
-    if not re.search(r" gap [\d.]+", log): fail("pose: no clip gap logged - clips are butted together")
+    if any(len(c.get("motions", [])) > 1 for c in S["cast"].values()) and not re.search(r" gap [\d.]+", log):
+        fail("pose: no clip gap logged - clips are butted together")
     noface = [n for n in S["cast"] if not re.search(r"^%s face .* speed 0\.(6[5-9]|7[0-5])" % re.escape(n), log, re.M)]
     if noface: fail("pose: no face motion clips (65-75%) for " + ", ".join(noface))
     say("OK pose (look: gui shot)")
@@ -604,12 +693,25 @@ def step_cams(S, base):
     if not require_replan(S,Path(ROOT)): fail("camera replan missing or stale; repair camera_replan")
     end = duration(S["wav"])
     only, full = cams_args()
-    rate = max(1,S.get("review_per_sec", 1)) # both modes: actual samples across each shot
-    wjson("cams.json", {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
+    rate = max(1,S.get("review_per_sec",1))
+    config = {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
                         "face_light_multiplier": S.get("face_light_multiplier", 0.04),
                         "face_light_overrides": S.get("face_light_overrides", {}),
-                        "face_light_source": S.get("face_light_source")})
-    job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
+                        "side_fill_overrides": S.get("side_fill_overrides", {}),
+                        "face_light_source": S.get("face_light_source")}
+    resume = S.get("resume_completed_cams", False) and not rate
+    if resume:
+        cfgpath = os.path.join(J, "cams.json")
+        if json.load(open(cfgpath, encoding="utf-8")) != config: fail("cams: completed job config differs")
+        run = os.path.join(J, "run", "zz_part_cams")
+        if os.path.exists(run + ".py") or not os.path.isfile(run + ".done"): fail("cams: job still pending or incomplete")
+        if "OK" not in open(run + ".log", encoding="utf-8").read(): fail("cams: completed job did not report OK")
+        for i in range(len(S["shots"])):
+            still = os.path.join(J, "cam_%02d_mid.png" % (i + 1))
+            if not os.path.isfile(still) or os.path.getmtime(still) < os.path.getmtime(cfgpath): fail("cams: missing or stale still")
+    else:
+        wjson("cams.json", config)
+        job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
     log = rlog("cams.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("cams")
     if "STILL_MISMATCH" in log: fail("cams: some stills were taken before the camera reached its planned position (see STILL_MISMATCH lines). Re-run cams; do not show these stills")
@@ -632,7 +734,7 @@ def step_cams(S, base):
     if os.path.isfile(bridge):
         br = subprocess.run([sys.executable, "-B", bridge, sheet, str(S.get("story","")), str(S.get("part",""))], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
         say("Preview bridge: " + (br.stdout.strip() if not br.returncode else "queue failed"))
-    say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % sheet)
+    say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % os.path.join(J, "part_cams.jpg"))
 
 
 MOTION_JOB = r'''
@@ -899,11 +1001,14 @@ if __name__ == "__main__":
     if len(sys.argv) < 3: print(__doc__); sys.exit(1)
     spec, step = sys.argv[1], sys.argv[2]
     from preview_gate import require, Blocked
-    try: require(spec,step,sys.argv[3:])
-    except Blocked as e: print("STOP: "+str(e)); sys.exit(2)
+    try:
+        require(spec, step, sys.argv[3:])
+    except Blocked as e:
+        print("STOP: " + str(e) + "; use Ai-iclone do", flush=True)
+        sys.exit(2)
     S = expand(json.load(open(spec, encoding="utf-8"))); base = os.path.splitext(spec)[0]
     resolve(S, spec); S["_spec"] = spec
-    if step == "render": run = ["render"]   # the render is always followed by the video check
+    if step == "render": run = ["render"]   # video_check is the next explicit Preview step
     elif step == "all": run = ORDER
     elif step in STEPS: run = ORDER[ORDER.index(step):] if "--from" in sys.argv and step in ORDER else [step]
     else: fail("unknown step " + step)
@@ -951,6 +1056,8 @@ if __name__ == "__main__":
         try:
             if s == "render": step_render(S, base, "--approved" in sys.argv)
             else: STEPS[s](S, base)
+        except SystemExit as e:
+            _now(s, "todo" if e.code==3 else "failed"); raise
         except BaseException:
             _now(s, "failed"); raise
         _now(s, "done"); ailog.done(); ailog.clean_fails()

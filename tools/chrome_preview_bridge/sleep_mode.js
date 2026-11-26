@@ -1,6 +1,6 @@
 /* Sleep Mode: one plan, one bound chat, no blind resend on ambiguous submission. */
 const SLEEP_ALARM="iclone-sleep", SLEEP_LOCAL="icloneSleepHandoff";
-async function sleepApi(path,body){const r=await req("/sleep/"+path,body);if(!r.ok)throw Error("Sleep relay "+r.status);return r.json()}
+async function sleepApi(path,body){const r=await req("/sleep/"+path,body);if(!r.ok){let x={};try{x=await r.json()}catch{}throw Error(x.error||("Sleep relay "+r.status))}return r.json()}
 async function sleepLocal(){return (await chrome.storage.local.get(SLEEP_LOCAL))[SLEEP_LOCAL]||{}}
 async function sleepStore(x){await chrome.storage.local.set({[SLEEP_LOCAL]:x})}
 async function sleepGoal(url,enabled){
@@ -46,7 +46,7 @@ let sleepRunning=false;
 async function sleepTick(){
  if(sleepRunning||running)return;sleepRunning=true;running=true;
  try{
-  let s=await sleepApi("status");if(!s.enabled)return;
+  let s=await sleepApi("status");if(!s.enabled||s.ready===false)return;
   if(!await idle())return;
   let l=await sleepLocal();
   if(s.phase==="work"){
@@ -64,7 +64,7 @@ async function sleepTick(){
    }
    await sleepGoal(g?.url||s.old_url||s.url,false);
    await sleepStore({});
-   if(!s.enabled)return;
+   if(!s.enabled||s.ready===false)return;
   }
   if(s.phase!=="handoff")return;
   l=await sleepLocal();
@@ -113,7 +113,7 @@ chrome.runtime.onMessage.addListener((m,sender,reply)=>{
   if(m.action==="start"){
    const url=await callerURL(sender);const g=await goalGet();
    if(!url||g?.enabled&&g.url!==url)throw Error("pause other goal and select project chat");
-   const s=await sleepApi("start",{url,confirmed:m.confirmed===true});await sleepStore({});
+   const ready=await sleepApi("status");if(!ready.ready)throw Error(ready.reason||"Preview runtime not ready");const s=await sleepApi("start",{url,confirmed:m.confirmed===true,scope:m.scope||"all"});await sleepStore({});
    if(g?.enabled)await sleepGoal(url,false);return s
   }
   throw Error("unknown action")

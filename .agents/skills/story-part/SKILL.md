@@ -11,23 +11,20 @@ Answer the user in simple Thai. Show the plan in Thai before touching iClone.
 3. **Write + check the part spec** -> skill `plan-part`. `ic8_part.py check` must print OK.
 4. **Build in iClone** -> skill `build-part` (open, cast, pose, sound, cams). Motion + expressions -> skill `acting`; adjusting a pose / lean / arms -> skill `pose-bones`.
 5. **Review stills** -> skill `review-stills`. Send the contact sheet. **STOP and wait** for the user.
-6. After the user approves: lip-sync -> skill `lip-sync`, then `ic8_part.py <spec> ready`.
+6. After the user approves: lip-sync -> skill `lip-sync`, then Preview `ready` to prepare Switch/frame 0. At its `AI WORK` gate, save manually from iClone's `File` menu, reopen the same file from `File > Open`, then run Preview `do` again to verify and complete `ready`.
 7. **Render only when the user says ผ่าน / เรนเดอร์** -> skill `save-render`.
 
 Hard rules (break none):
 - Never write into {DRIVE} (the shared Google Drive, read only), except copying the finished video to the publish folder.
-- Never save with RFileIO.SaveProject; save only through the GUI (`ic8_gui.ps1 save/saveas`), then prove it reopens.
+- **Saving rule (user 2026-11-26):** save only by clicking iClone `File > Save Project` / `File > Save Project As` in the live UI. Never use Python/RLPy, CLI, watcher, PowerShell helper, or simulated keyboard shortcuts to save. The `ic8_gui.ps1 save/saveas` commands are disabled and `ic8_save.py` is removed. Reopen manually through `File > Open` and prove the same file loads.
 - Never call RGlobal.RenderAudio or RAudio.LoadAudioToObject (hang/crash).
-- Never use the mouse or screen coordinates; never delete iCloneStoryBridge.
+- Use the live UI to manually click File > Save Project / Save Project As and reopen the file; use helpers for other chores. Never delete iCloneStoryBridge.
 - Max 2 parts per chat. Library motions first; Motion AI only after the user says yes (skill `motion-ai`).
 - Do not write your own stage/camera scripts to bypass `ic8_part.py`. If a shared script lacks a feature, fix the shared script.
 - Every new user instruction -> append to `docs/rules.md` immediately.
 - Do not spend long on one step: if blocked (missing file, rule conflict), tell the user in Thai what blocks you and ask.
+- 2026-11-27: Both New Story and Continue Part prompts must contain the same detailed reusable project/tool handbook, live Script Catalog, plugin instructions and Skills. Continue adds active story and current progress only. Never rely on chat memory for tool availability. Use installed plugin, Preview and existing scripts before writing new ones. Goal tracker interval 90 seconds; preserve preview priority, busy/draft guards and completion stop.
 
-## Project Sound / Preview — 2026-11-27
-- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
-- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
-- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.
 
-## Current candidate workflow (1.7.8)
-Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.
+## Current integrated runtime
+Follow docs/CINEMATIC_SLEEP.md and live Preview cards. New camera and evidence rules supersede old 80/100-only and fixed-cut rules. Preserve sound and actual manual File-menu save/reopen. Normal and Sleep share QA; Sleep requires explicit scoped activation. Do not bypass real checks.

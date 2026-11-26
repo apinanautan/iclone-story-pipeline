@@ -196,3 +196,7 @@
 - scripts/sleep_session.py: approved plan and handoff state.
 - scripts/motion_analyze.py / blender_motion_analyze.py: evaluated skeleton sample/cache; transfer not yet verified.
 - tools/chrome_preview_bridge/sleep_mode.js: opt-in chat handoff, verification required.
+
+## 1.7.9: Goal Tracker
+- relay.py: /goal/status, /goal/check, /goal/resume: stop latch and real Preview approval/completion gates.
+- goal_tracker.js: consumes relay stop, cancels alarm and disables session; Achievement remains supplemental.

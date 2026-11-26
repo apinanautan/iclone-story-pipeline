@@ -12,16 +12,31 @@ def clean(v):
     if isinstance(v,dict):return {k:clean(x) for k,x in v.items() if not re.search(r'password|secret|token|api.?key|relay.?key|credential|authorization',k,re.I)}
     if isinstance(v,list):return [clean(x) for x in v]
     return v
-RULES="""CC5 / iClone Story Pipeline — คำสั่งเริ่มแชต
-ควบคุม Windows ผ่าน Dino Bot Tunnel เท่านั้น. อ่าน AGENTS.md, docs/rules.md, docs/WORKFLOW.md, docs/MASTER_PROMPT.md, docs/SCRIPT_CATALOG.md, docs/CAMERA_GUIDE.md, docs/scene_anchors.md, docs/rlpy_lessons.md, docs/accupose_presets.md, docs/event_clip_workflow.md และ Skills ที่เกี่ยวข้องก่อนทำงาน ตรวจข้อมูล Space/GitHub/ปลั๊กอินที่เกี่ยวข้อง. ยึด progress/now.json และ spec ปัจจุบันเหนือ CURRENT_STORY.md ที่อาจล้าสมัย. ตรวจสคริปต์และ asset ที่มีอยู่ก่อนเขียนใหม่.
-อ่านบท DOCX และเสียงจริง ตรวจตัวละคร วัย เสื้อผ้า ผม ฉาก ยุค ความต่อเนื่อง. วางแผนทุกเหตุการณ์อย่างละเอียด: ช่วงเวลาเสียง ผู้พูด จุดยืน การเคลื่อนไหว อารมณ์ ปฏิกิริยา ทิศสายตา props กล้อง แสง คัต. ทำทีละท่อนและทีละเหตุการณ์ ไม่แบ่งคลิปเพียงเพราะเปลี่ยนกล้องหรือผู้พูด. รักษาเสียงต้นฉบับครบ ไม่ตัดขาด ซ้ำ ยืด.
-ใช้ Ai-iclone.exe และ flow: plan > audio > check > motion_plan > open > cast > sound > pose > lip (ถ้ามีบทพูด) > scene_review > prop_review > camera_replan > cams > cam_check > motion_check > light_check > face_check > editorial_review > switch > user_ok > ready > render > video_check > final_review. ตรวจภาพจริง แก้จนผ่าน ส่งพรีวิวและรออนุมัติก่อนเซฟ/เรนเดอร์. หลังอนุมัติ File > Save Project และเปิดไฟล์เดิมซ้ำผ่านเมนู ตรวจเวลาเซฟ ชื่อโปรเจกต์ Switch เฟรม 0; รอ texture loading เสร็จ. ตรวจ MP4 จริง ความยาวเท่าเสียง ภาพเคลื่อนไหวทุกคัต สีหน้า ปาก เสียง ก่อนเริ่มคลิปถัดไป. ไม่ข้าม gate หรือปลอมผลตรวจ.
-ใช้ Motion Library, motion_pool, AccuPOSE, Gesture, Edit Motion Layer, Blender DataLink, Blender Pose/Rig, RLPy ตามเหมาะสม. ส่ง Motion/Pose ปัจจุบันไป Blender เพื่อแก้กระดูกเมื่อจำเป็น ตรวจ retarget จริง. Gesture อยู่ C:\\Users\\Public\\Documents\\Reallusion\\Reallusion Templates\\Animation\\Gesture; Hold Gently.iHand เป็นตัวอย่างท่ามือ. ถ้าแก้ตำแหน่งเล็กน้อยใช้ Transform/Gizmo โดยตรง ไม่รัน Pose ใหม่ทั้งหมด. จัด grip แล้ว Attach หรือ Link เข้ากระดูกมือ/หัวที่ถูกต้อง รักษาตำแหน่งโลก. ผม prop ไม่กลายเป็น native hair อัตโนมัติ. ถ้า Link/Attach ไม่ได้เพราะ dependency cycle ให้ Modify > Look At > Set Free (weight=0 ไม่พอ); Linkage > Pick Parent > ตัวละคร > เลือก sub-node เช่น CC_Base_R_Hand > Align None. ตรวจตำแหน่งสัมพันธ์ต้น/กลาง/ท้ายและนิ้วสัมผัสจริง. ใช้ head/eye expression แทน Look At target ที่ link กับตัวเอง.
-กล้องเน้น MS/MCU/CU 75–150mm และบริบท/พร็อพตามบท เมื่อเหมาะสม หน้าไม่ถูกบัง แสงหน้าไม่ขาว/ดำครึ่งซีก ท่าไม่กระตุกหรือทะลุ สีหน้า สายตา กระพริบตรงบท. ส่งภาพพรีวิวก่อนข้อความติดตาม รอ GPT ตรวจภาพและตอบจบ; tracker 90 วินาที คง busy/draft/preview priority และรหัสหยุด.
-ชื่อไฟล์ ท่อนN.M.iProject และ N.M.mp4 หนึ่งไฟล์หลักต่อเหตุการณ์ ไม่สร้างเซฟขยะหรือ backup กระจายในโฟลเดอร์ส่งงาน. ส่งเฉพาะงานจริงที่ผู้ใช้กำหนด ไม่ส่ง JSON/log/catalog/AI reference. เรื่องที่ส่งงานและลง YouTube เรียบร้อย ให้ล้างบริบทและข้อมูลชั่วคราวที่ยืนยันว่าไม่ใช้แล้ว ไม่เก็บข้อมูลเรื่องเก่าปนเรื่องใหม่; รักษาต้นฉบับ ผลงานจริง คลังร่วม และงานกำลังทำ. เก็บบทเรียนทั่วไปและสคริปต์ที่ใช้ซ้ำได้. ห้ามเปลี่ยน Tunnel ID/API Key หรือรีสตาร์ต Windows. อัปเดตความสามารถใหม่ในสคริปต์ กฎ Skills Catalog GitHub และปลั๊กอินที่เกี่ยวข้องโดยไม่เผยแพร่ข้อมูลลับ. ลงมือทำจริง ไม่หยุดแค่รายงาน."""
-def tool_guide(base,story):
+RULES="""CC5 / iClone Story Pipeline — คู่มือสดร่วมทุกโหมด
+ก่อนเริ่มงานทุกครั้ง ตรวจเวอร์ชันบนเครื่องและ GitHub releases/main รวมถึงปลั๊กอิน iClone Story Operator ล่าสุดจากเครื่องมือที่มีอยู่จริง; ตรวจความต่างระหว่างรุ่นที่ติดตั้งและรุ่นที่เผยแพร่ ไม่ถือว่า release candidate ติดตั้งแล้ว อัปเดตอย่างปลอดภัยตามคำสั่งผู้ใช้และคู่มือ migration ที่พบเอง ไม่ต้องให้ผู้ใช้ส่งชื่อไฟล์หรือชื่อ Skill เพิ่ม ห้าม git reset/pull ทับงานที่แก้ค้างหรือเปลี่ยนรุ่นกลางขั้นที่กำลังรัน ถ้าอัปเดตไม่ได้ให้ใช้ความสามารถที่ตรวจแล้วว่าใช้งานได้ และรายงานข้อจำกัดจริง
+อ่าน AGENTS.md, docs/rules.md, docs/WORKFLOW.md, docs/MASTER_PROMPT.md, docs/SCRIPT_CATALOG.md, docs/CAMERA_GUIDE.md และ Skill ล่าสุดตามดัชนีที่สร้างจากไฟล์จริงด้านล่าง รวมถึงคู่มือใหม่ที่ปรากฏ ตรวจ live Preview status/rules ก่อนแต่ละขั้น ยึดสเปกและ progress จริงเหนือบริบทเก่า เลือกสคริปต์ที่มีอยู่ก่อนเขียนใหม่ ไม่มีลำดับขั้นหรือเลนส์ที่ฝังตายตัวใน Prompt; ใช้ validator ของ runtime ที่ตรวจแล้ว
+วางแผนบทและเวลาเสียงจริง จัดตัวละครตามวัย เสื้อผ้า ฉาก พร็อพ การแสดง อารมณ์และบทพูด รักษา Project Sound เดิม ไม่ใส่ซ้ำ วางกล้องตามความหมายและฉากจริง ตรวจ motion/face/lip/light/camera และลำดับภาพ ใช้ Blender, DataLink, Motion Library, AccuPOSE, Gesture, Edit Motion Layer และ RLPy ตามความเหมาะสม ตรวจผลจริง ไม่ปลอมหลักฐาน
+ใช้มาตรฐานคุณภาพเดียวกันทั้งเริ่มเรื่อง ทำต่อ และ Sleep Mode; เฉพาะการอนุมัติและการเปลี่ยนแชตเท่านั้นที่ต่างกัน โหมดปกติรอคำอนุมัติจริงก่อนเรนเดอร์ Sleep Mode ใช้สิทธิ์ที่ผู้ใช้เปิดและ gate ที่ runtime รองรับเท่านั้น ห้ามเปิด Sleep เอง เซฟและเปิดซ้ำผ่านเมนู File ตรวจวิดีโอและเสียงจริงก่อนนับว่าเสร็จ ไม่เผยแพร่หรือเขียนทับงานเดิมโดยไม่ได้รับอนุญาต
+ลงมือทำต่อจริงตามขั้นที่ได้รับอนุญาต ไม่หยุดเพียงรายงาน รักษาข้อมูลและความปลอดภัยของเครื่อง ไม่เปิดเผยคีย์ รหัสผ่าน หรือข้อมูลเรื่องอื่น"""
+def release_info(base):
+    # Local pointer contains only a path to a reviewed candidate; it is not a runtime switch.
+    v=read(base/"VERSION").strip() or "unknown"
+    cfg=load(base/"docs"/"prompt_release.local.json")
+    other=Path(cfg.get("source","")) if cfg.get("source") else None
+    if other and other.is_dir() and (other/"docs"/"CINEMATIC_SLEEP.md").is_file():
+        released=read(other/"VERSION").strip()
+        def ver(x):return tuple(int(n) for n in re.findall(r"\d+",x)[:3])
+        if ver(released)>ver(v):return v,other,released,cfg.get("release","")
+    return v,None,"",""
+def skill_files(base,other=None):
+    result={p.parent.name:p for p in (base/".agents"/"skills").glob("*/SKILL.md")}
+    if other:
+        # Installed instructions remain authoritative; expose candidate skills separately below.
+        for p in (other/".agents"/"skills").glob("*/SKILL.md"):result.setdefault(p.parent.name,p)
+    return result
+def tool_guide(base,story,other=None):
     """Shared, current, reusable tool guide. Both modes get identical instructions."""
-    old=() # reusable handbook only; no private story names
+    old=tuple(p.stem for p in (base/"stories").glob("*.json") if not p.stem.startswith("_"))
     # Avoid stale scene-specific examples and credential-looking lines in skill excerpts.
     def reusable(s):
         return "\n".join(line for line in s.splitlines()
@@ -35,9 +50,19 @@ def tool_guide(base,story):
     for rel in ("plugin/INSTRUCTIONS.md","docs/CHROME_PREVIEW_GUIDE.md","docs/CINEMATIC_SLEEP.md","docs/accupose_presets.md","docs/rlpy_lessons.md"):
         s=reusable(read(base/rel))
         if s:sections.append("\n--- "+rel+" ---\n"+s)
-    for p in sorted((base/".agents"/"skills").glob("*/SKILL.md")):
+    for p in sorted(skill_files(base,other).values(),key=lambda p:p.parent.name):
         s=reusable(read(p))
         if s:sections.append("\n--- Skill: "+p.parent.name+" ---\n"+s)
+    if other and other.resolve()!=base.resolve():
+        sections.append("\n=== คู่มือความสามารถรุ่นเผยแพร่ที่ยังไม่ใช่ runtime ที่ติดตั้ง ===")
+        for rel in ("docs/CINEMATIC_SLEEP.md","docs/SCRIPT_CATALOG.md"):
+            data=reusable(read(other/rel))
+            if data:sections.append("\n--- release "+rel+" ---\n"+data)
+        for p in sorted((other/".agents"/"skills").glob("*/SKILL.md")):
+            original=base/".agents"/"skills"/p.parent.name/"SKILL.md"
+            if original.exists() and read(original)==read(p):continue
+            data=reusable(read(p))
+            if data:sections.append("\n--- release Skill: "+p.parent.name+" ---\n"+data)
     return "\n".join(sections)
 
 def build(kind,base=BASE):
@@ -46,9 +71,10 @@ def build(kind,base=BASE):
     story=now.get("story");part=now.get("part")
     if kind=="sleep":
         session=load(base/"progress"/"sleep_session.json")
-        if not session.get("enabled"):raise ValueError("Sleep Mode not active")
+        if not session.get("enabled") or session.get("phase") not in ("work","handoff"):raise ValueError("Sleep Mode not active")
         story=session["story"];part=session["part"];now={"story":story,"part":part,"mode":"sleep"}
-    skills=sorted(p.parent.name for p in (base/".agents"/"skills").glob("*/SKILL.md"))
+    installed,other,released,link=release_info(base)
+    skills=sorted(skill_files(base,other))
     entries=[]
     for line in read(base/"docs"/"SCRIPT_CATALOG.md").splitlines():
         cols=line.split("|")
@@ -56,9 +82,15 @@ def build(kind,base=BASE):
             name=cols[1].strip()
             if any(k in name for k in ("part9","part3_")):continue
             entries.append(name+" — "+cols[2].strip())
-    intro=RULES+"\n\nPipeline: "+read(base/"VERSION").strip()+"\nSkills: "+", ".join(skills)+"\nดัชนีสคริปต์ (ตรวจ signature ก่อนใช้):\n"+"\n".join(entries)
+    intro=RULES+"\n\nInstalled Pipeline: "+installed+"\nSkills: "+", ".join(skills)+"\nดัชนีสคริปต์ (ตรวจ signature ก่อนใช้):\n"+"\n".join(entries)
     intro+="\nProject root on current machine: "+str(base.resolve())+"\nให้เริ่มจากโปรเจกต์ที่ตรวจพบจริง ไม่เดา path จากเครื่องอื่น; ตรวจว่าปลั๊กอิน GPT และ Dino Bot Tunnel พร้อมใช้งาน แล้วเรียกเครื่องมือที่มีอยู่ตามลำดับงาน."
-    intro+=tool_guide(base,story)
+    if other:
+        intro+="\nAvailable release (not automatically installed): "+released+" "+link+"\nReviewed source: "+str(other.resolve())
+    # Automatically discover migration and update handbooks. Do not embed private project state in new mode.
+    handoffs=sorted(p.name for p in (base/"docs").glob("HANDOFF_*.md") if p.name.startswith("HANDOFF_CINEMATIC") or p.name.startswith("HANDOFF_RELEASE"))
+    if handoffs:
+        intro+="\nคู่มือย้ายรุ่นที่ระบบพบเอง: "+", ".join("docs/"+p for p in handoffs)+" — อ่านและทำตามเองเมื่อรุ่นที่ติดตั้งต่างจากรุ่นที่เผยแพร่; ไม่ให้ผู้ใช้ต้องส่งคำสั่งซ้ำ"
+    intro+=tool_guide(base,story,other)
     if kind=="new":
         return intro+"""\n\nโหมดเริ่มเรื่องใหม่: ไม่นำตัวละคร บท หรือความคืบหน้าเรื่องเดิมมาใช้. อ่านชื่อเรื่องใหม่ บท เสียง และ assets ที่ผู้ใช้ระบุ ถ้าขาดข้อมูลจำเป็นจึงถาม. ตรวจไม่มีงานอื่นรันก่อนสลับเรื่อง. สร้าง story spec ใหม่และอัปเดต CURRENT_STORY.md ให้เหลือเรื่องเดียว. วางแผนละเอียดทุกท่อนก่อนลงมือ แล้วทำท่อน 1 ทีละเหตุการณ์ 1.1, 1.2 ... ตรวจและรออนุมัติแต่ละคลิป จบและตรวจไฟล์จริงครบทั้งท่อนก่อนเริ่มท่อน 2, 3 ตามลำดับ. ห้ามเปิดเรื่องเก่าที่ส่งเสร็จแล้วกลับมาแก้."""
     if kind not in ("continue","sleep"):raise ValueError("unknown mode")
@@ -74,4 +106,4 @@ def build(kind,base=BASE):
         d=load(p);statuses.append({"part":p.stem[len(story)+1:],"steps_done":list(d.get("steps_done",{})),"approved":bool(d.get("ok",{}).get("step5"))})
     spec=load(base/"parts"/(story+"_"+str(part)+".json")) if re.fullmatch(r"\d+(?:\.\d+)?",str(part)) else {}
     details={k:spec[k] for k in ("story","part","from","project","video","wav","shots","lines","cast","props","scene","face_refinement") if k in spec}
-    return intro+"\n\nโหมดทำเรื่องเดิมต่อ — สถานะสดจากเครื่อง:\n"+json.dumps(clean({"now":now,"story":meta,"progress":statuses,"current_part_spec":details}),ensure_ascii=False,indent=2)+"""\n\nอ่าน story spec และ part spec ล่าสุดซ้ำ ตรวจไฟล์วิดีโอและงานที่กำลังรัน. หากคลิปปัจจุบันยังไม่ผ่าน ให้ทำต่อจากขั้นแรกที่ยังไม่เสร็จ ไม่รันซ้ำ. เมื่อท่อนก่อนหน้าผ่าน final_review ครบแล้ว จึงเริ่มท่อนถัดไปจากบท/เสียงที่มีอยู่ รักษาความต่อเนื่องจากโปรเจกต์ก่อนหน้า. Sleep Mode: ส่วนขยายเป็นผู้เปลี่ยนท่อนเท่านั้น; โหมดปกติเปลี่ยนท่อนตามผู้ใช้เมื่อ dependency ผ่าน. วางแผนละเอียดและรักษา gate จริงตามโหมดที่ได้รับอนุญาต."""
+    return intro+"\n\nโหมดทำเรื่องเดิมต่อ — สถานะสดจากเครื่อง:\n"+json.dumps(clean({"now":now,"story":meta,"progress":statuses,"current_part_spec":details}),ensure_ascii=False,indent=2)+"""\n\nอ่าน story spec และ part spec ล่าสุดซ้ำ ตรวจไฟล์วิดีโอและงานที่กำลังรัน. หากคลิปปัจจุบันยังไม่ผ่าน ให้ทำต่อจากขั้นแรกที่ยังไม่เสร็จ ไม่รันซ้ำ. เมื่อท่อนก่อนหน้าผ่านการตรวจไฟล์และ gate สุดท้ายของ runtime ที่ใช้งานจริงแล้ว จึงเริ่มท่อนถัดไปจากบท/เสียงที่มีอยู่ รักษาความต่อเนื่องจากโปรเจกต์ก่อนหน้า. Sleep Mode: ส่วนขยายเป็นผู้เปลี่ยนท่อนเท่านั้น; โหมดปกติเปลี่ยนท่อนตามผู้ใช้เมื่อ dependency ผ่าน. วางแผนละเอียดและรักษา gate จริงตามโหมดที่ได้รับอนุญาต."""

@@ -8,10 +8,21 @@ const goalGet=async()=>{const o=await chrome.storage.local.get(GOAL_KEY);return 
 const goalSet=async(s)=>{await chrome.storage.local.set({[GOAL_KEY]:s})};
 const newSession=(url,enabled=false)=>({schema:2,url,session:crypto.randomUUID(),achievement:"ACHIEVEMENT: "+crypto.randomUUID().slice(0,12).toUpperCase(),enabled,minutes:1.5,next:Date.now(),pending:null,status:enabled?"starting immediately":"paused"});
 const validFor=(s,url)=>s?.url===url;
+async function stopFromRelay(s){
+ if(!s?.enabled||!s.url)return false;
+ let g;
+ try{const r=await req("/goal/check",{url:s.url});if(!r.ok)return false;g=await r.json()}catch{return false}
+ if(!g.stop)return false;
+ const cur=await goalGet();
+ if(cur?.session!==s.session||!cur.enabled)return true;
+ cur.enabled=false;cur.revision=(cur.revision||0)+1;cur.status="หยุดติดตาม — "+g.reason;cur.pending=null;cur.next=0;
+ await goalSet(cur);await chrome.alarms.clear(GOAL_ALARM);return true;
+}
 async function goalInit(){
  let s=await goalGet();
  if(s?.schema!==2){const old=s;s=newSession(LEGACY_URL,false);s.next=old?.next||Date.now();await goalSet(s)}
  if(s.minutes!==1.5){const old=Number(s.minutes)||3;if(s.enabled&&s.next>Date.now())s.next=Math.max(Date.now(),s.next+(1.5-old)*60000);s.minutes=1.5;await goalSet(s)}
+ if(await stopFromRelay(s))s=await goalGet();
  if(s.enabled&&!await chrome.alarms.get(GOAL_ALARM))await chrome.alarms.create(GOAL_ALARM,{periodInMinutes:.5});
  const tabs=await chrome.tabs.query({url:"https://chatgpt.com/*"});
  for(const t of tabs.filter(t=>chatURL(t.url)))try{await chrome.scripting.executeScript({target:{tabId:t.id},files:["achievement_observer.js","goal_panel.js"]})}catch{}
@@ -23,7 +34,7 @@ async function goalInit(){
    const current=await goalGet();
    if(probe.stop&&current?.session===s.session&&current?.revision===s.revision){
     if(probe.ownDraft&&s.pending)await goalPage(bound[0],s,"yield",s.pending.marker,s.pending.message);
-    current.enabled=false;current.status="completed: "+current.achievement;current.pending=null;current.completedAt=Date.now();
+    current.revision=(current.revision||0)+1;current.enabled=false;current.status="completed: "+current.achievement;current.pending=null;current.completedAt=Date.now();
     await goalSet(current);await chrome.alarms.clear(GOAL_ALARM);
    }
   }catch{}
@@ -41,13 +52,14 @@ chrome.runtime.onMessage.addListener((m,sender,reply)=>{
  (async()=>{
   let s=await goalGet();const url=await callerURL(sender);
   if(!url)return {enabled:false,status:"เปิดบทสนทนา ChatGPT ที่มีงานก่อน"};
-  if(m.action==="status")return validFor(s,url)?s:{enabled:false,status:s?.enabled?"กำลังติดตามอีกแชต — พักแชตนั้นก่อน":"พร้อมเริ่มติดตาม"};
+  if(m.action==="status"){if(validFor(s,url)&&await stopFromRelay(s))s=await goalGet();return validFor(s,url)?s:{enabled:false,status:s?.enabled?"กำลังติดตามอีกแชต — พักแชตนั้นก่อน":"พร้อมเริ่มติดตาม"};}
   if(m.action==="pause"){
    if(!validFor(s,url))return {enabled:false,status:"ไม่ได้ติดตามแชตนี้"};
    s.enabled=false;s.status="paused";s.revision=(s.revision||0)+1;await goalSet(s);await chrome.alarms.clear(GOAL_ALARM);return s;
   }
   if(m.action==="resume"){
    if(s?.enabled&&!validFor(s,url))return {enabled:false,status:"กำลังติดตามอีกแชต — พักแชตนั้นก่อน"};
+   try{const r=await req("/goal/resume",{url});if(r.ok&&(await r.json()).stop)return {enabled:false,status:"รอผู้ใช้อนุมัติใน Preview"}}catch{}
    if(!s?.enabled||!validFor(s,url))s=newSession(url,true);
    else{s.next=Date.now();s.status="starting immediately"}
    await goalSet(s);await chrome.alarms.create(GOAL_ALARM,{periodInMinutes:.5});void goalStartNow();return s;
@@ -67,26 +79,40 @@ async function goalPage(tab,s,op,marker="",message=""){
   const sig=last?String(last.closest("[data-message-id]")?.getAttribute("data-message-id")||last.getAttribute("data-message-id")||assistant.length)+":"+answer.slice(-500):null;
   // The random achievement belongs to this session, not only the last turn.
   // Never match the user's own prompt, editor, code snippets, or goal panel.
-  const userSelector='[data-message-author-role="user"],[data-turn="user"],[data-role="user"],[contenteditable="true"],textarea,input,form,nav,aside,pre,code,#cc5-goal-floating-panel';
-  const assistantSelector='[data-message-author-role="assistant"],[data-turn="assistant"],[data-role="assistant"]';
-  const exact=t=>String(t||"").replace(/[\u200B-\u200D\uFEFF]/g,"").split(/\r?\n/).some(l=>l.trim()===achievement);
+  // Match a complete standalone line only in an actual assistant turn.
+  // Different ChatGPT layouts put the role on either the message or its ancestor.
+  const excluded='[data-message-author-role="user"],[data-turn="user"],[data-role="user"],[contenteditable="true"],textarea,input,nav,aside,pre,code,#cc5-goal-floating-panel,[hidden],[aria-hidden="true"]';
+  const roles='[data-message-author-role],[data-turn],[data-role]';
+  const assistantSelector='[data-message-author-role="assistant"],[data-turn="assistant"],[data-role="assistant"],[data-testid="assistant-message"]';
+  const normalize=t=>String(t??"").normalize("NFKC").replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,"").replace(/[\u2010-\u2015\u2212]/g,"-").trim();
+  const exact=t=>String(t??"").split(/\r?\n/).some(l=>normalize(l)===normalize(achievement));
+  const isAssistant=e=>{
+   if(e.closest(excluded))return false;
+   const owner=e.closest(roles);
+   if(owner&&["user","system","tool"].some(x=>[owner.getAttribute("data-message-author-role"),owner.getAttribute("data-turn"),owner.getAttribute("data-role")].includes(x)))return false;
+   if(e.closest(assistantSelector))return true;
+   const turn=e.closest('[data-testid^="conversation-turn-"],article');
+   if(!turn)return false;
+   const headings=[...turn.querySelectorAll('h1,h2,h3,h4,h5,h6,[role="heading"]')];
+   return headings.some(h=>/^(ChatGPT (said|says):?|ChatGPT กล่าว(?:ว่า)?[:：]?|ChatGPT พูดว่า[:：]?)$/i.test(normalize(h.textContent)))&&!headings.some(h=>/^(You said:?|คุณพูดว่า[:：]?|คุณกล่าวว่า[:：]?)$/i.test(normalize(h.textContent)));
+  };
   const hasAchievement=()=>{
    if(!achievement)return false;
-   const root=document.querySelector("main")||document.body;
-   if(!root)return false;
-   // Rich-text blocks retain the line even when the enclosing turn includes UI.
-   const candidates=root.querySelectorAll(assistantSelector.split(",").map(sel=>sel+" p,"+sel+" li,"+sel+" div,"+sel+" span").join(","));
-   for(const e of candidates){
-    if(e.closest(userSelector)||!e.closest(assistantSelector))continue;
-    if(Array.from(e.children).some(c=>c.matches("p,li,div,span")))continue;
-    if(exact(e.innerText||e.textContent))return true;
+   // Do not depend on a particular main container, markdown class or leaf layout.
+   const nodes=document.querySelectorAll(assistantSelector+', [data-testid^="conversation-turn-"] p, article p, .markdown p, .prose p, [data-testid^="conversation-turn-"] li, article li, [data-testid^="conversation-turn-"] div, article div');
+   for(const e of nodes){
+    if(!isAssistant(e)||e.querySelector(excluded))continue;
+    // innerText preserves line breaks; textContent covers split inline spans.
+    if(exact(e.innerText)||exact(e.textContent))return true;
    }
-   // Alternate ChatGPT layouts: assistant Markdown/prose inside a conversation turn.
-   for(const e of root.querySelectorAll('.markdown,.prose,[data-testid="assistant-message"]')){
-    if(e.closest(userSelector)||!e.closest('[data-testid^="conversation-turn-"],article,'+assistantSelector))continue;
-    if(exact(e.innerText||e.textContent))return true;
+   // A role container may contain controls/code; inspect its individual blocks instead.
+   for(const owner of document.querySelectorAll(assistantSelector)){
+    if(!isAssistant(owner))continue;
+    for(const e of owner.querySelectorAll('p,li,div,blockquote')){
+     if(isAssistant(e)&&!e.querySelector(excluded)&&(exact(e.innerText)||exact(e.textContent)))return true;
+    }
    }
-   return role("assistant").some(e=>!e.closest(userSelector)&&!e.querySelector("pre,code")&&exact(e.innerText||e.textContent));
+   return false;
   };
   const stop=hasAchievement();
   // Some ChatGPT layouts omit data-message-author-role. Match the unique
@@ -151,7 +177,7 @@ async function goalPage(tab,s,op,marker="",message=""){
   if(!button||!await safe()||draft()!==message||!button.isConnected)return {...snapshot,ownDraft:draft()===message,state:"draft waiting"};
   if(hasAchievement())return {...snapshot,ownDraft:draft()===message,state:"completed"};
   button.click();
-  for(let i=0;i<24;i++){await new Promise(r=>setTimeout(r,500));if(receipt())return {...snapshot,state:"sent"}}
+  for(let i=0;i<24;i++){await new Promise(r=>setTimeout(r,500));if(hasAchievement())return {...snapshot,state:"completed"};if(receipt())return {...snapshot,state:"sent"}}
   return {...snapshot,state:draft()?"send unknown":"submitted unconfirmed"};
  }});
  return r[0]?.result||{state:"unknown"};
@@ -174,7 +200,7 @@ async function goalTick(manual=false){
  if(running)return;running=true;
  let s;
  try{
-  s=await goalGet();if(!s?.enabled)return;
+  s=await goalGet();if(!s?.enabled||await stopFromRelay(s))return;
   const tabs=(await chrome.tabs.query({url:"https://chatgpt.com/*"})).filter(t=>t.url&&chatURL(t.url)===s.url);
   if(tabs.length!==1){s.status="waiting: bound chat not unique";return}
   const tab=tabs[0];
@@ -182,7 +208,7 @@ async function goalTick(manual=false){
 
   if(probe.stop){
    if(probe.ownDraft&&s.pending)await goalPage(tab,s,"yield",s.pending.marker,s.pending.message);
-   s.manualUntil=0;s.enabled=false;s.status="completed: "+s.achievement;s.pending=null;s.completedAt=Date.now();
+   s.revision=(s.revision||0)+1;s.manualUntil=0;s.enabled=false;s.status="completed: "+s.achievement;s.pending=null;s.completedAt=Date.now();
    await goalSet(s);await chrome.alarms.clear(GOAL_ALARM);return
   }
   if(s.pending&&probe.delivered){s.pending=null;s.manualUntil=0;s.next=manual?Date.now():Date.now()+s.minutes*60000;s.status="followup sent";if(!manual)return}
@@ -201,15 +227,16 @@ async function goalTick(manual=false){
 
   if(s.pending&&!probe.ownDraft){if(probe.draft){s.status="waiting: user draft";return}if(s.pending.attempted){s.pending=null;s.next=manual?Date.now():Date.now()+s.minutes*60000;s.status="ส่งรอบก่อนแล้ว แต่ตรวจใบตอบรับไม่ได้ — ไม่ส่งข้อความเดิมซ้ำ";if(!manual)return}else s.pending=null}
   if(!s.pending&&probe.draft){s.status="waiting: user draft";return}
-  if(!s.pending){const marker="[ติดตามเป้าหมาย CC5-"+crypto.randomUUID().slice(0,8)+"]";s.pending={marker,attempted:false,message:marker+" "+DEFAULT_PROMPT+" เมื่อบรรลุเป้าหมายปัจจุบันและตรวจผลงานจริงครบแล้ว ให้ตอบบรรทัดสุดท้ายด้วยรหัสนี้เท่านั้น: "+s.achievement+" หากยังไม่บรรลุ ห้ามพิมพ์รหัสเป็นบรรทัดเดี่ยว"};await goalSet(s)}
+  if(!s.pending){const marker="[ติดตามเป้าหมาย CC5-"+crypto.randomUUID().slice(0,8)+"]";s.pending={marker,attempted:false,message:marker+" "+DEFAULT_PROMPT+" เมื่อบรรลุเป้าหมายปัจจุบันและตรวจผลงานจริงครบแล้ว ให้ตอบบรรทัดสุดท้ายด้วยรหัสนี้เท่านั้น: "+s.achievement+" หากยังไม่บรรลุ ห้ามพิมพ์รหัสเป็นบรรทัดเดี่ยว"};const current=await goalGet();if(!current?.enabled||current.session!==s.session||current.revision!==s.revision)return;await goalSet(s)}
+  const latest=await goalGet();if(!latest?.enabled||latest.session!==s.session||latest.revision!==s.revision||latest.completedAt)return;
   s.status=probe.ownDraft?"วางข้อความแล้ว — กำลังรอปุ่มส่ง":"กำลังวางข้อความและส่ง";await goalSet(s);
   const out=await goalPage(tab,s,"send",s.pending.marker,s.pending.message);
-  if(out.state==="completed"){if(out.ownDraft&&s.pending)await goalPage(tab,s,"yield",s.pending.marker,s.pending.message);s.enabled=false;s.status="completed: "+s.achievement;s.completedAt=Date.now();s.pending=null;await goalSet(s);await chrome.alarms.clear(GOAL_ALARM);return}
+  if(out.state==="completed"){if(out.ownDraft&&s.pending)await goalPage(tab,s,"yield",s.pending.marker,s.pending.message);s.revision=(s.revision||0)+1;s.enabled=false;s.status="completed: "+s.achievement;s.completedAt=Date.now();s.pending=null;await goalSet(s);await chrome.alarms.clear(GOAL_ALARM);return}
   if(out.state==="send unknown"){s.pending.attempted=true;s.pending.attemptedAt=Date.now();}
   if(out.state==="sent"||out.state==="submitted unconfirmed"){s.pending=null;s.manualUntil=0;s.next=Date.now()+s.minutes*60000;s.status=out.state==="sent"?"followup sent":"กดส่งแล้ว ช่องพิมพ์ว่าง — รอรอบถัดไป (ยังไม่ยืนยันข้อความ)"}
   else{s.status=out.state==="draft waiting"?"รอปุ่มส่งพร้อม — จะลองเอง":out.state==="send unknown"?"ส่งแล้วแต่ยังไม่พบใบตอบรับ":out.state;if(out.state==="wait"||out.state==="user draft"){if(!out.ownDraft)s.pending=null}}
  }catch(e){if(s)s.status="error: "+String(e).slice(0,180)}
- finally{try{if(s){const current=await goalGet();if(current?.session===s.session&&current?.revision===s.revision){await goalSet(s)}}}finally{running=false}}
+ finally{try{if(s){const current=await goalGet();if(current?.session===s.session&&current?.revision===s.revision&&!current.completedAt){await goalSet(s)}}}finally{running=false}}
 }
 goalInit().catch(()=>{});
 chrome.runtime.onMessage.addListener((m,sender,reply)=>{
@@ -217,7 +244,7 @@ chrome.runtime.onMessage.addListener((m,sender,reply)=>{
  (async()=>{
   const s=await goalGet(),url=chatURL(sender.tab?.url);
   const ok=!!s?.enabled&&validFor(s,url);
-  if(m.type==="iclone-goal-safe"){const p=ok?await previewPriority(url):{wait:false};const current=await goalGet();reply({ok:ok&&current?.enabled&&current.session===m.session&&validFor(current,url)&&!p.wait});return}
+  if(m.type==="iclone-goal-safe"){if(ok&&await stopFromRelay(s)){reply({ok:false});return}const p=ok?await previewPriority(url):{wait:false};const current=await goalGet();reply({ok:ok&&current?.enabled&&current.session===m.session&&validFor(current,url)&&!p.wait});return}
   if(ok&&!running){const p=await previewPriority(url);if(p.wait&&p.job){await deliver()}if(!running)void goalTick()}
   reply({ok});
  })().catch(()=>reply({ok:false}));return true

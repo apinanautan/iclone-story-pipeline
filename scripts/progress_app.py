@@ -203,6 +203,9 @@ def video_done(spec):
 def current_part(story):
     now = load(PROG / "now.json", {})
     ps = parts_of(story)
+    from sleep_session import state
+    session=state(ROOT)
+    if session.get("enabled") and session.get("story")==story and session.get("part"):return session["part"]
     if now.get("story") == story and time.time() - now.get("time", 0) < 3 * 3600:
         n = str(now.get("part"))
         # finished part (video checked) -> move on: the next part starts with every dot grey
@@ -258,9 +261,12 @@ def step_states(story, n):
     now = load(PROG / "now.json", {})
     live = now if now.get("story") == story and str(now.get("part")) == n and time.time() - now.get("time", 0) < 3 * 3600 else {}
     narr_only = bool(spec) and all(L.get("who") in ("บรรยาย", "narrator") for L in spec.get("lines", []))
+    from sleep_session import complete
+    legacy_complete = "scene_review" not in done and bool(ok.get("step5")) and "video_check" in done and "render" in done and complete(ROOT,story,n)
     out = {}
     for k, _ in STEPS:
-        if k == "plan": s = "done" if plan_complete(spec) else "todo"
+        if legacy_complete and k in ("scene_review","prop_review","camera_replan","editorial_review","final_review"): s = "skip"
+        elif k == "plan": s = "done" if plan_complete(spec) else "todo"
         elif k == "audio": s = "done" if spec and Path(expand(spec.get("wav", ""))).exists() else "todo"
         elif k == "sound":
             from workflow_state import source_changed

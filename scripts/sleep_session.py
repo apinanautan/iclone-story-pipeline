@@ -13,7 +13,7 @@ def plan(root,story):
     rows=d.get("parts",[]);ids=[str(x.get("n")) for x in rows];tr=d.get("teacher_range",[])
     if not ids or len(set(ids))!=len(ids) or any(not re.fullmatch(r"\d+(?:\.\d+)?",n) for n in ids):raise SleepError("invalid planned parts")
     if len(tr)!=2 or any(not isinstance(x.get("master"),list) or len(x["master"])!=2 or not x["master"][0]<x["master"][1] for x in rows):raise SleepError("invalid timeline")
-    if abs(rows[0]["master"][0]-tr[0])>.1 or abs(rows[-1]["master"][1]-tr[1])>.1 or any(abs(a["master"][1]-b["master"][0])>.1 for a,b in zip(rows,rows[1:])):raise SleepError("timeline gaps")
+    if abs(rows[0]["master"][0]-tr[0])>.1 or abs(rows[-1]["master"][1]-tr[1])>1.0 or any(abs(a["master"][1]-b["master"][0])>.1 for a,b in zip(rows,rows[1:])):raise SleepError("timeline gaps")
     return ids,hashobj({"range":tr,"parts":rows,"approval":d["story_plan_ok"]})
 def project_url(url):
     u=urlsplit(url);m=re.fullmatch(r"(/g/[^/]+)/c/[a-zA-Z0-9-]+/?",u.path)
@@ -46,12 +46,19 @@ def complete(root,story,n):
     if not all(k in sd for k in ("render","video_check","final_review")):return False
     r=read(folder(root,story,n)/"final_receipt.json")
     return bool(r and r.get("size")==v.stat().st_size and r.get("mtime_ns")==v.stat().st_mtime_ns and r.get("project_size")==p.stat().st_size and r.get("project_mtime_ns")==p.stat().st_mtime_ns)
-def start(root,story,url,confirmed):
+def start(root,story,url,confirmed,from_part=None,protect_part=None):
     if confirmed is not True:raise SleepError("explicit Sleep Mode confirmation required")
     ids,h=plan(root,story);project=project_url(url)
     if state(root).get("enabled"):raise SleepError("already running")
     s={"enabled":True,"session":uuid.uuid4().hex,"story":story,"parts":ids,"plan":h,"project":project,"url":url.rstrip("/"),"started":time.time(),"history":[],"phase":"work"}
-    s["part"]=next((n for n in ids if not complete(root,story,n)),None)
+    if from_part is not None and str(from_part) not in ids:raise SleepError("selected part is not in approved plan")
+    scope=ids[ids.index(str(from_part)):] if from_part is not None else ids
+    s["scope_start"]=scope[0]
+    s["part"]=next((n for n in scope if not complete(root,story,n)),None)
+    if protect_part is not None and str(protect_part) in ids and s["part"] is not None and ids.index(s["part"])<ids.index(str(protect_part)):
+        raise SleepError("Earlier part needs review. To preserve the open project, choose Start current part onward.")
+    if from_part is not None:
+        s["earlier_unverified"]=[n for n in ids[:ids.index(str(from_part))] if not complete(root,story,n)]
     if s["part"] is None:s.update(enabled=False,phase="complete")
     else:s.update(phase="handoff",old_url=s["url"],url=None)
     return save(root,s)

@@ -34,6 +34,16 @@ class PipelineQA(unittest.TestCase):
         S.bind_next(self.r,"https://chatgpt.com/g/g-test-project/c/final")
         with patch.object(S,"complete",return_value=True):
             d=S.advance(self.r);self.assertFalse(d["enabled"]);self.assertEqual(d["phase"],"complete")
+    def test_explicit_current_scope_preserves_earlier_work(self):
+        with patch.object(S,"complete",return_value=False):
+            with self.assertRaises(S.SleepError):S.start(self.r,self.story,self.url,True,protect_part="1.2")
+            self.assertFalse(S.state(self.r).get("enabled"))
+            d=S.start(self.r,self.story,self.url,True,from_part="1.2",protect_part="1.2")
+            self.assertEqual(d["part"],"1.2")
+            self.assertEqual(d["earlier_unverified"],["1.1"])
+        S.bind_next(self.r,"https://chatgpt.com/g/g-test-project/c/current")
+        with patch.object(S,"complete",side_effect=lambda r,s,n:n=="1.2"):
+            self.assertEqual(S.advance(self.r)["part"],"2")
     def test_plan_change_blocks(self):
         with patch.object(S,"complete",return_value=False):S.start(self.r,self.story,self.url,True)
         self.plan["parts"][0]["note"]="changed";Q.write(self.r/"stories"/(self.story+".json"),self.plan)

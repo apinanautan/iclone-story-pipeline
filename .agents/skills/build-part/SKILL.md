@@ -13,16 +13,17 @@ python scripts/ic8_part.py parts/<spec>.json pose
 python scripts/ic8_part.py parts/<spec>.json sound
 python scripts/ic8_part.py parts/<spec>.json cams     # Cam_A/B, switcher, auto face light, DOF, stills
 ```
+- If the target project does not exist yet, open the source in iClone and use `File > Save Project As` manually before continuing. Do not trigger Save As with a script or shortcut.
 - After fixing a number in the spec: `python scripts/ic8_part.py <spec> <step> --from`.
 - `cams` adds a face light per avatar. If the log says `WARNING NO FACE LIGHT`, the scene has no point/spot light: tell the user; do not fake it by cranking the directional light.
 - Directional light colour uses normalized RRgb(1.0,0.92,0.84); the 255 scale washes out.
-- Never use your own stage/camera scripts. Never save by script.
+- Never use your own stage/camera scripts. Save only through the visible iClone File menu; never save by script, helper, CLI, watcher or simulated shortcut.
 Next: `review-stills`.
 
-## Project Sound / Preview — 2026-11-27
-- Cast → Sound → Pose → Lip → Cams. Import Project Sound only once per loaded project; inspect the clip name and full part range at frame 0. Repair Pose/Motion/face/camera or add cast without importing it again. Re-import only when a different project/audio is loaded or sound is confirmed missing/wrong. Lip Sync uses the original full part audio per speaker and retains the Project Sound track.
-- Save/reopen only via the visible iClone File menu. No automatic script save, and no render before approval.
-- For the locally installed Chrome Preview Bridge and Goal Tracker, read docs/CHROME_PREVIEW_GUIDE.md; check actual installation and exact authorized conversation before use.
+## Attach after pose — mandatory (2026-11-27)
+For a prop intended to remain on a body part, fit the pose and prop contact first; use Attach (permanent parent to the correct sub-node, e.g. hand for held trophy, head for glasses/hair). Preserve world placement, scale and orientation at attach time; inspect parent and parent node, check relative transform at start/middle/end and actual contact. Do not use repeated world-position tracking as a substitute for Attach when the prop must stay on the body. Use a timed Link only when the story requires handoff/release. For hair, parenting a prop to head does not convert it into a skinned hair asset; distinguish the two. Save the same main file via the authorized visible File > Save Project workflow at the approval gate; no duplicate files or render before approval. If the attachment API or GUI is not verified, stop and report the actual blocker rather than marking success.
+- 2026-11-27: Cast → Sound → Pose → Lip → Cams. ใส่ Project Sound ครั้งเดียวหลังวางตัวละคร ตรวจชื่อคลิปและช่วงเวลา Timeline ที่เฟรม 0. การแก้ Pose/Motion/สีหน้า/กล้องหรือเพิ่มตัวละครในฉากเดิมไม่ต้องนำเสียงเข้าซ้ำ. ใส่ใหม่เมื่อเปิดโปรเจกต์ใหม่ เปลี่ยนไฟล์เสียง หรือยืนยันว่าเสียงผิด/หาย. Lip Sync หลัง Pose เฉพาะผู้พูด ไม่ใช่ใส่ Project Sound ซ้ำ. ไม่ข้ามจุดอนุมัติ.
 
-## Current candidate workflow (1.7.8)
-Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.
+
+## Current integrated runtime
+Follow docs/CINEMATIC_SLEEP.md and live Preview cards. New camera and evidence rules supersede old 80/100-only and fixed-cut rules. Preserve sound and actual manual File-menu save/reopen. Normal and Sleep share QA; Sleep requires explicit scoped activation. Do not bypass real checks.
