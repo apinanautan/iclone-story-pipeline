@@ -19,10 +19,10 @@ J = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Tidmunz Studio", "snapgen_
 SHEET = "part_cams_all.jpg"
 # question -> what must be true (shown in the file and the card)
 ASK = {
-    "subject_face": "the speaker (or the subject of the narration) is in frame and we see the FACE: front or 3/4, not the back/profile only, not dark",
-    "framing": "no head cut at the top, nobody sliced by the frame edge, no big empty wall/sky/ground, not full-body-and-legs (except the wide shot)",
+    "subject_face": "the actual narrative subject/action/location is visible; speaking face readable when dialogue needs it; establishing/insert/action may show relevant props without a face",
+    "framing": "no head cut at the top, nobody sliced by the frame edge, no big empty wall/sky/ground, no unmotivated full-body framing; contextual action/establishing permitted when it serves the story",
     "clean": "no body through a chair/table/bed, nobody floating, no missing/glitchy models, nothing blocking the face",
-    "differs": "clearly different from the shot before it (not the same angle only nearer/farther); shot 1 = true",
+    "differs": "meaningful change in visible scale, composition or narrative beat; small left-right changes or repetitive same-size faces do not count; shot 1 compare previous part",
 }
 
 

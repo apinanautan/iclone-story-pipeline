@@ -187,3 +187,12 @@
 - scripts/workflow_state.py - pure dependency invalidation and Project Sound source receipt; keep sound during cast/pose/motion repair, revalidate on new project or changed WAV.
 - tests/test_sound_workflow.py - offline regression checks of real step order, one native import, sound retention and changed WAV.
 - docs/CHROME_PREVIEW_GUIDE.md - local Chrome extension/relay usage and safe chat binding. Browser key and local binding stay off GitHub.
+
+## 1.7.8 candidate additions
+- scripts/cinematic_qa.py: scene, prop, replan, editorial, final evidence gates.
+- scripts/ic8_scene_review.py: temporary survey camera, restores view/time.
+- scripts/blender_prop_build.py / blender_prop_export.py: headless prop build + geometry QA + FBX.
+- scripts/media_qa.py: independent stream lengths.
+- scripts/sleep_session.py: approved plan and handoff state.
+- scripts/motion_analyze.py / blender_motion_analyze.py: evaluated skeleton sample/cache; transfer not yet verified.
+- tools/chrome_preview_bridge/sleep_mode.js: opt-in chat handoff, verification required.

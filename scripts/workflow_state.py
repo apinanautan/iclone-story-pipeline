@@ -3,11 +3,14 @@ def invalidated_steps(step, order):
     after = order[order.index(step) + 1:] if step in order and not step.endswith("check") else []
     if step == "sound":
         # Replacing audio needs fresh lip sync and delivery validation, not pose.
-        after = [k for k in after if k in ("lip", "ready", "render", "video_check")]
+        after = [k for k in after if k in ("lip","scene_review","prop_review","camera_replan","cams","cam_check","motion_check","light_check","face_check","editorial_review","switch","ready","render","video_check","final_review")]
     if step == "lip":
         after = [k for k in after if k in ("ready", "render", "video_check")]
     if step == "render":
-        after = ["video_check"]
+        after = ["video_check","final_review"]
+    if step == "video_check": after=["final_review"]
+    if step in ("cam_check","motion_check","light_check","face_check"): after=order[order.index(step)+1:]
+    if step == "lip": after=[k for k in order[order.index(step)+1:]]
     if step == "motion_plan":
         after = order[order.index("pose"):]
     if step in ("cast", "pose", "motion_plan"):

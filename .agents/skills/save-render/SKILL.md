@@ -19,3 +19,6 @@ python scripts/ic8_part.py parts/<spec>.json render --approved
 - Complete Preview's `video_check` and verify the exact path, width, height, frame rate, duration, and audio with ffprobe. Treat any mismatch as a failed render and repair through Preview; never move or rename a wrong render to disguise it.
 - Output `{VIDEO}\<story>\<N>.mp4`. Copying it to the publish folder in {DRIVE} is the only write allowed there.
 - `scripts/ic8_gui.ps1 save/saveas` and `scripts/ic8_save.py` are disabled/removed. Never RFileIO.SaveProject, never RGlobal.RenderAudio. Check the video with ffprobe (60 fps, right length).
+
+## Current candidate workflow (1.7.8)
+Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.

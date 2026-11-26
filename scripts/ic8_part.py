@@ -37,6 +37,7 @@ Spec (parts/<story>_<N>.json):
 """
 import time
 import json, os, re, subprocess, sys, math
+from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import expand, root   # {MOTION} / {DRIVE} placeholders: never hardcode a drive letter
 
@@ -49,7 +50,7 @@ FF, FFP = _ff("ffmpeg"), _ff("ffprobe")   # found on any PC (no one-PC path)
 os.environ["IC8_FF"], os.environ["IC8_FFP"] = FF, FFP   # ic8_gui.ps1 uses the same ones
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
-ORDER = ["check", "motion_plan", "open", "cast", "sound", "pose", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
+ORDER = ["check", "motion_plan", "open", "cast", "sound", "pose", "lip", "scene_review", "prop_review", "camera_replan", "cams", "cam_check", "motion_check", "light_check", "face_check", "editorial_review", "switch"]
 
 
 import ailog   # real % + timing + fail report for GPT (user 2026-11-23)
@@ -296,11 +297,14 @@ def step_check(S, base):
         a, b = s["t"]
         if b - a < 2.0: errs.append("shot %d shorter than 2 s" % (i + 1))
         if i and abs(sh[i - 1]["t"][1] - a) > 0.01: errs.append("gap/overlap before shot %d" % (i + 1))
-        if s.get("wide"):   # establishing/view shot: any lens, no DOF
+        if s.get("coverage") in ("establishing","action","two_shot","insert"):
+            if not 24 <= s["focal"] <= 150 or not s.get("story_beat"): errs.append("shot %d: narrative coverage needs lens 24-150 and story_beat" % (i+1))
+        elif s.get("wide"):   # establishing/view shot: any lens, no DOF
             if not 20 <= s["focal"] <= 200: errs.append("shot %d focal %s (20-200)" % (i + 1, s["focal"]))
-        elif s["focal"] not in (80, 100): errs.append("shot %d focal %s: character shots use 80 or 100 mm only (rules: Camera). Mark view shots \"wide\": true" % (i + 1, s["focal"]))
+        elif not 75 <= s["focal"] <= 150: errs.append("shot %d character focal must be 75-150 mm" % (i + 1))
         d = math.dist(s["pos"], s["target"]); h = d * 24 / s["focal"]   # cm of body visible top-to-bottom
-        if s.get("wide"):   # user hates full bodies: a view shot must not frame any cast member
+        if s.get("coverage") in ("establishing","action","two_shot","insert"): pass
+        elif s.get("wide"):   # user hates full bodies: a view shot must not frame any cast member
             hx = math.atan(18 / s["focal"])
             for n, c in S["cast"].items():
                 if not c.get("pos"): continue
@@ -596,9 +600,11 @@ def cams_args():
 
 
 def step_cams(S, base):
+    from cinematic_qa import require_replan,capture_cams
+    if not require_replan(S,Path(ROOT)): fail("camera replan missing or stale; repair camera_replan")
     end = duration(S["wav"])
     only, full = cams_args()
-    rate = S.get("review_per_sec", 1) if full else 0
+    rate = max(1,S.get("review_per_sec", 1)) # both modes: actual samples across each shot
     wjson("cams.json", {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
                         "face_light_multiplier": S.get("face_light_multiplier", 0.04),
                         "face_light_overrides": S.get("face_light_overrides", {}),
@@ -621,6 +627,7 @@ def step_cams(S, base):
     result = subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), sheet])
     if result.returncode or not os.path.isfile(sheet) or (prior is not None and os.stat(sheet).st_mtime_ns == prior):
         fail("cams: fresh contact sheet not verified; do not send old preview")
+    capture_cams(S,Path(ROOT),Path(J))
     bridge = os.path.join(ROOT, "tools", "chrome_preview_bridge", "queue_preview.py")
     if os.path.isfile(bridge):
         br = subprocess.run([sys.executable, "-B", bridge, sheet, str(S.get("story","")), str(S.get("part",""))], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
@@ -791,18 +798,19 @@ def step_light_check(S, base):
 
 def step_switch(S, base):
     gui("switch")   # user 2026-11-21: viewport on the Switch camera before the user checks
-    say("OK viewport = Switch camera. STOP: send the stills; the user checks and says ผ่าน")
+    from sleep_session import active
+    say("OK viewport = Switch camera. "+("Sleep Mode: verify evidence and use sleep-approve." if active(Path(ROOT),S["story"],str(S["part"])) else "STOP: user reviews and approves."))
 
 
 def step_video_check(S, base):
     v = expand(S["video"])
     if not os.path.exists(v): fail("video_check: no video at %s" % v)
-    out = subprocess.run([FFP, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", v], capture_output=True, text=True).stdout.strip()
-    got, want = float(out or 0), duration(S["wav"])
-    if abs(got - want) > 1.0: fail("video_check: video %.1fs, sound %.1fs" % (got, want))
-    aud = subprocess.run([FFP, "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", v], capture_output=True, text=True).stdout.strip()
-    if not aud: fail("video_check: video has no sound track")
-    say("OK video_check: %s %.1fs (%.0f MB)" % (os.path.basename(v), got, os.path.getsize(v) / 1e6))
+    from media_qa import probe_video
+    want=duration(S["wav"])
+    try: got=probe_video(FFP,v,want)
+    except (ValueError,RuntimeError,OSError,subprocess.SubprocessError) as e:fail("video_check: "+str(e))
+    say("OK video_check: %s video %.2fs audio %.2fs" % (os.path.basename(v),got["video"],got["audio"]))
+
 
 
 def step_cam_check(S, base):
@@ -819,9 +827,12 @@ def step_ready(S, base):
     g = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "progress", "%s_%s.json" % (S.get("story"), S.get("part")))
     d = json.load(open(g, encoding="utf-8")) if os.path.exists(g) else {}
     sd = d.get("steps_done", {})
-    miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") != "บรรยาย" for l in S.get("lines", [])))]
+    miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") not in NARR for l in S.get("lines", [])))]
     if miss: fail("ready: run these steps first, in order: " + ", ".join(miss))
-    if not d.get("ok", {}).get("step5"): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
+    from cinematic_qa import editorial_valid
+    if not editorial_valid(S,Path(ROOT)):fail("ready: editorial evidence stale; repair and review")
+    from sleep_session import approval_valid
+    if not (d.get("ok", {}).get("step5") or approval_valid(Path(ROOT),S["story"],str(S["part"]),d)): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
     proj = os.path.normpath(S["project"])
     proof = d.get("ready_menu_save")
     if not proof:
@@ -840,33 +851,65 @@ def step_ready(S, base):
     d.pop("ready_menu_save", None)
     with open(g, "w", encoding="utf-8") as f: json.dump(d, f, ensure_ascii=False, indent=1)
     count("ready", 2, 2, "ตรวจเซฟเมนูและเปิดซ้ำ")
-    say("OK ready: manual File-menu save and reopen verified. STOP: tell the user to press Play in iClone (Switch, frame 0). Render only after they say ผ่าน.")
+    say("OK ready: manual File-menu save and reopen verified. Render next only after the current mode's authorization and actual review gates.")
 
 def step_render(S, base, approved):
-    if not approved: fail("render needs --approved (the user must say ผ่าน first)")
+    from cinematic_qa import editorial_valid
+    if not editorial_valid(S,Path(ROOT)):fail("render: editorial evidence stale")
+    from sleep_session import approval_valid
+    d=json.load(open(os.path.join(ROOT,"progress",f'{S["story"]}_{S["part"]}.json'),encoding="utf-8"))
+    if not approved or not (d.get("ok",{}).get("step5") or approval_valid(Path(ROOT),S["story"],str(S["part"]),d)) or not all(k in d.get("steps_done",{}) for k in ORDER+["ready"] if k!="lip" or any(l["who"] not in NARR for l in S["lines"])): fail("render requires actual QA, ready and authorization")
+    if Path(S["video"]).exists():
+        import shutil
+        backup=Path(ROOT)/"progress"/"render_backups"/S["story"]/str(S["part"]);backup.mkdir(parents=True,exist_ok=True)
+        dest=backup/(str(time.time_ns())+".mp4");shutil.copy2(S["video"],dest)
+        say("Existing video preserved in "+str(dest))
     wait_textures()   # 2026-11-21: a render started during Texture Loading came out with white, untextured people
     end = duration(S["wav"]); mids = ",".join("%.2f" % ((s["t"][0] + s["t"][1]) / 2) for s in S["shots"])
     a = ["render", os.path.normpath(S["video"]), end, os.path.normpath(S["wav"]), "-Shots", mids]
-    if S.get("publish"): a += ["-Publish", os.path.normpath(S["publish"])]
+    # Publication is a separate user action after final review; never publish unreviewed output.
     gui(*a)
 
 
-STEPS = {"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
+def step_scene_review(S,base):
+    from cinematic_qa import scene_review
+    scene_review(S,Path(ROOT),Path(J),job,fail,say)
+
+def step_prop_review(S,base):
+    from cinematic_qa import prop_review
+    prop_review(S,Path(ROOT),Path(J),job,step_props,fail,say)
+
+def step_camera_replan(S,base):
+    from cinematic_qa import check_replan
+    check_replan(S,Path(ROOT),Path(J),fail,say)
+
+def step_editorial_review(S,base):
+    from cinematic_qa import check_editorial
+    check_editorial(S,Path(ROOT),Path(J),fail,say)
+
+def step_final_review(S,base):
+    from cinematic_qa import check_final
+    check_final(S,Path(ROOT),fail,say)
+
+STEPS = {"scene_review":step_scene_review,"prop_review":step_prop_review,"camera_replan":step_camera_replan,"editorial_review":step_editorial_review,"final_review":step_final_review,"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
          "sound": step_sound, "lip": step_lip, "cams": step_cams, "cam_check": step_cam_check, "motion_check": step_motion_check,
          "light_check": step_light_check, "face_check": step_face_check, "switch": step_switch, "ready": step_ready, "video_check": step_video_check}
 
 if __name__ == "__main__":
     if len(sys.argv) < 3: print(__doc__); sys.exit(1)
     spec, step = sys.argv[1], sys.argv[2]
+    from preview_gate import require, Blocked
+    try: require(spec,step,sys.argv[3:])
+    except Blocked as e: print("STOP: "+str(e)); sys.exit(2)
     S = expand(json.load(open(spec, encoding="utf-8"))); base = os.path.splitext(spec)[0]
     resolve(S, spec); S["_spec"] = spec
-    if step == "render": run = ["render", "video_check"]   # the render is always followed by the video check
+    if step == "render": run = ["render"]   # the render is always followed by the video check
     elif step == "all": run = ORDER
     elif step in STEPS: run = ORDER[ORDER.index(step):] if "--from" in sys.argv and step in ORDER else [step]
     else: fail("unknown step " + step)
     if run: story_gate(S)   # user 2026-11-22: stage 1 first, for every step of every part
     if run and run[0] not in ("check", "render") and step != "audio": step_check(S, base)   # never act on a broken spec
-    FULL = ORDER + ["ready", "render", "video_check"]   # every pipeline step the Preview shows, in order
+    FULL = ORDER + ["ready", "render", "video_check","final_review"]   # every pipeline step the Preview shows, in order
     def _now(st, state):   # live status for the Preview program (scripts/progress_app.py)
         try:
             f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "progress", "now.json")
@@ -889,7 +932,8 @@ if __name__ == "__main__":
                 try: os.remove(os.path.join(J, "live.json"))   # no stale % from the previous step
                 except OSError: pass
                 for k in invalidate: sd.pop(k, None)
-                if st in ("cast", "pose", "cams", "open", "sound", "lip", "motion_plan"): d.get("ok", {}).pop("step5", None)
+                if st in ("cast", "pose", "cams", "open", "sound", "lip", "motion_plan","scene_review","prop_review","camera_replan","editorial_review","cam_check","motion_check","light_check","face_check"):
+                    d.get("ok", {}).pop("step5", None); d.pop("sleep_approval",None)
                 if st != "ready" and "ready" in invalidate: d.pop("ready_menu_save", None)
                 if "sound" in invalidate: d.pop("sound_source", None)
             elif state == "done":

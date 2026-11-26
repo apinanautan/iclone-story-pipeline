@@ -112,3 +112,6 @@ Current workflow is event-clip render-first. Do not infer completion from filena
 - Latest user rule for 3.4 comfort: FAKE EMBRACE by camera composition; characters grouped and almost still, only very small head/breathing motion. NO exaggerated Hug Kid mocap, no required literal arm contact, no forced transitions, and NO Look At on 3.4. Existing 3.4 is NOT verified updated to this direction.
 - Do not render 4.1/4.2 before user approval; contact-sheet QA is not a finished MP4. Story WAV must be continuous across 4.1+4.2 to 4.3.
 - Live iClone 4.1 has two Cam41_A/B cameras, six switches, 28 props. Read-only QA checked 18 source frames during 15.3-30.2s: visible red-clad Sunee, mixing bowl and restrained work. See docs/part4_2_qa_20261111.md.
+
+## Current candidate workflow (1.7.8)
+Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.

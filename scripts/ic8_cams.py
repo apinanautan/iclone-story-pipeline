@@ -183,8 +183,8 @@ try:
         RLPy.RGlobal.SetProjectLength(T(END + float(p.get("tail", 5.0))))
         RLPy.RGlobal.SetEndTime(T(END + float(p.get("tail", 5.0))))
     FACE_LIGHT_MULTIPLIER = p.get("face_light_multiplier", 0.04)
-    bad = [i + 1 for i, s in enumerate(p["shots"]) if not s.get("wide") and s["focal"] not in (80, 100)]
-    if bad: raise ValueError("shots %s: character shots must use 80 or 100 mm (or mark \"wide\": true)" % bad)
+    bad = [i + 1 for i, s in enumerate(p["shots"]) if not (s.get("wide") or s.get("coverage") in ("establishing","action","two_shot","insert")) and not 75 <= s["focal"] <= 150]
+    if bad: raise ValueError("shots %s: character shots must use 75-150 mm (or mark \"wide\": true)" % bad)
     LIVE(2, "ไฟหน้าตัวละคร")
     face_lights()
     LIVE(8, "สร้างกล้อง Cam_A / Cam_B")
@@ -207,7 +207,7 @@ try:
     avs = {x.GetName(): x for x in RLPy.RScene.GetAvatars()}
     for i, s in enumerate(p["shots"]):
         sub = avs.get(s.get("subject") or "")
-        if not sub: continue
+        if not sub or s.get("coverage") in ("establishing","action","two_shot","insert") or s.get("size") in ("EST","MS","OTS","TWO","INSERT"): continue
         LIVE(12 + 8.0 * i / len(p["shots"]), "เล็งหน้า ช็อต %d: %s" % (i + 1, s["subject"]))
         RLPy.RGlobal.SetTime(T(sum(s["t"]) / 2)); QtWidgets.QApplication.processEvents()
         mx, c, mn = RLPy.RVector3(), RLPy.RVector3(), RLPy.RVector3(); sub.GetBounds(mx, c, mn)

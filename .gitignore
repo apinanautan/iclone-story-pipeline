@@ -14,3 +14,8 @@ stories/*
 !stories/_template.json
 parts/*
 !parts/_example.json
+
+# private relay state
+tools/preview_bridge_local/
+tools/chrome_preview_bridge/relay.key
+tools/chrome_preview_bridge/config.local.js

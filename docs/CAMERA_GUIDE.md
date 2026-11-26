@@ -79,3 +79,6 @@
 6. **motion กล้อง:** 2 คีย์ Linear ต่อช็อต แกนเดียว ซูมเข้า/ถอยออกสลับกัน 12–20 cm; ตำแหน่งเป้าหมายคงที่
 7. **ความสูงกล้อง** ≈ ระดับตาตัวละคร (z 125–150 สำหรับนั่ง); เลนส์หน้า 50–85 mm; ช็อตกว้าง 50 mm ก็พอสำหรับห้อง
 8. **ก่อนบอกให้กด Play:** ช่วงเล่นครอบคลุมทั้งท่อน, viewport = Switch, ถ่ายภาพนิ่งช็อตใหม่ดูแล้ว
+
+## Current candidate workflow (1.7.8)
+Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.

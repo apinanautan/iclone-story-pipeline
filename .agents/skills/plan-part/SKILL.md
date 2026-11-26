@@ -27,3 +27,6 @@ Start from the timed transcript (`brief` prints it). For each line ask: who spea
   Then look at the NEXT part's first line: the next part should open on a different angle/person, not the same shot.
 - No shot under ~3 s unless it is a quick reaction the story needs.
 - Close-ups: aim at eye height, full head with a little room above (check every still).
+
+## Current candidate workflow (1.7.8)
+Read docs/CINEMATIC_SLEEP.md and current Preview cards. Scene-aware replan, prop review, editorial/final review use identical standards in BOTH modes. Old 80/100-only and five-second-cut rules are superseded. Sleep changes approval and handoff only. Use Ai-iclone repair <step> and do, not direct ic8_part calls. Motion Analyzer requires verified transfer and explicit bone map; no invented evidence. Do not claim live pass before verification.

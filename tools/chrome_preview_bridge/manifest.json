@@ -1,0 +1,37 @@
+{
+  "manifest_version": 3,
+  "name": "iClone Preview to Chat",
+  "version": "0.4.7",
+  "description": "Attach the latest iClone camera preview to the active ChatGPT conversation.",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "alarms",
+    "idle",
+    "storage",
+    "clipboardWrite",
+    "tabs"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:18764/*",
+    "https://chatgpt.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "run_at": "document_idle",
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "achievement_observer.js",
+        "goal_panel.js"
+      ]
+    }
+  ]
+}

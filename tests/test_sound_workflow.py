@@ -12,7 +12,7 @@ ORDER = assigned("scripts/ic8_part.py", "ORDER")
 FULL = ORDER + ["ready", "render", "video_check"]
 class SoundWorkflow(unittest.TestCase):
     def test_order(self):
-        self.assertEqual(ORDER[ORDER.index("cast"):ORDER.index("cams")+1], ["cast", "sound", "pose", "lip", "cams"])
+        self.assertEqual(ORDER[ORDER.index("cast"):ORDER.index("cams")+1], ["cast", "sound", "pose", "lip", "scene_review", "prop_review", "camera_replan", "cams"])
         self.assertEqual([k for k, v in assigned("scripts/progress_app.py", "STEPS") if k in ORDER], ORDER)
     def test_repair_keeps_sound(self):
         for step in ("cast", "motion_plan", "pose", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check"):
