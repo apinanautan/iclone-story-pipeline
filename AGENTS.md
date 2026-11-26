@@ -1,5 +1,9 @@
 # iClone Story Pipeline: instructions for any AI that picks this up
 
+## Mandatory script lookup (2026-11-27)
+After reading the live Ai-iclone status and rules card, consult [docs/SCRIPT_CATALOG.md](docs/SCRIPT_CATALOG.md) and the `script-catalog` skill before creating or invoking any helper. Check current source and local availability; reuse existing generic scripts through Preview. Do not run historical or unverified helpers as substitutes. Update the catalog when scripts change. No new parallel workflow, no render before explicit approval.
+
+
 **START HERE (2026-11-22): run `Ai-iclone.exe` (no arguments) in this folder and follow what it prints.** It is the program for this work: it shows the story/part status (same as the Ai-iclone window), the one next command (`Ai-iclone do`), and the rules card of that step. Do not read the rest of this file or docs/ unless it says so.
 Older notes below are history/reference.
 
