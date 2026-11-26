@@ -595,3 +595,9 @@ The user has repeated every item below many times and is furious about repeating
 ## Texture-only PBR
 
 For texture-only PBR work, keep the mesh and UVs. Generate or extract one Base Color / Normal / Roughness / Metallic / Height set per material, with AO when supported. Keep plaster and ordinary wood nonmetallic. Supply separate maps for iClone and an ORM pack when using glTF. Use the normal convention required by the destination renderer. For an open window, leave the hole open so the scene artist can place their own exterior. Verify under neutral and angled light; identify approximate maps separately from model-derived or scanned maps.
+
+## 2026-11-26 — render only through Preview; verify the requested output
+- Ai-iclone Preview is the controller for every part. Before rendering, read `Ai-iclone status` and `Ai-iclone rules render`; render only when the current Preview step is `render` and its approval gate is satisfied. Advance with `Ai-iclone do` in order; never launch the renderer independently or skip Preview steps.
+- Follow the live render card. The current card specifies 1920×1080 (1080p), 60 fps. Resolve `{VIDEO}` from the active project's `paths.local.json`; final path is `{VIDEO}\\<story>\\<part>.mp4`.
+- Complete Preview `video_check` and verify exact path, resolution, frame rate, duration, and audio with ffprobe. A mismatch is a failed render; repair through Preview and never move or rename an incorrectly rendered file to disguise it.
+- Incident: `1.1` was rendered outside the Preview gate at 1280×720 and first saved outside `{VIDEO}`; this was incorrect. Treat the existing `1.1.mp4` as noncompliant until Preview's render and video_check steps succeed.
