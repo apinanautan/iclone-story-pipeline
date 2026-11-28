@@ -486,6 +486,21 @@ def chat_code_line():
     if c: out("รหัสแชต (AI พิมพ์บรรทัดนี้ในคำตอบ 1 ครั้ง ภาพจาก iClone จะส่งเข้าแชตนี้เอง): " + c)
 
 
+def snap():
+    """Send what iClone shows right now to the working chat. No story/part rules (user 2026-11-28: building a
+    scene or testing must be free). Never counts as story QA."""
+    sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+    try:
+        from capture_preview import capture
+        from queue_preview import queue_snap
+        img = capture(None)
+    except Exception as e:
+        out("STOP: จับภาพ iClone ไม่ได้: %s (เปิด iClone ไว้ 1 หน้าต่าง ไม่ย่อ)" % e); return 2
+    chat_code_line()
+    r = queue_snap(img); out("snap: " + r)
+    return 0 if r.startswith("queued") else 2
+
+
 def plugin_line():
     """Thai one-liner: is the Chrome plugin Chrome really runs current? (the plugin reports itself every 30 s)"""
     b = ROOT / "tools" / "chrome_preview_bridge"
@@ -635,6 +650,7 @@ def main(a):
         rc = subprocess.run([PY, str(SCR / "ic8_story.py"), a[1], "init"], cwd=ROOT).returncode
         if rc == 0: save_sel({"story": a[1]})
         return rc
+    if c == "snap": return snap()
     if c == "doctor": return doctor()
     if c == "setup": return setup()
     if c == "log":

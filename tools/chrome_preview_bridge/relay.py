@@ -266,7 +266,7 @@ class Handler(BaseHTTPRequestHandler):
                 with LOCK:
                     b=bind(str(q.get("url","")))
                     h=handoff_pending()
-                    if h and (h.get("mode")=="generic" or h.get("story")==b.get("story")):
+                    if h and (h.get("mode") in ("generic","chat_code") or h.get("story")==b.get("story")):
                         sleep.write(STATE/"handoff.json",dict(h,state="cancelled"))
                 self.reply(json.dumps(b,ensure_ascii=False).encode());return
             with LOCK:

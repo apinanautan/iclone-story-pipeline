@@ -56,6 +56,17 @@ class Handoff(unittest.TestCase):
         b.handoff_bind(b.handoff_pending()["id"],"https://chatgpt.com/c/new")
         self.assertEqual(q.queue(img,"Fixture","3"),"queued one preview")
         self.assertEqual(b.read(self.state/"job.json")["url"],"https://chatgpt.com/c/new")
+    def test_chat_code_does_not_block_story_images(self):
+        b.bind("https://chatgpt.com/c/work");img=self.base/"sample.jpg";img.write_bytes(bytes([255,216,255])+b"sample")
+        b.chat_code()   # Ai-iclone prints it on every run; GPT may not echo it again
+        self.assertEqual(q.queue(img,"Fixture","3"),"queued one preview")
+    def test_snap_has_no_story_rules(self):
+        img=self.base/"sample.jpg";img.write_bytes(bytes([255,216,255])+b"sample")
+        self.assertIn("no chat bound",q.queue_snap(img))
+        b.bind("https://chatgpt.com/c/work")
+        self.put("progress/ai_iclone.json",{"story":"Other","part":"9"})   # live story differs from the bound one
+        self.assertEqual(q.queue_snap(img),"queued one preview")
+        j=b.read(self.state/"job.json");self.assertEqual((j["kind"],j["url"],j["sleep"]),("snap","https://chatgpt.com/c/work",False))
     def test_new_handoff_archives_stranded_old_draft(self):
         b.bind("https://chatgpt.com/c/old")
         self.put("tools/preview_bridge_local/job.json",{"id":"a"*32,"url":"https://chatgpt.com/c/old","created":1,"state":"claimed","phase":"drafted","diagnostic":"waiting: bound chat not unique"})

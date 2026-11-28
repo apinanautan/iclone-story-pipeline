@@ -58,7 +58,7 @@ def chat_code():
     if state(ROOT.parent.parent).get("enabled"):return ""
     h=handoff_pending()
     if not h:
-        h=dict(id=uuid.uuid4().hex,state="pending",created=time.time(),mode="generic")
+        h=dict(id=uuid.uuid4().hex,state="pending",created=time.time(),mode="chat_code")
         STATE.mkdir(exist_ok=True)
         p=STATE/"handoff.tmp";p.write_text(json.dumps(h,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"handoff.json")
     return "[iClone Handoff "+h["id"]+"]"
@@ -79,7 +79,7 @@ def handoff_bind(id,url):
     h=handoff_pending()
     if not h or h["id"]!=id:raise ValueError("Unknown or expired handoff")
     n=current()
-    if h.get("mode")!="generic" and (n["story"],str(n["part"]))!=(h["story"],h["part"]):raise ValueError("Target not selected yet")
+    if h.get("mode") not in ("generic","chat_code") and (n["story"],str(n["part"]))!=(h["story"],h["part"]):raise ValueError("Target not selected yet")
     from sleep_session import state
     if state(ROOT.parent.parent).get("enabled"):raise ValueError("Sleep is active")
     raw=read(ROOT.parent.parent/"progress"/"now.json")
@@ -91,7 +91,7 @@ def handoff_bind(id,url):
         raise ValueError("Invalid conversation URL")
     target='https://chatgpt.com'+u.path.rstrip('/')
     j=read(STATE/'job.json')
-    if (h.get("mode")=="generic" and j.get("state")=="claimed"
+    if (h.get("mode") in ("generic","chat_code") and j.get("state")=="claimed"
         and j.get("phase")=="drafted" and j.get("diagnostic")=="waiting: bound chat not unique"
         and j.get("url")!=target and j.get("created",0)<h.get("created",0)
         and re.fullmatch(r"[a-f0-9]{32}",str(j.get("id","")))
@@ -104,7 +104,7 @@ def handoff_bind(id,url):
         j.update(state="superseded",result="New verified handoff; unsent old-chat draft archived, not delivered")
         p=STATE/'job.tmp';p.write_text(json.dumps(j,ensure_ascii=False),encoding="utf-8");p.replace(STATE/'job.json')
     b=bind(url)
-    if h.get("mode")!="generic":b["part"]=h["part"]
+    if h.get("mode") not in ("generic","chat_code"):b["part"]=h["part"]
     p=STATE/"authorization.tmp";p.write_text(json.dumps(b,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"authorization.local.json")
     h.update(state="bound",url=b["url"])
     p=STATE/"handoff.tmp";p.write_text(json.dumps(h,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"handoff.json")

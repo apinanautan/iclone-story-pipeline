@@ -80,6 +80,39 @@ def stuck(old,now=None):
     if age>STALE:return '%s/%s for %d s'%(st,old.get('phase'),age)
     return None
 
+def _put(image,url,j,replaced=None):
+    """Write one delivery job for the plugin: image + target chat."""
+    if not url.startswith('https://'):url='https://'+url
+    u=urlsplit(url)
+    if u.scheme!='https' or u.netloc!='chatgpt.com' or not re.search(r'/c/[a-zA-Z0-9-]+$',u.path):raise ValueError('invalid bound chat')
+    b=Path(image).read_bytes()
+    if not b.startswith(bytes((0xff,0xd8))) or len(b)>8_000_000:raise ValueError('invalid preview')
+    j=dict(j,id=uuid.uuid4().hex,url='https://chatgpt.com'+u.path,state='pending',created=time.time())
+    if replaced:j['replaced']=replaced
+    STATE.mkdir(exist_ok=True)
+    tmp=STATE/'preview.tmp';tmp.write_bytes(b);tmp.replace(STATE/'preview.jpg')
+    tmp=STATE/'job.tmp';tmp.write_text(json.dumps(j,ensure_ascii=False),encoding='utf-8');tmp.replace(STATE/'job.json')
+    msg='queued one preview'+(' (replaced stuck delivery: %s)'%replaced['why'] if replaced else '')
+    if not ensure_relay():msg+='; WARNING relay not running and could not start: run tools/chrome_preview_bridge/start-relay.cmd (see preview_bridge_local/relay.log)'
+    return msg
+
+def _free(old):
+    """None when a new job may go out; else why not. A stuck old job is replaced."""
+    if old.get('state') in ('pending','claimed','needs_review'):
+        why=stuck(old)
+        if not why:return 'skipped: previous delivery still in progress (%s/%s)'%(old.get('state'),old.get('phase')),None
+        return None,{'id':old.get('id'),'state':old.get('state'),'phase':old.get('phase'),'diagnostic':old.get('diagnostic'),'result':old.get('result'),'why':why}
+    return None,None
+
+def queue_snap(image):
+    """Whatever iClone shows now -> the bound chat. No story/part condition (user 2026-11-28: building a scene
+    or testing must not hit story rules). Marked as a snapshot, never story QA evidence."""
+    url=binding().get('url','')
+    if not url:return 'skipped: no chat bound yet: write the chat code line Ai-iclone prints into your reply once, then snap again'
+    busy,replaced=_free(read_job())
+    if busy:return busy
+    return _put(image,url,{'kind':'snap','sleep':False},replaced)
+
 def queue(image,story,part,kind="review"):
     n=current();auth=binding();h=handoff_pending()
     if h and (h.get('mode')=='generic' or (h.get('story'),h.get('part'))==(story,str(part))):return 'skipped: waiting for new handoff chat to bind; queue fresh image after binding'
@@ -90,22 +123,9 @@ def queue(image,story,part,kind="review"):
         why=stuck(old)
         if not why:return 'skipped: previous delivery still in progress (%s/%s)'%(old.get('state'),old.get('phase'))
         replaced={'id':old.get('id'),'state':old.get('state'),'phase':old.get('phase'),'diagnostic':old.get('diagnostic'),'result':old.get('result'),'why':why}
-    url=auth.get('url','')
-    if not url.startswith('https://'):url='https://'+url
-    u=urlsplit(url)
-    if u.scheme!='https' or u.netloc!='chatgpt.com' or not re.search(r'/c/[a-zA-Z0-9-]+$',u.path):raise ValueError('invalid bound chat')
-    b=Path(image).read_bytes()
-    if not b.startswith(b'\xff\xd8') or len(b)>8_000_000:raise ValueError('invalid preview')
     session_path=Path(__file__).resolve().parents[2]/'progress'/'sleep_session.json'
     session=json.loads(session_path.read_text(encoding='utf-8')) if session_path.exists() else {}
-    j={'sleep':bool(session.get('enabled') and session.get('phase')=='work' and session.get('story')==story and session.get('part')==str(part)), 'id':uuid.uuid4().hex,'url':'https://chatgpt.com'+u.path,'state':'pending','created':time.time(),'kind':kind}
-    if replaced:j['replaced']=replaced
-    STATE.mkdir(exist_ok=True)
-    tmp=STATE/'preview.tmp';tmp.write_bytes(b);tmp.replace(STATE/'preview.jpg')
-    tmp=STATE/'job.tmp';tmp.write_text(json.dumps(j,ensure_ascii=False),encoding='utf-8');tmp.replace(STATE/'job.json')
-    msg='queued one preview'+(' (replaced stuck delivery: %s)'%replaced['why'] if replaced else '')
-    if not ensure_relay():msg+='; WARNING relay not running and could not start: run tools/chrome_preview_bridge/start-relay.cmd (see preview_bridge_local/relay.log)'
-    return msg
+    return _put(image,auth.get('url',''),{'sleep':bool(session.get('enabled') and session.get('phase')=='work' and session.get('story')==story and session.get('part')==str(part)),'kind':kind},replaced)
 
 WAIT_TH={'mouse or keyboard active':'รอให้หยุดใช้เมาส์/คีย์บอร์ด 15 วินาที','bound chat not unique':'เปิดแชตที่ผูกไว้ใน Chrome ให้มีแท็บเดียว',
          'user active':'รอให้หยุดใช้เมาส์/คีย์บอร์ด','user_draft':'ช่องพิมพ์มีข้อความค้าง','other_attachment':'มีไฟล์อื่นแนบค้างในช่องพิมพ์',

@@ -6,7 +6,8 @@ from PIL import ImageGrab, ImageStat
 from queue_preview import STATE, queue
 from bridge_binding import current
 
-def capture(part):
+def capture(part=None):
+    # part=None: any single iClone window, whatever project is open (Ai-iclone snap)
     user32=ctypes.windll.user32
     try: user32.SetProcessDPIAware()
     except OSError: pass
@@ -18,11 +19,11 @@ def capture(part):
             n=user32.GetWindowTextLengthW(hwnd)
             title=ctypes.create_unicode_buffer(n+1)
             user32.GetWindowTextW(hwnd,title,n+1)
-            if title.value.startswith("iClone 8 - ") and re.search(r"(?<![0-9.])"+re.escape(str(part))+r"\.iProject(?:\s*\*)?$",title.value):
+            if title.value.startswith("iClone 8 - ") and (part is None or re.search(r"(?<![0-9.])"+re.escape(str(part))+r"\.iProject(?:\s*\*)?$",title.value)):
                 candidates.append(hwnd)
         return True
     user32.EnumWindows(visit,0)
-    if len(candidates)!=1: raise RuntimeError("Expected one visible iClone window for active part")
+    if len(candidates)!=1: raise RuntimeError("Expected one visible iClone window"+("" if part is None else " for active part")+" (found %d)"%len(candidates))
     if "window" not in inspect.signature(ImageGrab.grab).parameters:
         raise RuntimeError("Pillow window capture is unavailable")
     im=ImageGrab.grab(window=candidates[0]).convert("RGB")
