@@ -1,1 +1,31 @@
-<!doctype html><html lang="th"><meta charset="utf-8"><style>body{font:14px system-ui;width:340px;padding:12px}button{padding:9px;width:100%;margin:3px 0;cursor:pointer}p{white-space:pre-wrap;margin:6px 0 10px;font-size:12px}h3{font-size:14px;margin:8px 0}hr{border:0;border-top:1px solid #ddd;margin:12px 0}</style><button id="bind">ผูกแชตนี้สำหรับส่งภาพ</button><p id="bindstatus">ผูกเฉพาะแชตและเรื่องที่เลือก</p><button id="attach">แนบภาพกล้องล่าสุด</button><p id="status">แนบเฉพาะภาพ iClone ไม่ส่งข้อความเอง</p><hr><b>ติดตามเป้าหมายทุก 30 วินาที</b><p id="goalstatus">กำลังอ่านสถานะ</p><button id="goalpause">พักติดตาม</button><button id="goalresume">เริ่มติดตามทันที</button><hr><h3>คัดลอกคำสั่งงานสำหรับแชตใหม่</h3><button id="copy-new">1. คัดลอก Prompt เริ่มเรื่องใหม่</button><p>กฎและเครื่องมือ + วางแผนและทำทีละท่อน</p><button id="copy-continue">2. คัดลอก Prompt ทำงานต่อ</button><p>คำสั่งกลางทุกเรื่อง — อ่านสถานะจริงและทำต่อเฉพาะงานที่ยังไม่เสร็จ</p><p id="copystatus" role="status">คัดลอกเท่านั้น ไม่ส่งเข้าแชตอัตโนมัติ</p><hr><h3>Sleep Mode — ทำทุกท่อนอัตโนมัติ</h3><p>เปิดแชตใหม่ → ส่ง Prompt → ตรวจว่าท่อนเสร็จ → ทำท่อนถัดไป จนจบแผน</p><p id="sleep-status">ยังไม่เริ่ม</p><button id="sleep-start" disabled>เริ่มทำทุกท่อนตามแผน</button><button id="sleep-current" disabled>เริ่มจากท่อนปัจจุบันจนจบแผน</button><button id="sleep-pause">พัก Sleep Mode</button><script src="config.local.js"></script><script src="popup.js"></script><script src="sleep_popup.js"></script></html>
+<!doctype html><html lang="th"><meta charset="utf-8"><style>
+:root{--bg:#fff;--fg:#1d1d1f;--mut:#6b6b70;--line:#e3e3e8;--card:#f6f6f8;--ok:#1a7f37;--bad:#c62828;--acc:#2f5bd3}
+@media (prefers-color-scheme:dark){:root{--bg:#1e1e20;--fg:#ececf0;--mut:#a0a0a8;--line:#38383c;--card:#29292c;--ok:#4cc26a;--bad:#ff6b6b;--acc:#7aa2ff}}
+body{font:13px system-ui;width:340px;padding:10px 12px;margin:0;background:var(--bg);color:var(--fg)}
+#top{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-bottom:8px;line-height:1.6;white-space:pre-wrap}
+.ok{color:var(--ok)}.bad{color:var(--bad)}
+h3{font-size:13px;margin:12px 0 4px;color:var(--mut);font-weight:600}
+button{padding:8px;width:100%;margin:3px 0;cursor:pointer;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg);font:inherit;text-align:left}
+button:hover:not(:disabled){border-color:var(--acc)}button:disabled{opacity:.45;cursor:default}
+.row{display:flex;gap:6px}.row button{text-align:center}
+p{white-space:pre-wrap;margin:2px 0 6px;font-size:12px;color:var(--mut)}
+</style>
+<div id="top">กำลังเชื่อมโปรแกรมในเครื่อง...</div>
+<h3>1. เริ่มแชตใหม่ (คัดลอกแล้ววางเอง)</h3>
+<button id="copy-new">คัดลอก Prompt เริ่มเรื่องใหม่</button>
+<button id="copy-continue">คัดลอก Prompt ทำงานต่อ (ทุกเรื่อง ทำต่อเฉพาะที่ยังไม่เสร็จ)</button>
+<p id="copystatus" role="status"></p>
+<h3>2. แชตนี้</h3>
+<button id="bind">ผูกแชตนี้ ให้ภาพจาก iClone ส่งมาที่นี่</button>
+<p id="bindstatus"></p>
+<button id="attach">แนบภาพกล้องล่าสุด (ไม่กดส่งให้)</button>
+<p id="status"></p>
+<h3>3. ติดตามงาน (ส่งข้อความเตือนทุก 30 วินาทีจนถึงเป้า)</h3>
+<p id="goalstatus">กำลังอ่านสถานะ</p>
+<div class="row"><button id="goalresume">เริ่มติดตาม</button><button id="goalpause">พัก</button></div>
+<h3>4. Sleep Mode (ทำทุกท่อนเองจนจบแผน)</h3>
+<p id="sleep-status">กำลังอ่านสถานะ</p>
+<button id="sleep-current" disabled>เริ่มจากท่อนปัจจุบันจนจบแผน</button>
+<button id="sleep-start" disabled>เริ่มทุกท่อนที่ยังไม่ผ่าน</button>
+<button id="sleep-pause" disabled>พัก Sleep Mode</button>
+<script src="config.local.js"></script><script src="popup.js"></script><script src="sleep_popup.js"></script></html>

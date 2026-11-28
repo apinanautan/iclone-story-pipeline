@@ -46,7 +46,9 @@ let sleepRunning=false;
 async function sleepTick(){
  if(sleepRunning||running)return;sleepRunning=true;running=true;
  try{
-  let s=await sleepApi("status");if(!s.enabled||s.ready===false)return;
+  let s=await sleepApi("status");
+  {const l0=await sleepLocal();if(l0.status&&(!s.enabled||/fetch/i.test(l0.status))){delete l0.status;await sleepStore(l0)}}  // old errors never stay on screen
+  if(!s.enabled||s.ready===false)return;
   if(!await idle())return;
   let l=await sleepLocal();
   if(s.phase==="work"){
@@ -96,7 +98,7 @@ async function sleepTick(){
    const res=await sleepPage(tab,s.project,l.marker,msg,true);
    if(["wait","draft waiting","not ready","user draft"].includes(res.state)){l.phase="draft";await sleepStore(l)}
   }
- }catch(e){const l=await sleepLocal();l.status=String(e);await sleepStore(l)}
+ }catch(e){if(/fetch/i.test(String(e)))return;const l=await sleepLocal();l.status=String(e);await sleepStore(l)}
  finally{running=false;sleepRunning=false}
 }
 chrome.alarms.onAlarm.addListener(a=>{if(a.name===SLEEP_ALARM)void sleepTick()});

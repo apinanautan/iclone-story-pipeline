@@ -8,10 +8,17 @@ async function change(j,phase){const r=await req("/stage",{id:j.id,phase});if(!r
 async function note(j,result){await req("/diagnostic",{id:j.id,result})}
 async function receipt(j,state,result){await req("/receipt",{id:j.id,state,result})}
 async function idle(){return await chrome.idle.queryState(IDLE_SECONDS)==="idle"}
-function start(){chrome.alarms.create("iclone-preview",{periodInMinutes:0.5});deliver()}
+function start(){chrome.alarms.create("iclone-preview",{periodInMinutes:0.5});selfUpdate();deliver()}
+// The relay copies newer files into this folder; reload once per new version (no manual reload, no loop).
+async function selfUpdate(){try{
+ const v=(await (await req("/ext/version")).json()).version,own=chrome.runtime.getManifest().version;
+ const cmp=(a,b)=>{a=String(a).split(".").map(Number);b=String(b).split(".").map(Number);for(let i=0;i<Math.max(a.length,b.length);i++){if((a[i]||0)!==(b[i]||0))return (a[i]||0)-(b[i]||0)}return 0},newer=cmp(v,own)>0;
+ const k="icloneReloadedFor";if(!newer||(await chrome.storage.local.get(k))[k]===v)return;
+ await chrome.storage.local.set({[k]:v});chrome.runtime.reload();
+}catch{}}
 chrome.runtime.onInstalled.addListener(start);
 chrome.runtime.onStartup.addListener(start);
-chrome.alarms.onAlarm.addListener(a=>{if(a.name==="iclone-preview")deliver()});
+chrome.alarms.onAlarm.addListener(a=>{if(a.name==="iclone-preview"){selfUpdate();deliver()}});
 chrome.idle.setDetectionInterval(IDLE_SECONDS);
 chrome.idle.onStateChanged.addListener(s=>{if(s==="idle")deliver()});
 chrome.runtime.onMessage.addListener((m,s,reply)=>{if(m?.type==="iclone-idle"){idle().then(ok=>reply({ok})).catch(()=>reply({ok:false}));return true}});

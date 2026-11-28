@@ -122,6 +122,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status);self.send_header('Content-Type',typ);self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_GET(self):
         if not self.authorized():return
+        if self.path=='/ext/version':
+            try:sync_installed()
+            except OSError:pass
+            self.reply(json.dumps({"version":ext_version()}).encode());return
         if self.path=='/goal/status':
             self.reply(json.dumps(goal_control()).encode());return
         if self.path=='/sleep/status':
@@ -148,7 +152,7 @@ class Handler(BaseHTTPRequestHandler):
             try:
                 run=reconcile_orphaned_run(BASE)
             except (OSError,ValueError):run={}
-            self.reply(json.dumps({'job':{k:j.get(k) for k in ('id','url','state','phase','result','kind','sleep')},'bound':binding(),'generating':run.get('step')=='cams' and run.get('state')=='running'},ensure_ascii=False).encode());return
+            self.reply(json.dumps({'job':{k:j.get(k) for k in ('id','url','state','phase','result','kind','sleep')},'bound':binding(),'generating':run.get('step')=='cams' and run.get('state')=='running','now':{k:active_context(BASE).get(k) for k in ('story','part','step','state')}},ensure_ascii=False,default=str).encode());return
         if self.path=='/pending':
             with LOCK:j=read_state()
             self.reply(json.dumps(j if j.get('state')=='pending' or (j.get('state')=='claimed' and j.get('phase') in ('recover','attached','drafted')) else {},ensure_ascii=False).encode());return
@@ -260,6 +264,35 @@ class Handler(BaseHTTPRequestHandler):
                 save_state(j)
             self.reply(b'{"ok":true}')
         except (ValueError,OSError):self.send_error(400)
+EXT_FILES=("manifest.json","background.js","popup.html","popup.js","sleep_popup.js","sleep_mode.js","goal_tracker.js","goal_panel.js","achievement_observer.js","README.txt")
+def ext_version(d=ROOT):
+    try:return json.loads((Path(d)/"manifest.json").read_text(encoding="utf-8")).get("version","")
+    except (OSError,ValueError):return ""
+def chrome_installs():
+    # Chrome loads this extension unpacked from whatever folder the user picked (often a copy in Downloads).
+    out=set()
+    for f in (Path(os.environ.get("LOCALAPPDATA",""))/"Google"/"Chrome"/"User Data").glob("*/*Preferences"):
+        try:d=json.loads(f.read_text(encoding="utf-8"))
+        except (OSError,ValueError):continue
+        for v in d.get("extensions",{}).get("settings",{}).values():
+            p=Path(v.get("path","")) if isinstance(v,dict) and v.get("location")==4 else None
+            if p and p.is_dir() and p.resolve()!=ROOT.resolve() and (p/"manifest.json").is_file():
+                try:
+                    if json.loads((p/"manifest.json").read_text(encoding="utf-8")).get("name")=="iClone Preview to Chat":out.add(p)
+                except (OSError,ValueError):pass
+    return sorted(out)
+def sync_installed(targets=None):
+    # user 2026-11-28: no manual reloading. Copy new files into the loaded folder; the extension reloads itself.
+    done=[]
+    for t in (chrome_installs() if targets is None else targets):
+        for n in EXT_FILES:
+            src,dst=ROOT/n,Path(t)/n
+            if src.is_file() and (not dst.is_file() or dst.read_bytes()!=src.read_bytes()):
+                tmp=dst.with_suffix(dst.suffix+".tmp");tmp.write_bytes(src.read_bytes());tmp.replace(dst);done.append(str(dst))
+        for b in Path(t).glob("*.bak"):b.unlink(missing_ok=True)
+    return done
 if __name__=='__main__':
     STATE.mkdir(exist_ok=True)
+    try:sync_installed()
+    except OSError:pass
     ThreadingHTTPServer(('127.0.0.1',18764),Handler).serve_forever()

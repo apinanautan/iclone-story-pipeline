@@ -5,10 +5,12 @@ async function sleepControl(action,scope="all"){
  if(action==="start"&&!confirmed)return;
  const r=await chrome.runtime.sendMessage({type:"iclone-sleep-control",action,confirmed,scope});
  currentPart=r?.current_part||currentPart;document.querySelector("#sleep-current").disabled=!currentPart||!!r?.enabled||r?.ready===false||!!r?.error;document.querySelector("#sleep-current").textContent=currentPart?"เริ่มจากท่อน "+currentPart+" จนจบแผน":"เริ่มจากท่อนปัจจุบันจนจบแผน";
- document.querySelector("#sleep-start").disabled=!!r?.enabled||r?.ready===false||!!r?.error; document.querySelector("#sleep-pause").disabled=!r?.enabled; ss.textContent=r?.error||(r?.ready===false?("ยังเปิดไม่ได้: "+r.reason):"")||((r?.enabled?"เปิด — ":"ปิด — ")+(r?.phase||"ยังไม่เริ่ม")+(r?.part?" | ท่อน "+r.part:"")+(r?.local?.status?"\n"+r.local.status:""));
+ document.querySelector("#sleep-start").disabled=!!r?.enabled||r?.ready===false||!!r?.error; document.querySelector("#sleep-pause").disabled=!r?.enabled; const PH={work:"กำลังทำท่อน",handoff:"กำลังเปิดแชตใหม่ให้ท่อนถัดไป",done:"จบแผนแล้ว"};
+ // old errors are shown only while Sleep runs, in plain Thai (user 2026-11-28)
+ ss.textContent=r?.error?thai(r.error):r?.ready===false?"ยังเปิดไม่ได้: "+r.reason:r?.enabled?"เปิดอยู่ — "+(PH[r.phase]||r.phase||"")+(r?.part?" ท่อน "+r.part:"")+(r?.local?.status?"\nล่าสุด: "+thai(r.local.status):""):"ปิดอยู่ — กดปุ่มด้านล่างเพื่อเริ่ม";
 }
-document.querySelector("#sleep-start").onclick=()=>sleepControl("start").catch(e=>ss.textContent=String(e));
-document.querySelector("#sleep-current").onclick=()=>sleepControl("start","current").catch(e=>ss.textContent=String(e));
-document.querySelector("#sleep-pause").onclick=()=>sleepControl("pause").catch(e=>ss.textContent=String(e));
-sleepControl("status").catch(e=>{ss.textContent=String(e);document.querySelector("#sleep-start").disabled=true});
+document.querySelector("#sleep-start").onclick=()=>sleepControl("start").catch(e=>ss.textContent=thai(e));
+document.querySelector("#sleep-current").onclick=()=>sleepControl("start","current").catch(e=>ss.textContent=thai(e));
+document.querySelector("#sleep-pause").onclick=()=>sleepControl("pause").catch(e=>ss.textContent=thai(e));
+sleepControl("status").catch(e=>{ss.textContent=thai(e);document.querySelector("#sleep-start").disabled=true});
 setInterval(()=>sleepControl("status").catch(()=>{}),2000);
