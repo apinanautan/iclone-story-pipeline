@@ -132,6 +132,20 @@ def sel():
     return P.load(SEL, {})
 
 
+def program_stop(story, n, nxt):
+    """Why `do` would print STOP for this part step right now (repairs used up / same failure looping), or None.
+    The Goal Tracker asks this so it stops nudging the chat when the program itself has stopped (user 2026-11-28)."""
+    if fails(nxt) and repair_text(nxt, fails(nxt)) is None:
+        return "ข้อ %s ลองทางซ่อมครบแล้ว รอผู้ใช้" % nxt
+    try:
+        import repair_queue as RQ
+        meth = RQ.method_sig(ROOT / "parts" / f"{story}_{n}.json", SCR)
+        why = RQ.stuck(P.PROG, story, n, nxt, meth) if meth else None
+    except Exception:
+        why = None
+    return ("ข้อ %s วนซ้ำ: %s" % (nxt, why)) if why else None
+
+
 def save_sel(d):
     SEL.parent.mkdir(parents=True, exist_ok=True)
     SEL.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -494,6 +508,14 @@ def main(a):
         try: s.reconfigure(encoding="utf-8")
         except Exception: pass
     c = a[0] if a else ""
+    # every command keeps the Chrome plugin current: relay up, on the newest code, copying new plugin files
+    # into the folder Chrome loads; the plugin then reloads itself (user 2026-11-28: no manual plugin updates)
+    try:
+        sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+        import queue_preview
+        queue_preview.ensure_relay(wait=3)
+    except Exception:
+        pass
     # self-update on EVERY start (exe, Ai-iclone.cmd, GPT/MCP): only the exe used to update (user 2026-11-23)
     if c == "update" or (c not in ("", "help", "-h", "--help", "version", "--version") and os.environ.get("AIICLONE_NO_UPDATE") != "1"):
         import selfupdate

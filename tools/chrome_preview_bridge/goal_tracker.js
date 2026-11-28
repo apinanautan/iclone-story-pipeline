@@ -154,10 +154,10 @@ async function goalPage(tab,s,op,marker="",message=""){
   // Never match the user's own prompt, editor, code snippets, or goal panel.
   // Match a complete standalone line only in an actual assistant turn.
   // Different ChatGPT layouts put the role on either the message or its ancestor.
-  const excluded='[data-message-author-role="user"],[data-turn="user"],[data-role="user"],[contenteditable="true"],textarea,input,nav,aside,pre,code,#cc5-goal-floating-panel,[hidden],[aria-hidden="true"]';
+  const excluded='[data-message-author-role="user"],[data-turn="user"],[data-role="user"],[contenteditable="true"],textarea,input,nav,aside,#cc5-goal-floating-panel,[hidden],[aria-hidden="true"]';  // code/pre allowed (2026-11-28): GPT formats the code as `code`
   const roles='[data-message-author-role],[data-turn],[data-role]';
   const assistantSelector='[data-message-author-role="assistant"],[data-turn="assistant"],[data-role="assistant"],[data-testid="assistant-message"]';
-  const normalize=t=>String(t??"").normalize("NFKC").replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,"").replace(/[\u2010-\u2015\u2212]/g,"-").trim();
+  const normalize=t=>String(t??"").normalize("NFKC").replace(/[`*_]/g,"").replace(/[\u200B-\u200F\u202A-\u202E\u2060-\u206F\uFEFF]/g,"").replace(/[\u2010-\u2015\u2212]/g,"-").trim();
   const exact=t=>String(t??"").split(/\r?\n/).some(l=>normalize(l)===normalize(achievement));
   const isAssistant=e=>{
    if(e.closest(excluded))return false;
@@ -302,7 +302,7 @@ async function goalTick(manual=false){
 
   if(s.pending&&!probe.ownDraft){if(probe.draft){s.status="waiting: user draft";return}if(s.pending.attempted){s.pending=null;s.next=manual?Date.now():Date.now()+s.minutes*60000;s.status="ส่งรอบก่อนแล้ว แต่ตรวจใบตอบรับไม่ได้ — ไม่ส่งข้อความเดิมซ้ำ";if(!manual)return}else s.pending=null}
   if(!s.pending&&probe.draft){s.status="waiting: user draft";return}
-  if(!s.pending){const marker="[ติดตามเป้าหมาย CC5-"+crypto.randomUUID().slice(0,8)+"]";s.pending={marker,attempted:false,message:marker+" "+(await nextFollowup())+" เมื่อบรรลุเป้าหมายและตรวจผลจริงครบแล้ว ให้ใช้เครื่องมือควบคุมคอมพิวเตอร์ที่เชื่อมอยู่ค้นหาโฟลเดอร์ iClone Story Pipeline แล้วเรียก py -3 -B tools/chrome_preview_bridge/goal_signal.py "+s.achievement.split(": ")[1]+" ด้วยตัวเอง (ไม่ให้ผู้ใช้รัน). ตรวจผล state=stopped ซึ่งเป็นใบตอบรับจากส่วนขยายจริง ไม่ใช่แค่เขียนไฟล์. หากไม่มีใบตอบรับ ห้ามอ้างว่าหยุดแล้ว ให้ตรวจ Relay/เครื่องมือและแก้เฉพาะจุดที่ติด. จากนั้นตอบบรรทัดสุดท้ายด้วยรหัสนี้: "+s.achievement+" หากยังไม่บรรลุ ห้ามเรียกสคริปต์หยุดหรือพิมพ์รหัสเป็นบรรทัดเดี่ยว"};const current=await goalGet();if(!current?.enabled||current.session!==s.session||current.revision!==s.revision)return;await goalSet(s)}
+  if(!s.pending){const marker="[ติดตามเป้าหมาย CC5-"+crypto.randomUUID().slice(0,8)+"]";s.pending={marker,attempted:false,message:marker+" "+(await nextFollowup())+" เมื่อบรรลุเป้าหมายและตรวจผลจริงครบแล้ว ให้ใช้เครื่องมือควบคุมคอมพิวเตอร์ที่เชื่อมอยู่ค้นหาโฟลเดอร์ iClone Story Pipeline แล้วเรียก py -3 -B tools/chrome_preview_bridge/goal_signal.py "+s.achievement.split(": ")[1]+" ด้วยตัวเอง (ไม่ให้ผู้ใช้รัน) ครั้งเดียว ไม่ต้องรอผลหรือรันซ้ำ ถ้ารันไม่ได้ก็ข้ามไป. ทุกกรณีให้จบคำตอบด้วยรหัสนี้เป็นบรรทัดสุดท้ายเดี่ยวๆ แล้วหยุด (ระบบอ่านรหัสจากแชตเองด้วย): "+s.achievement+" หากยังไม่บรรลุ ห้ามเรียกสคริปต์หยุดหรือพิมพ์รหัสเป็นบรรทัดเดี่ยว"};const current=await goalGet();if(!current?.enabled||current.session!==s.session||current.revision!==s.revision)return;await goalSet(s)}
   if(await relayGoal(s,"/goal/attempt",{session:s.session,marker:s.pending.marker}))return;
   const latest=await goalGet();if(!latest?.enabled||latest.session!==s.session||latest.revision!==s.revision||latest.completedAt)return;
   s.status=probe.ownDraft?"วางข้อความแล้ว — กำลังรอปุ่มส่ง":"กำลังวางข้อความและส่ง";await goalSet(s);

@@ -1,6 +1,6 @@
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-import os,hmac,json,threading,sys
+import os,hmac,json,threading,sys,re
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]/'scripts'))
 import sleep_session as sleep
 from preview_gate import dispatch,Blocked,reconcile_orphaned_run
@@ -14,6 +14,8 @@ STATE=ROOT.parent/'preview_bridge_local'
 KEY=(ROOT/'relay.key').read_text().strip()
 IMAGE=Path(os.environ['LOCALAPPDATA'])/'Tidmunz Studio'/'snapgen_data'/'ic8_jobs'/'part_cams.jpg'
 LOCK=threading.Lock()
+import hashlib
+CODE=hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:16]   # which relay.py this process runs
 def read_state():
     try:return json.loads((STATE/'job.json').read_text(encoding='utf-8'))
     except (OSError,ValueError):return {}
@@ -91,7 +93,10 @@ def goal_gate(url):
     blocked=local_goal_block(url)
     if blocked:return blocked
     auth=binding()
-    if not url or auth.get("url")!=url:return {"stop":False}
+    # An unbound chat in the same ChatGPT project as the bound one works on the same story (user 2026-11-28:
+    # the tracker kept nudging an unbound chat after the work had stopped).
+    proj=lambda u:(re.match(r"https://chatgpt\.com/g/[^/]+/",u or "") or [None])[0]
+    if not url or (auth.get("url")!=url and not (proj(url) and proj(url)==proj(auth.get("url")))):return {"stop":False}
     ss=sleep.state(BASE)
     n=active_context(BASE)
     if auth.get("story")!=n.get("story"):return {"stop":False}
@@ -109,6 +114,9 @@ def goal_gate(url):
         nxt=next((k for k,_ in P.STEPS if ps[k] not in ("done","skip")),None)
         if nxt=="user_ok":return {"stop":True,"reason":"waiting for user approval"}
         if nxt is None:return {"stop":True,"reason":"Preview part complete"}
+        import ai_iclone
+        why=ai_iclone.program_stop(story,part,nxt)
+        if why:return {"stop":True,"reason":why}
         repair=ps[nxt] in ("bad","warn","fail","failed") or (n.get("state")=="failed" and n.get("step")==nxt)
         return {"stop":False,"mode":"repair" if repair else "work","step":nxt}
     except Exception:return {"stop":False,"wait":True,"reason":"Preview status unavailable"}
@@ -125,7 +133,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path=='/ext/version':
             try:sync_installed()
             except OSError:pass
-            self.reply(json.dumps({"version":ext_version()}).encode());return
+            self.reply(json.dumps({"version":ext_version(),"code":CODE}).encode());return
         if self.path=='/goal/status':
             self.reply(json.dumps(goal_control()).encode());return
         if self.path=='/sleep/status':

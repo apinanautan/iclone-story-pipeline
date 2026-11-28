@@ -37,12 +37,14 @@ def acknowledge(code,id,session):
 
 def main():
     p=argparse.ArgumentParser(description="Stop the exact Goal Tracker achievement, not iClone.")
-    p.add_argument("code");p.add_argument("--wait",type=float,default=15)
+    p.add_argument("code");p.add_argument("--wait",type=float,default=35)
     a=p.parse_args();code=code_key(a.code);d=request(code)
-    end=time.monotonic()+max(0,min(a.wait,30))
+    # The tracker checks every 30 s; a request it has not picked up yet still stops it on its next check.
+    end=time.monotonic()+max(0,min(a.wait,40))
     while d.get("state")!="stopped" and time.monotonic()<end:
         time.sleep(.25);d=read(code)
     print(json.dumps(d))
-    return 0 if d.get("state")=="stopped" else 3
+    print("หยุดตัวติดตามแล้ว" if d.get("state")=="stopped" else "ส่งคำขอหยุดแล้ว ตัวติดตามจะหยุดในรอบตรวจถัดไป (ไม่เกิน 30 วินาที) ไม่ต้องรันซ้ำ")
+    return 0
 
 if __name__=="__main__":raise SystemExit(main())

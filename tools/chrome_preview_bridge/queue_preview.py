@@ -6,7 +6,7 @@
 - status_line() is the one-line send state the Preview window shows
 """
 from pathlib import Path
-import sys,json,uuid,os,re,time,subprocess,urllib.request
+import sys,json,uuid,os,re,time,subprocess,urllib.request,urllib.error
 from urllib.parse import urlsplit
 from bridge_binding import current,binding,handoff_pending
 ROOT=Path(__file__).resolve().parent
@@ -21,8 +21,39 @@ def relay_up(timeout=0.5):
         with urllib.request.urlopen(req,timeout=timeout) as r:return r.status==200
     except Exception:return False
 
+def relay_code():
+    """relay.py version the running relay was started with ('' = old relay without it, None = not running)."""
+    try:
+        key=(ROOT/'relay.key').read_text().strip()
+        req=urllib.request.Request(f'http://127.0.0.1:{PORT}/ext/version',headers={'X-Preview-Key':key})
+        with urllib.request.urlopen(req,timeout=0.5) as r:return json.loads(r.read()).get('code','')
+    except urllib.error.HTTPError:return ''
+    except Exception:return None
+
+def restart_if_old():
+    """user 2026-11-28: plugin updates itself. After Ai-iclone update the running relay still has old code:
+    stop it (only when no image is mid-delivery) so ensure_relay starts the new one."""
+    import hashlib
+    run=relay_code()
+    if run is None or run==hashlib.sha256((ROOT/'relay.py').read_bytes()).hexdigest()[:16]:return False
+    if read_job().get('state') in ('claimed',):return False
+    ns=subprocess.run(['netstat','-ano','-p','TCP'],capture_output=True,text=True,timeout=10).stdout
+    pids={l.split()[-1] for l in ns.splitlines() if f'127.0.0.1:{PORT} ' in l and 'LISTENING' in l}
+    killed=False
+    for pid in pids:
+        img=subprocess.run(['tasklist','/FI',f'PID eq {pid}','/FO','CSV','/NH'],capture_output=True,text=True,timeout=10).stdout.lower()
+        if 'python' in img:subprocess.run(['taskkill','/PID',pid,'/F'],capture_output=True,timeout=10);killed=True
+    if not killed:return False
+    for _ in range(10):
+        if not relay_up():return True
+        time.sleep(0.3)
+    return True
+
 def ensure_relay(wait=8):
-    """True when the relay answers. Starts it (hidden, detached, outlives this script) if needed."""
+    """True when the relay answers. Starts it (hidden, detached, outlives this script) if needed;
+    restarts it when it runs an older relay.py."""
+    try:restart_if_old()
+    except Exception:pass
     if relay_up():return True
     exe=Path(sys.executable);w=exe.with_name('pythonw.exe')
     STATE.mkdir(exist_ok=True)
