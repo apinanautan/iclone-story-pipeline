@@ -114,8 +114,10 @@ def goal_gate(url):
         nxt=next((k for k,_ in P.STEPS if ps[k] not in ("done","skip")),None)
         if nxt=="user_ok":return {"stop":True,"reason":"waiting for user approval"}
         if nxt is None:return {"stop":True,"reason":"Preview part complete"}
-        import ai_iclone
-        why=ai_iclone.program_stop(story,part,nxt)
+        try:
+            import ai_iclone
+            why=ai_iclone.program_stop(story,part,nxt)
+        except Exception:why=None  # a broken STOP check must not hide the real next step
         if why:return {"stop":True,"reason":why}
         repair=ps[nxt] in ("bad","warn","fail","failed") or (n.get("state")=="failed" and n.get("step")==nxt)
         return {"stop":False,"mode":"repair" if repair else "work","step":nxt}
@@ -130,9 +132,14 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(status);self.send_header('Content-Type',typ);self.send_header('Cache-Control','no-store');self.send_header('Content-Length',str(len(data)));self.end_headers();self.wfile.write(data)
     def do_GET(self):
         if not self.authorized():return
-        if self.path=='/ext/version':
+        if self.path.split('?')[0]=='/ext/version':
             try:sync_installed()
             except OSError:pass
+            from urllib.parse import urlsplit,parse_qs
+            have=parse_qs(urlsplit(self.path).query).get('have',[''])[0][:20]
+            if have:   # the plugin Chrome really runs says its version; Ai-iclone status reads it
+                try:sleep.write(STATE/'ext_seen.json',{'version':have,'time':__import__('time').time()})
+                except OSError:pass
             self.reply(json.dumps({"version":ext_version(),"code":CODE}).encode());return
         if self.path=='/goal/status':
             self.reply(json.dumps(goal_control()).encode());return

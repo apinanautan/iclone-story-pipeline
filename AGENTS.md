@@ -11,6 +11,7 @@
 7. คำสั่งใหม่ของผู้ใช้ทุกข้อ เขียนต่อท้าย `docs/rules.md` ทันที เซฟ iClone ผ่านเมนู File เท่านั้น ไม่เรนเดอร์ก่อนผู้ใช้อนุมัติ
 
 ตอนนี้ทำอะไรได้แล้ว/ยังไม่ได้: `docs/WHAT_WORKS.md` · ลงเครื่องใหม่: `Ai-iclone.exe setup`
+ปลั๊กอิน Chrome (ส่งภาพ ปุ่มติดตามงาน Sleep) อัปเดตตัวเอง AI ตรวจและดูแลเอง: skill `chrome-plugin`
 Blender ทำอะไรได้ (โมชั่น พร็อพ ฉาก texture): `docs/BLENDER.md`
 
 แก้โปรแกรมเอง (เฉพาะเมื่อผู้ใช้สั่งให้แก้โค้ด): ดู `docs/SCRIPT_CATALOG.md` และ skill `script-catalog`

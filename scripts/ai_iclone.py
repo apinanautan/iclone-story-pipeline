@@ -436,6 +436,8 @@ def manual():
     out(CHAT.replace("{cmd}", CMD)); out(""); out(HARD); out("")
     out("ก่อนข้อที่ใช้ iClone: iClone ต้องเปิดอยู่และโหลด Script > Load Python > scripts/ic8_watch.py แล้ว (ถ้าไม่แน่ใจ ถามผู้ใช้)\n")
     out("=== สถานะตอนนี้ ===")
+    pl = plugin_line()
+    if pl and not pl.startswith("OK"): out(pl)
     r = show_status()
     if r and r[3]:
         kind = (STORY_KIND if r[1] == "story" else PART_KIND)[r[3]]
@@ -471,6 +473,20 @@ def doctor():
     return 1 if bad else 0
 
 
+def plugin_line():
+    """Thai one-liner: is the Chrome plugin Chrome really runs current? (the plugin reports itself every 30 s)"""
+    b = ROOT / "tools" / "chrome_preview_bridge"
+    try: want = json.loads((b / "manifest.json").read_text(encoding="utf-8"))["version"]
+    except (OSError, ValueError, KeyError): return ""
+    seen = P.load(ROOT / "tools" / "preview_bridge_local" / "ext_seen.json", {})
+    have, age = seen.get("version"), time.time() - float(seen.get("time", 0) or 0)
+    if have == want and age < 600: return "OK   ปลั๊กอิน Chrome %s (อัปเดตตัวเอง)" % want
+    if have == want: return "--   ปลั๊กอิน Chrome %s แต่ไม่ได้ติดต่อมา %d นาที (Chrome ปิดอยู่?)" % (want, age // 60)
+    if have: return "..   ปลั๊กอิน Chrome %s -> %s กำลังอัปเดตตัวเอง (ไม่เกิน 1 นาที)" % (have, want)
+    return ("FAIL ปลั๊กอิน Chrome ยังเป็นรุ่นเก่าที่อัปเดตตัวเองไม่ได้: ผู้ใช้กด reload ที่ 'iClone Preview to Chat' ใน "
+            "chrome://extensions ครั้งเดียว (หรือปิดแล้วเปิด Chrome ใหม่) ถ้ายังไม่เคยติดตั้ง: Load unpacked โฟลเดอร์ " + str(b))
+
+
 def setup():
     """user 2026-11-28: a new PC = download Ai-iclone.exe, run `Ai-iclone setup`, nothing else to remember.
     The exe already fetched the newest release before this runs. Checks everything, fixes what it can,
@@ -491,6 +507,9 @@ def setup():
                         "'-NoProfile','-ExecutionPolicy','Bypass','-File','\"%s\"'" % (ROOT / "mcp_server" / "install_openplugin.ps1")])
         if not os.path.isfile(os.path.join(ic, "OpenPlugin", "iCloneStoryBridge", "main.py")):
             left.append("ใน iClone: Script > Load Python > scripts/ic8_watch.py (ทุกครั้งที่เปิด iClone)")
+    pl = plugin_line()
+    if pl.startswith("OK"): out(pl)
+    elif pl: left.append(pl.split(None, 1)[1])
     out("4/4 Blender (ใช้ตรวจโมชั่น ทำพร็อพ)")
     bl = sorted(glob.glob(os.path.join(pf, "Blender Foundation", "Blender*", "blender.exe")))
     if not bl: left.append("ลง Blender จาก blender.org (ไม่บังคับ ใช้แค่ตรวจโมชั่นและทำพร็อพ)")
