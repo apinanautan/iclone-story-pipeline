@@ -277,6 +277,7 @@ def _do(dry=False, force=False):
     r = show_status()
     if not r: return 1
     story, stage, n, nxt = r
+    chat_code_line()
     out("")
     from workflow_state import unsaved_live_part
     pending=unsaved_live_part(ROOT)
@@ -438,6 +439,7 @@ def manual():
     out("=== สถานะตอนนี้ ===")
     pl = plugin_line()
     if pl and not pl.startswith("OK"): out(pl)
+    chat_code_line()
     r = show_status()
     if r and r[3]:
         kind = (STORY_KIND if r[1] == "story" else PART_KIND)[r[3]]
@@ -471,6 +473,17 @@ def doctor():
     out("doctor: %s" % ("all OK" if not bad else "%d problem(s). Fix = Ai-iclone update (newest version finds the tools by itself). "
                          "Do NOT hardcode paths or install other ffmpeg copies." % bad))
     return 1 if bad else 0
+
+
+def chat_code_line():
+    # GPT copies this into its reply; the Chrome plugin then sends Preview images to that chat by itself
+    try:
+        sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+        from bridge_binding import chat_code
+        c = chat_code()
+    except Exception:
+        return
+    if c: out("รหัสแชต (AI พิมพ์บรรทัดนี้ในคำตอบ 1 ครั้ง ภาพจาก iClone จะส่งเข้าแชตนี้เอง): " + c)
 
 
 def plugin_line():

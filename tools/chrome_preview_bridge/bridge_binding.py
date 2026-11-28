@@ -52,14 +52,25 @@ def handoff_options():
     if ids.index(part)+1<len(ids) and complete(base,story,part):default=ids[ids.index(part)+1]
     return {"story":story,"parts":ids,"selected":part,"default":default}
 
-def handoff_create(part=None,story=None):
+def chat_code():
+    """Code GPT writes in its reply so the plugin binds THAT chat (user 2026-11-28: no bind button)."""
+    from sleep_session import state
+    if state(ROOT.parent.parent).get("enabled"):return ""
+    h=handoff_pending()
+    if not h:
+        h=dict(id=uuid.uuid4().hex,state="pending",created=time.time(),mode="generic")
+        STATE.mkdir(exist_ok=True)
+        p=STATE/"handoff.tmp";p.write_text(json.dumps(h,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"handoff.json")
+    return "[iClone Handoff "+h["id"]+"]"
+
+def handoff_create(part=None,story=None,kind="continue"):
     from prompt_handoff import build
     from sleep_session import state
     base=ROOT.parent.parent
     if state(base).get("enabled"):raise ValueError("Sleep is active")
     # No part selector or snapshot: bind to actual active story when the user posts.
     h=dict(id=uuid.uuid4().hex,state="pending",created=time.time(),mode="generic")
-    prompt="[iClone Handoff "+h["id"]+"]\n"+build("continue",base)
+    prompt="[iClone Handoff "+h["id"]+"]\n"+build(kind,base)
     STATE.mkdir(exist_ok=True)
     p=STATE/"handoff.tmp";p.write_text(json.dumps(h,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"handoff.json")
     return {"prompt":prompt}

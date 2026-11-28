@@ -20,6 +20,15 @@ class Handoff(unittest.TestCase):
     def tearDown(self):
         for p in reversed(self.patches):p.stop()
         self.tmp.cleanup()
+    def test_chat_code_reused_then_binds_gpt_chat(self):
+        c=b.chat_code();self.assertRegex(c,r"^\[iClone Handoff [a-f0-9]{32}\]$")
+        self.assertEqual(c,b.chat_code())
+        x=b.handoff_bind(c[16:-1],"https://chatgpt.com/c/gpt")
+        self.assertEqual(x["url"],"https://chatgpt.com/c/gpt")
+        self.assertNotEqual(c,b.chat_code())
+    def test_new_story_prompt_has_marker(self):
+        v=b.handoff_create(kind="new")["prompt"]
+        self.assertRegex(v,r"^\[iClone Handoff [a-f0-9]{32}\]\n")
     def test_generic_prompt_identical_across_targets(self):
         x=h.build("continue",self.base)
         self.put("progress/ai_iclone.json",{"story":"Other","part":"21.3"})

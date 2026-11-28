@@ -10,8 +10,9 @@
    if(!chrome.runtime?.id){dispose();return}
    if(Date.now()-lastHandoff>5000){
     lastHandoff=Date.now();
-    const users=Array.from(document.querySelectorAll('[data-message-author-role="user"],[data-turn="user"],article[data-role="user"]'));
-    const matches=users.map(e=>(e.innerText||"").trim().match(/^\[iClone Handoff ([a-f0-9]{32})\]/)).filter(Boolean);
+    // user pasted the plugin prompt, or GPT wrote the chat code Ai-iclone printed (user 2026-11-28: no bind button)
+    const msgs=Array.from(document.querySelectorAll('[data-message-author-role="user"],[data-message-author-role="assistant"],[data-turn="user"],[data-turn="assistant"],article[data-role="user"]'));
+    const matches=msgs.map(e=>(e.innerText||"").match(/\[iClone Handoff ([a-f0-9]{32})\]/)).filter(Boolean);
     const id=matches.at(-1)?.[1];
     if(id&&id!==boundHandoff)Promise.resolve(chrome.runtime.sendMessage({type:"iclone-handoff-observed",id})).then(r=>{if(r?.ok)boundHandoff=id}).catch(()=>{});
    }

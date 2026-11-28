@@ -144,7 +144,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path=='/goal/status':
             self.reply(json.dumps(goal_control()).encode());return
         if self.path=='/sleep/status':
-            ready,reason=sleep_readiness(); current=active_context(BASE); self.reply(json.dumps(dict(sleep.state(BASE),ready=ready,reason=reason,current_part=current.get("part")),ensure_ascii=False).encode());return
+            ready,reason=sleep_readiness(); current=active_context(BASE); self.reply(json.dumps(dict(sleep.state(BASE),ready=ready,reason=reason,current_part=current.get("part"),current_story=current.get("story")),ensure_ascii=False).encode());return
         if self.path=='/sleep/prompt':
             try:
                 ready,reason=sleep_readiness()
@@ -248,7 +248,7 @@ class Handler(BaseHTTPRequestHandler):
             if self.path in ("/handoff/create","/handoff/bind"):
                 try:
                     with LOCK:
-                        if self.path=="/handoff/create":result=handoff_create()
+                        if self.path=="/handoff/create":result=handoff_create(kind="new" if q.get("kind")=="new" else "continue")
                         else:result=handoff_bind(str(q.get("id","")),str(q.get("url","")))
                     self.reply(json.dumps(result,ensure_ascii=False).encode())
                 except (ValueError,OSError) as e:self.reply(json.dumps({"error":str(e)}).encode(),status=409)
