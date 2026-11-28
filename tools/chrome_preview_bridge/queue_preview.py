@@ -108,10 +108,26 @@ def queue_snap(image):
     """Whatever iClone shows now -> the bound chat. No story/part condition (user 2026-11-28: building a scene
     or testing must not hit story rules). Marked as a snapshot, never story QA evidence."""
     url=binding().get('url','')
-    if not url:return 'skipped: no chat bound yet: write the chat code line Ai-iclone prints into your reply once, then snap again'
     busy,replaced=_free(read_job())
     if busy:return busy
+    if not url:return _hold(image,replaced)
     return _put(image,url,{'kind':'snap','sleep':False},replaced)
+
+def _hold(image,replaced=None):
+    """No chat bound yet (user 2026-11-28: the plugin must send it, no second snap): keep the image as
+    'waiting_chat'. When GPT writes the chat code, handoff_bind() turns it into a pending job for that chat."""
+    from bridge_binding import chat_code
+    code=chat_code()
+    if not code:return 'skipped: Sleep is active; snap waits until Sleep stops'
+    b=Path(image).read_bytes()
+    if not b.startswith(bytes((0xff,0xd8))) or len(b)>8_000_000:raise ValueError('invalid preview')
+    j={'kind':'snap','sleep':False,'id':uuid.uuid4().hex,'url':'','state':'waiting_chat','created':time.time(),'handoff':code[16:-1]}
+    if replaced:j['replaced']=replaced
+    STATE.mkdir(exist_ok=True)
+    tmp=STATE/'preview.tmp';tmp.write_bytes(b);tmp.replace(STATE/'preview.jpg')
+    tmp=STATE/'job.tmp';tmp.write_text(json.dumps(j,ensure_ascii=False),encoding='utf-8');tmp.replace(STATE/'job.json')
+    ensure_relay()
+    return 'waiting: write this line in your reply once, the plugin then sends the image to this chat by itself: '+code
 
 def queue(image,story,part,kind="review"):
     n=current();auth=binding();h=handoff_pending()

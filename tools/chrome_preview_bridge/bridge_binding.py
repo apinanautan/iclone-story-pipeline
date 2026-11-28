@@ -17,13 +17,16 @@ def current():
     return n
 def binding():
     return read(STATE/'authorization.local.json')
-def bind(url):
+def bind(url,need_story=True):
     u=urlsplit(url)
     if u.scheme!='https' or u.netloc!='chatgpt.com' or not re.search(r'/c/[a-zA-Z0-9-]+/?$',u.path):raise ValueError('Invalid conversation URL')
-    n=current()
+    try:n=current()
+    except ValueError:
+        if need_story:raise
+        n={}   # chat code / snap: binding a chat needs no open story (user 2026-11-28)
     j=read(STATE/'job.json')
     if j.get('state') in ('pending','claimed','needs_review') or (n.get('step')=='cams' and n.get('state')=='running'):raise ValueError('Preview is busy; resolve it before rebinding')
-    b={'story':n['story'],'url':u.origin if hasattr(u,'origin') else 'https://chatgpt.com'+u.path.rstrip('/')}
+    b={'story':n.get('story'),'url':u.origin if hasattr(u,'origin') else 'https://chatgpt.com'+u.path.rstrip('/')}
     STATE.mkdir(exist_ok=True)
     p=STATE/'authorization.tmp';p.write_text(json.dumps(b,ensure_ascii=False),encoding='utf-8');p.replace(STATE/'authorization.local.json')
     return b
@@ -78,7 +81,8 @@ def handoff_create(part=None,story=None,kind="continue"):
 def handoff_bind(id,url):
     h=handoff_pending()
     if not h or h["id"]!=id:raise ValueError("Unknown or expired handoff")
-    n=current()
+    free=h.get("mode")=="chat_code"
+    n={} if free else current()
     if h.get("mode") not in ("generic","chat_code") and (n["story"],str(n["part"]))!=(h["story"],h["part"]):raise ValueError("Target not selected yet")
     from sleep_session import state
     if state(ROOT.parent.parent).get("enabled"):raise ValueError("Sleep is active")
@@ -103,9 +107,13 @@ def handoff_bind(id,url):
         if (STATE/'preview.jpg').is_file():shutil.copy2(STATE/'preview.jpg',archive/'preview.jpg')
         j.update(state="superseded",result="New verified handoff; unsent old-chat draft archived, not delivered")
         p=STATE/'job.tmp';p.write_text(json.dumps(j,ensure_ascii=False),encoding="utf-8");p.replace(STATE/'job.json')
-    b=bind(url)
+    b=bind(url,need_story=not free)
     if h.get("mode") not in ("generic","chat_code"):b["part"]=h["part"]
     p=STATE/"authorization.tmp";p.write_text(json.dumps(b,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"authorization.local.json")
     h.update(state="bound",url=b["url"])
     p=STATE/"handoff.tmp";p.write_text(json.dumps(h,ensure_ascii=False),encoding="utf-8");p.replace(STATE/"handoff.json")
+    j=read(STATE/'job.json')
+    if j.get('state')=='waiting_chat' and (STATE/'preview.jpg').is_file():   # held snap -> this chat now
+        j.update(state='pending',url=b['url'],created=time.time())
+        p=STATE/'job.tmp';p.write_text(json.dumps(j,ensure_ascii=False),encoding="utf-8");p.replace(STATE/'job.json')
     return b

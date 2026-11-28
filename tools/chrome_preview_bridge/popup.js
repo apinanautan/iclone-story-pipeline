@@ -12,7 +12,7 @@ async function showTop(){
   el.innerHTML="";const line=(t,c)=>{const s=document.createElement("div");s.textContent=t;if(c)s.className=c;el.append(s)};
   line("✓ เชื่อมโปรแกรมในเครื่องแล้ว","ok");
   line("งานตอนนี้: "+(d.now?.story?d.now.story+" ท่อน "+d.now.part:"ยังไม่ได้เลือกเรื่อง"));
-  line("แชตที่รับภาพ: "+(!d.bound?.url?"ยังไม่ผูก":here?"แชตนี้ ✓ ("+d.bound.story+")":"แชตอื่น ("+d.bound.story+")"),d.bound?.url&&!here?"bad":"");
+  line("แชตที่รับภาพ: "+(!d.bound?.url?"ยังไม่ผูก":here?"แชตนี้ ✓"+(d.bound.story?" ("+d.bound.story+")":""):"แชตอื่น"+(d.bound.story?" ("+d.bound.story+")":"")),d.bound?.url&&!here?"bad":"");
   if(d.job?.state)line("ภาพล่าสุด: "+(STEP[d.job.state]||d.job.state)+(d.generating?" · กำลังทำภาพใหม่":""));
  }catch(e){el.innerHTML="";const s=document.createElement("div");s.className="bad";s.textContent="✗ "+thai(e);el.append(s)}
 }

@@ -62,11 +62,19 @@ class Handoff(unittest.TestCase):
         self.assertEqual(q.queue(img,"Fixture","3"),"queued one preview")
     def test_snap_has_no_story_rules(self):
         img=self.base/"sample.jpg";img.write_bytes(bytes([255,216,255])+b"sample")
-        self.assertIn("no chat bound",q.queue_snap(img))
         b.bind("https://chatgpt.com/c/work")
         self.put("progress/ai_iclone.json",{"story":"Other","part":"9"})   # live story differs from the bound one
         self.assertEqual(q.queue_snap(img),"queued one preview")
         j=b.read(self.state/"job.json");self.assertEqual((j["kind"],j["url"],j["sleep"]),("snap","https://chatgpt.com/c/work",False))
+    def test_snap_unbound_waits_then_goes_to_code_chat(self):
+        # other PC 2026-11-28: GPT wrote the code but never snapped again -> image must still arrive
+        self.put("progress/ai_iclone.json",{});self.put("progress/now.json",{})   # no story open
+        img=self.base/"sample.jpg";img.write_bytes(bytes([255,216,255])+b"sample")
+        r=q.queue_snap(img);self.assertIn("waiting",r)
+        code=__import__("re").search(r"\[iClone Handoff ([a-f0-9]{32})\]",r).group(1)
+        j=b.read(self.state/"job.json");self.assertEqual(j["state"],"waiting_chat")
+        x=b.handoff_bind(code,"https://chatgpt.com/c/gpt");self.assertIsNone(x["story"])
+        j=b.read(self.state/"job.json");self.assertEqual((j["state"],j["url"],j["kind"]),("pending","https://chatgpt.com/c/gpt","snap"))
     def test_new_handoff_archives_stranded_old_draft(self):
         b.bind("https://chatgpt.com/c/old")
         self.put("tools/preview_bridge_local/job.json",{"id":"a"*32,"url":"https://chatgpt.com/c/old","created":1,"state":"claimed","phase":"drafted","diagnostic":"waiting: bound chat not unique"})

@@ -498,7 +498,7 @@ def snap():
         out("STOP: จับภาพ iClone ไม่ได้: %s (เปิด iClone ไว้ 1 หน้าต่าง ไม่ย่อ)" % e); return 2
     chat_code_line()
     r = queue_snap(img); out("snap: " + r)
-    return 0 if r.startswith("queued") else 2
+    return 0 if r.startswith(("queued","waiting")) else 2
 
 
 def plugin_line():
