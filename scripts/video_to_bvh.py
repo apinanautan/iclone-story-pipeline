@@ -103,10 +103,11 @@ def detect(path):
                         backend="onnxruntime", device=dev)
     print("DEVICE", prov, flush=True)
     cap = cv2.VideoCapture(path); fps = cap.get(cv2.CAP_PROP_FPS) or 30
-    frames, k2d = [], []
+    frames, k2d = [], []; tot = int(cap.get(cv2.CAP_PROP_FRAME_COUNT)) or 1; nxt = 0
     while True:
         ok, im = cap.read()
         if not ok: break
+        if len(frames) >= nxt: print("PCT body %d/%d" % (len(frames), tot), flush=True); nxt += max(1, tot // 10)
         frames.append(im); kp, sc = track(im)
         if len(kp):
             i = int(np.argmax([(np.ptp(k[:, 0]) * np.ptp(k[:, 1])) for k in kp]))   # the biggest person

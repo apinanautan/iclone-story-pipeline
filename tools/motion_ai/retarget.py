@@ -52,6 +52,10 @@ Mt0 = {b: rot(wmat(T, b)) for _, b in MAP}
 hip_t0 = wmat(T, "CC_Base_Hip").to_translation()
 hip_s0 = wmat(S, "Hips").to_translation()
 ratio = hip_t0.z / max(hip_s0.z, 1e-4)
+if os.environ.get("HIP_FROM_F0") == "1":   # mocap BVH (CMU): root rest is at the floor, so measure the hip at the first frame
+    if S.animation_data: S.animation_data.action = act
+    sc.frame_set(f0); upd(); hip_s0 = wmat(S, "Hips").to_translation(); ratio = hip_t0.z / max(hip_s0.z, 1e-4)
+    S.animation_data.action = None; upd()
 
 def hand_ik(f):
     """HAND_IK=1 (video_to_bvh motions): a hand near a knee in the clip stays at the same place on the CC knee
@@ -95,6 +99,7 @@ if os.environ.get("REST0", "1") == "1":   # iClone uses frame 0 as the reference
         pb.matrix_basis.identity(); pb.keyframe_insert("location", frame=f0 - 1)
         pb.keyframe_insert("rotation_quaternion" if pb.rotation_mode == "QUATERNION" else "rotation_euler", frame=f0 - 1)
 for f in range(f0, f1 + 1):
+    if (f - f0) % max(1, (f1 - f0) // 10) == 0: print("PCT bake %d/%d" % (f - f0, f1 - f0 + 1), flush=True)
     sc.frame_set(f)
     for pb in T.pose.bones: pb.matrix_basis.identity()
     upd()
@@ -102,7 +107,13 @@ for f in range(f0, f1 + 1):
         q = rot(wmat(S, a)) @ Rs0[a].inverted() @ Mt0[b]
         cur = wmat(T, b)
         loc = cur.to_translation()
-        if a == "Hips": loc = hip_t0 + (wmat(S, "Hips").to_translation() - hip_s0) * ratio
+        if a == "Hips":
+            loc = hip_t0 + (wmat(S, "Hips").to_translation() - hip_s0) * ratio
+            if os.environ.get("HIP_YAW_ONLY") == "1":
+                # iClone (HIK onto another character) drops the spine's counter-rotation: a tilted Hip bone tilts the whole
+                # body back (user 2026-11-23 "ท่ายังเพี้ยน"). Hip keeps only its heading; waist/thighs get the tilt (world-space).
+                fw = (rot(wmat(S, a)) @ Rs0[a].inverted()) @ mathutils.Vector((0, -1, 0)); fw.z = 0
+                if fw.length > 1e-4: q = mathutils.Vector((0, -1, 0)).rotation_difference(fw.normalized()) @ Mt0[b]
         pb = T.pose.bones[b]
         pb.matrix = T.matrix_world.inverted() @ (mathutils.Matrix.Translation(loc) @ q.to_matrix().to_4x4() @
                                                  mathutils.Matrix.Diagonal(cur.to_scale()).to_4x4())

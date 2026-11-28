@@ -29,7 +29,7 @@ new instruction from the user to rules.md immediately. Do one step at a time; do
    - Reuse code from `scripts/ic8_part2_build.py` (face/blink/lips part only; USE_BODY_MOTION stays False). **Do NOT call
      RemoveAllAnimations** (it would wipe the AccuPOSE poses) and **never load .rlDikPreset by script** (crashed iClone).
    - Check: render a still (`RGlobal.RenderImage`) from a camera ~3.5 m from the group; poses must still be seated.
-   - Save (Ctrl+S).
+   - Save by manually clicking iClone File > Save Project.
 2. **Cameras last**, per the shot list in `docs/part2_plan.md`: lenses 80/100 mm only; this interior = blur front and back
    (DOF on) but characters and their poses readable; cut on the listed times with `RScene.AddSwitchCameraKey`.
    Stills first → show the user → fix. Then set the viewport camera to **Switcher**. Save.

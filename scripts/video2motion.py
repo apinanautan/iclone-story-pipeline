@@ -20,7 +20,11 @@ VPY = os.path.join(TOOLS, "Scripts", "python.exe")
 NOWIN = getattr(subprocess, "CREATE_NO_WINDOW", 0)
 
 
-def say(s): print(s, flush=True)
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import ailog   # real % + timing + fail report (user 2026-11-23)
+def say(s): ailog.log(s)
+def fail(s):
+    say("FAIL: " + s); print(ailog.fail_report(s, iclone=False), flush=True); sys.exit(1)
 
 
 MB_URL = "https://github.com/apinanautan/iclone-story-pipeline/releases/download/models-1/motionbert_lite_243.onnx"
@@ -50,7 +54,7 @@ def ensure_venv():
         say("STOP: video2motion needs a one-time setup (~250 MB download into %s).\n"
             "Ask the user once, then run again with --allow-install." % TOOLS); sys.exit(2)
     py = base_python()
-    if not py: sys.exit("FAIL: needs Python 3.10-3.13 on this PC. Tell the user: install Python 3.12 from python.org.")
+    if not py: fail("needs Python 3.10-3.13 on this PC. Tell the user: install Python 3.12 from python.org.")
     say("SETUP venv with %s -> %s" % (py, TOOLS))
     if not os.path.isfile(VPY): subprocess.run([py, "-m", "venv", TOOLS], check=True, timeout=600)
     pip = [VPY, "-m", "pip", "install", "-q", "--disable-pip-version-check"]
@@ -79,13 +83,24 @@ def cc_base():
     return None
 
 
-def run(cmd, env=None, limit=900):
-    r = subprocess.run(cmd, capture_output=True, text=True, errors="replace", env=env, timeout=limit, creationflags=NOWIN)
-    keep = [l for l in (r.stdout + r.stderr).splitlines() if re.match(r"(DEVICE|BVH|CHECK|arm |BONES|BAKED|EXPORTED)", l)
-            or "Error" in l or "Traceback" in l]
-    for l in keep: say("  " + l)
-    if r.returncode: sys.exit("FAIL: %s (exit %d)" % (os.path.basename(cmd[-3] if len(cmd) > 3 else cmd[0]), r.returncode))
-    return r.stdout
+def run(cmd, env=None, limit=900, lo=0, hi=100):
+    """run one stage, show its REAL % live (lines "PCT <what> i/n" from the stage), hard time limit, then the log lines."""
+    import time; t0 = time.time(); keep = []
+    p = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, errors="replace", env=env, creationflags=NOWIN)
+    import threading; timer = threading.Timer(limit, p.kill); timer.start()
+    try:
+        for l in p.stdout:
+            m = re.match(r"PCT (\w+) (\d+)/(\d+)", l)
+            if m: ailog.live("video2motion", lo + (hi - lo) * int(m.group(2)) / max(1, int(m.group(3))),
+                             "%s %s/%s (%.0f s)" % (m.group(1), m.group(2), m.group(3), time.time() - t0)); continue
+            if re.match(r"(DEVICE|BVH|CHECK|arm |BONES|BAKED|EXPORTED)", l) or "Error" in l or "Traceback" in l:
+                keep.append(l.rstrip()); ailog.log("  " + l.rstrip())
+        p.wait()
+    finally: timer.cancel()
+    name = os.path.basename(cmd[-3] if len(cmd) > 3 else cmd[0])
+    if time.time() - t0 >= limit: fail("%s took over %d s: stopped" % (name, limit))
+    if p.returncode: fail("%s (exit %d)" % (name, p.returncode))
+    ailog.live("video2motion", hi, "%s done in %.0f s" % (name, time.time() - t0))
 
 
 def main():
@@ -95,22 +110,22 @@ def main():
     if not os.path.isfile(clip): sys.exit("FAIL: no clip " + clip)
     name = a[1] if len(a) > 1 else os.path.splitext(os.path.basename(clip))[0]
     B, CC = blender(), cc_base()
-    if not B: sys.exit("FAIL: Blender is not installed (needs Blender 4+ from blender.org).")
+    if not B: fail("Blender is not installed (needs Blender 4+ from blender.org).")
     if not CC: sys.exit("FAIL: no CC3_Base_Plus.fbx (+ .fbxkey + .3dxProfile) under Documents\\Reallusion. Tell the user: in Character "
                         "Creator export the CC3_Base_Plus character to FBX once (or set CC_BASE_FBX).")
-    ensure_venv()
+    ailog.start("video2motion"); ensure_venv()
     out = os.path.join(os.path.dirname(clip), name + "_motion"); os.makedirs(out, exist_ok=True)
     bvh, chk, fbx = os.path.join(out, name + ".bvh"), os.path.join(out, name + "_check.mp4"), os.path.join(out, name + "_CC.fbx")
     import tempfile
     blend = os.path.join(tempfile.mkdtemp(), "src.blend")
     say("1/3 body from the clip (RTMPose + MotionBERT) ...")
-    run([VPY, os.path.join(ROOT, "scripts", "video_to_bvh.py"), clip, bvh, chk], env=dict(os.environ, MOTIONBERT_ONNX=MB))
+    run([VPY, os.path.join(ROOT, "scripts", "video_to_bvh.py"), clip, bvh, chk], env=dict(os.environ, MOTIONBERT_ONNX=MB), lo=0, hi=60)
     frames = int(re.search(r"Frames:\s*(\d+)", open(bvh).read()).group(1))
     say("2/3 BVH -> Blender ...")
-    run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "bvh2blend.py"), "--", bvh, blend])
+    run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "bvh2blend.py"), "--", bvh, blend], lo=60, hi=70)
     say("3/3 onto the CC3_Base_Plus skeleton ...")
-    env = dict(os.environ, NOSWING_SPINE="1", HAND_IK="1", LAST=str(frames), CC_BASE_FBX=CC)
-    run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "retarget.py"), "--", blend, fbx], env=env)
+    env = dict(os.environ, NOSWING_SPINE="1", HAND_IK="1", HIP_YAW_ONLY="1", LAST=str(frames), CC_BASE_FBX=CC)
+    run([B, "-b", "--factory-startup", "--python", os.path.join(ROOT, "tools", "motion_ai", "retarget.py"), "--", blend, fbx], env=env, lo=70, hi=100)
     say("OK video2motion: %s\n  iClone: drag %s in (keep its .fbxkey + .3dxProfile next to it), Convert All, save as iMotion.\n"
         "  LOOK at %s first (left = clip + skeleton, right = the motion)." % (out, os.path.basename(fbx), os.path.basename(chk)))
     return 0

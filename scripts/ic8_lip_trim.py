@@ -1,34 +1,58 @@
-# Trim viseme keys to each speaker's window after the FULL N.mp3 was imported via
-# Animation > Create Script > Audio File (GUI; RAudio.LoadAudioToObject makes no visemes).
-import RLPy, os
-import json as _j
-WIN = _j.loads(os.environ.get('LIPWIN', 'null')) or {'p2_old': (1.4, 4.7), 'p2_im': (13.4, 24.6), 'p2_woman': (31.7, 40.5), 'p2_young': (40.8, 50.6)}
-OUT = os.path.join(os.environ['LOCALAPPDATA'], 'Tidmunz Studio', 'snapgen_data', 'ic8_jobs', 'lip_trim.txt')
-out = []
+# Explicit silent NONE keys; preserve existing speech keys.
+import RLPy, os, json
+WIN=json.loads(os.environ['LIPWIN'])
+END=float(WIN.pop('__end__'))
+J=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs')
+T=lambda s:RLPy.RTime.FromValue(int(round(s*6000)))
+def keys(v):
+    kv=v.GetVisemeKeys()
+    return [kv[i] for i in range(len(kv))]
+def sec(k):return k.GetTime().ToFloat()/6000.
+def row(k):return [round(sec(k),5),int(k.GetID()),float(k.GetWeight())]
+out=[];audit={};pending=[]
 for a in RLPy.RScene.GetAvatars():
-    n = a.GetName(); v = a.GetVisemeComponent()
-    kv = v.GetVisemeKeys(); ks = [kv[i] for i in range(len(kv))]; rm = 0
-    if n in WIN:
-        w = WIN[n]   # [s, e] or [[s, e], ...]; [] = mouth closed all part
-        w = [w] if w and not isinstance(w[0], (list, tuple)) else w
-        for k in ks:
-            t = k.GetTime().ToFloat() / 6000.0
-            if not any(s - 0.1 <= t <= e + 0.15 for s, e in w):
-                v.RemoveVisemesKey(k); rm += 1
-        # 2026-11-22 user: the mouth must CLOSE when a line ends. AccuLips' last key is often an open shape
-        # (Pucker / Upper Dental) with nothing after it, so the mouth hung open until the next line.
-        # Add a 'None' (ID 0, closed) key just after the last key of every window.
-        kv = v.GetVisemeKeys(); ks = [kv[i] for i in range(len(kv))]; shut = 0
-        for s, e in w:
-            inw = [k for k in ks if s - 0.1 <= k.GetTime().ToFloat() / 6000.0 <= e + 0.15]
-            if not inw: continue
-            last = max(inw, key=lambda k: k.GetTime().ToFloat())
-            if last.GetID() == 0: continue
-            c = last.Clone(); c.SetID(0); c.SetWeight(1.0)
-            c.SetTime(RLPy.RTime.FromValue(int(round((max(last.GetTime().ToFloat() / 6000.0, e) + 0.12) * 6000))))
-            v.AddVisemeKey(c); shut += 1
-        out.append('%s closed mouth at %d line end(s)' % (n, shut))
-    kv = v.GetVisemeKeys(); left = [kv[i].GetTime().ToFloat() / 6000.0 for i in range(len(kv))]
-    out.append('%s clips %d keys %d removed %d left %d range %s' % (n, v.GetClipCount(), len(ks), rm, len(left),
-               '%.2f-%.2f' % (min(left), max(left)) if left else '-'))
-open(OUT, 'w', encoding='utf-8').write('\n'.join(out))
+    n=a.GetName()
+    if n not in WIN:continue
+    v=a.GetVisemeComponent();old=keys(v);w=[]
+    for s,e in sorted(WIN[n]):
+        if w and s<=w[-1][1]+.001:w[-1][1]=max(w[-1][1],e)
+        else:w.append([s,e])
+    spoken=[row(k) for k in old if any(s<=sec(k)<=e for s,e in w) and k.GetID()!=0]
+    if w and not spoken:raise RuntimeError(n+' no speech keys')
+    pending.append((a,v,old,w,spoken))
+    audit[n]={'before':[row(k) for k in old],'windows':w}
+with open(os.path.join(J,'lip_silence_before.json'),'w',encoding='utf-8') as f:json.dump(audit,f,ensure_ascii=False)
+for a,v,old,w,spoken in pending:
+    n=a.GetName();inside=lambda t:any(s<=t<=e for s,e in w)
+    for k in old:
+        if not inside(sec(k)):v.RemoveVisemesKey(k)
+    gaps=[];last=0.
+    for s,e in w:
+        if s>last:gaps.append((last,s))
+        last=e
+    if END>last:gaps.append((last,END))
+    if w:
+        times=set()
+        for lo,hi in gaps:
+            l=lo+(1/60 if lo else 0);h=hi-(1/60 if hi<END else 0)
+            if l>h:continue
+            times.update([round(l,5),round(h,5)])
+            x=l+1
+            while x<h:times.add(round(x,5));x+=1
+        for t in sorted(times):
+            k=RLPy.RVisemeKey();k.SetID(0);k.SetWeight(100.0);k.SetTime(T(t));v.AddVisemeKey(k)
+    actual=[row(k) for k in keys(v)]
+    after=[r for r in actual if r[1]!=0 and inside(r[0])]
+    if sorted(after)!=sorted(spoken):raise RuntimeError(n+' speech keys changed')
+    if any(r[1]!=0 and not inside(r[0]) for r in actual):raise RuntimeError(n+' non-neutral outside speech')
+    audit[n]['after']=actual
+    fc=a.GetFaceComponent()
+    try:
+        names=[x for g in ('Jaw','MouthBase','MouthMove') for x in fc.GetExpressionNames(g) if any(y in x.lower() for y in ('open','close','drop','press','clench'))]
+        samples=[round((lo+hi)/2,3) for lo,hi in gaps if hi-lo>.5]+[round((lo+hi)/2,3) for lo,hi in w]
+        audit[n]['face_names']=names
+        audit[n]['face_weights']={str(t):list(fc.GetExpressionWeights(T(t),names)) for t in samples}
+    except Exception as e:audit[n]['face_probe_error']=repr(e)
+    out.append('%s speech keys preserved %d; total %d; non-neutral outside speech 0'%(n,len(spoken),len(actual)))
+with open(os.path.join(J,'lip_silence_after.json'),'w',encoding='utf-8') as f:json.dump(audit,f,ensure_ascii=False)
+open(os.path.join(J,'lip_trim.txt'),'w',encoding='utf-8').write(chr(10).join(out))

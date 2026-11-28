@@ -1,5 +1,14 @@
 # User's rules (add every new instruction here immediately)
 
+## 2026-11-26 — render only through Preview; verify the requested output
+- Ai-iclone Preview is the controller for every part. Before rendering, read `Ai-iclone status` and `Ai-iclone rules render`; render only when the current Preview step is `render` and its approval gate is satisfied. Advance with `Ai-iclone do` in order; never launch the renderer independently or skip Preview steps.
+- Follow the live render card. The current card specifies 1920×1080 (1080p), 60 fps. Resolve `{VIDEO}` from the active project's `paths.local.json`; final path is `{VIDEO}\\<story>\\<part>.mp4`.
+- Complete Preview `video_check` and verify exact path, resolution, frame rate, duration, and audio with ffprobe. A mismatch is a failed render; repair through Preview and never move or rename an incorrectly rendered file to disguise it.
+- Incident: `1.1` was rendered outside the Preview gate at 1280×720 and first saved outside `{VIDEO}`; this was incorrect. Treat the existing `1.1.mp4` as noncompliant until Preview's render and video_check steps succeed.
+
+## Current binding rule — iClone project save (2026-11-26)
+Save only by manually clicking iClone `File > Save Project` / `File > Save Project As` in the live app. No script, watcher, CLI, PowerShell helper, Ctrl+S, or Ctrl+Shift+S may trigger saving. Keep the current project open; verify the save without reopening. This overrides every older save instruction below.
+
 คีย์ลัดและข้อจำกัดเรื่องโฟกัสแผง: ดู [คู่มือคีย์ลัด iClone 8](iclone8_keyboard_shortcuts.md) ก่อนใช้ shortcut โดยเฉพาะคีย์ที่ความหมายต่างกันระหว่าง viewport, Timeline และ editor panels
 
 ## Part 7 REDO audit (2026-11-12, latest user instruction)
@@ -125,7 +134,7 @@
 
 - **User approved (2026-11-07): the final part 2 camera style is THE standard** — scripts/ic8_part2_cams.py as template for every part (constant-speed slow zoom, orbit ≤2°, two-camera Switcher cuts, centred chest-up, tight sharp two-shots).
 
-- **iClone freeze (2026-11-07):** importing audio froze iClone 3× while Parsec was connected (Parsec virtual audio). Disconnect Parsec before File > Import of audio. Load the cast ONE avatar per watcher job (ic8_part3_build.py ONLY=...). After Save As, verify the file time on disk — a 'saved' report isn't proof (3.iProject was once an old project). Ctrl+S may show an 'update file version' popup → OK.
+- **iClone freeze (2026-11-07):** importing audio froze iClone 3× while Parsec was connected (Parsec virtual audio). Disconnect Parsec before File > Import of audio. Load the cast ONE avatar per watcher job (ic8_part3_build.py ONLY=...). After Save As, verify the file time on disk — a 'saved' report isn't proof (3.iProject was once an old project). If a version-update popup appears during the manual File-menu save, read it and respond to its exact text.
 
 - **User (2026-11-07):** heads must not be still: every character slowly nods up/down, each with a different period/phase/amount (not in sync). Script: scripts/ic8_head_nod.py (face expression keys Head_Turn_Down/Up, period 4.5–7.5 s, monk calmer). Signature: fc.AddExpressionKeys(RTime, [names], [weights], RTime transition) inside BeginKeyEditing/EndKeyEditing.
 
@@ -151,13 +160,13 @@
 
 - **User (2026-11-07, crowd):** the scene felt too empty: add extra villagers (different looks) kneeling in a back row and beside the group, mostly seen from behind or the side so the crowd looks bigger without many people. Part 6: +4 (กรรมการวัดชาย 60, ลูกศิษย์ชายหนุ่ม 22, ลูกศิษย์หญิง 35, กรรมการวัดชายแก่ 68) via scripts/ic8_part6_extras.py (ONLY=<key> one per job), AccuPOSE Kneel Seiza, scripts/ic8_part6_extras_nod.py. Fixed scripts/ic8_select.ps1 (BOM bug: it never selected anything).
 
-- **User (2026-11-07):** the 4 extra villagers (p3_x1..x4) were also added to parts 3, 4, 5 (and 6). Recipe per part: open the project by script (RFileIO.LoadFile; click OK on the 'physics memory' warning), run ic8_part6_extras.py with ONLY=<key> and L=<part length> one avatar per job, ic8_blend_clips.py if L>40.8, AccuPOSE Kneel Seiza per avatar (wait 10 s after opening the panel, verify heads z 87-89 by script: a missed click can hit other buttons, e.g. an Insert Frame dialog), ic8_part6_extras_nod.py with the same L, re-run the part's cams script, pick Switch, Ctrl+S. Future parts 7-11: add the 4 extras from the start.
+- **User (2026-11-07):** the 4 extra villagers (p3_x1..x4) were also added to parts 3, 4, 5 (and 6). Recipe per part: open the project by script (RFileIO.LoadFile; click OK on the 'physics memory' warning), run ic8_part6_extras.py with ONLY=<key> and L=<part length> one avatar per job, ic8_blend_clips.py if L>40.8, AccuPOSE Kneel Seiza per avatar (wait 10 s after opening the panel, verify heads z 87-89 by script: a missed click can hit other buttons, e.g. an Insert Frame dialog), ic8_part6_extras_nod.py with the same L, re-run the part's cams script, pick Switch, then manually click iClone File > Save Project. Future parts 7-11: add the 4 extras from the start.
 
 - **User (2026-11-07, part 7):** shots must not look empty/spread out: keep people close together and close to the camera, with something behind them (statue, crowd), never an empty yard. When moving avatars after cameras exist, re-run the cams script and check ALL shots (moved people can intrude into other shots). Lesson: LookAt keys turn heads sideways; set weight 0 with AddLookAtKey(T(0),T(1),bone,0.0,0.0) to remove.
 
 - **User (2026-11-07, cut count):** too many camera cuts for a folk tale: reduce a little (not by half). Target about 6-7 shots per 30-35 s of audio (one cut every ~5 s, long holds with slow moves), merge neighbouring shots of the same subject instead of cutting. Applies from part 8 on.
 
-- **iClone freeze on Save As (2026-11-07, part 8):** Save As over an existing 6 GB project froze iClone ~5 min and I killed it; after relaunch: dismiss popups (OK on the connection error, 'No, thank you', OK on the plugin popup, Cancel on 'unsaved project data'), Script > Load Python > CC5 Characters\iclone\ic8_watch.py (OK), open the last part by script, Save As again (worked, ~40 s). A 'Free Disk Space on E: insufficient (6002 MB)' popup appeared on Ctrl+S once while E: really had 47 GB: answer No and retry. Wessuwan camera spots: left of the axis (700,3150,200) shows the whole statue; north/east of it are inside roofs/trees (black frames). Not behind Naga node_0 at (200,-1000). Click the iClone window before Ctrl+S (focus may be on Explorer: key presses are blocked).
+- **iClone freeze on Save As (2026-11-07, part 8; historical):** Save As over a 6 GB project froze iClone ~5 min. Current rule: manual File-menu save only, then reopen and verify. The old Ctrl+S / scripted-dialog workaround is superseded by the user rule dated 2026-11-26.
 
 - **User (2026-11-07, part 8):** Seeka Oi must look happy: gentle smile for the whole part (scripts/ic8_smile.py: Mouth_Corner_Up, Mouth_Corner_Pull, Eye_Cheek_Raise, Brow_Raise_Outer keys over the Look-front clip; expression names via fc.GetExpressionNames(group) with groups Brows/Cheeks/MouthBase/MouthMove/EyeLid). No shot may show a blurred standing character far in the background with an empty yard (shot 28.10-31.55 was redone from the south-east). Check close-ups of faces for mood: Look-front neutral looks grumpy.
 
@@ -253,12 +262,12 @@ The user has repeated every item below many times and is furious about repeating
 3. **Use the REAL story character** (e.g. `สุนีย์.iAvatar` red floral blouse, bun, from `ดวงเมียน้อย ตัวละคร`). The factory scene contains a survey avatar named `Sunee` (short hair, white blouse) — **hide it, never animate it**.
 4. Motion: stretched one-clip slow (speed 0.2–0.5), little movement, **no walking/stepping**, root drift ≤ ~20 cm measured every second; work motions from `โมชั่น\ทำงาน\...\Motions For Construction` (Drill Floor, Chisel Wall, Sawing, Welding 01, Inspect Plans 01 stand in place); never Paint Wall/Plastering/Pick Up & Carry; never the Daily Life folder. Copy motion/avatar files to `{SAVE}\*_local.*` first.
 5. Props = working equipment (mixing bowl, cutting board with flour, rolling pin, tray), not finished sweets, placed near the hands and in camera view. Do not search the disk and do not ask: build them with Tidmunz Studio (user's method, no need to ask): `"%LOCALAPPDATA%\Tidmunz Studio\.venv312\Scripts\python.exe" "Documents\CC5 Characters	ools\prop_3d.py" <name> "<English description>"` (GPT image → Hunyuan 3D, result `CC5 Characters\data\props_3d\<name>\model.glb`; same as the Prop tab in the app; steps in `CC5 Characters\docs\GARMENT_PIPELINE.md` §2), then load the glb into iClone and check size from stills. Blender primitives (`docs/make_props_blender.py`) only as a fallback when Tidmunz is down.
-6. Never render until the user checks. Save with Ctrl+S in the GUI and verify file time/size/title (no `*`).
+6. Never render until the user checks. Save by manually clicking iClone File > Save Project and verify file time/size/title (no `*`).
 7. Speed: no long silent blocking commands (use Monitor + check iClone is alive); report each step in one short Thai line; when something fails switch approach at once (use the user's file from Downloads, another motion, ...). The user said: "if it won't open, load the new one from the drive and key again". User says stop → TaskStop and delete queued jobs immediately.
 8. Every new user instruction → docs/rules.md + this skill + docs/DELIVERY_CHECKLIST.md right away, then commit.
 
 ## Crash/startup lessons (2026-11-11)
-- iClone died (0xc0000005, ucrtbase) twice inside `RFileIO.SaveProject` of the factory scene when the motion came from the Drive-stream path `{MOTION}\..\..\...` and the scene from the Drive copy. What worked: scene file the user downloaded to Downloads + local copies of motion/avatar + GUI Ctrl+S. After a crash: delete the half-written `.iProject` (size far below normal), delete pending `run\*.py` (a stale job makes the watcher print `BLOCKED: existing pending .py jobs` and refuse to start), relaunch.
+- Historical crash note: `RFileIO.SaveProject` crashed twice on a factory scene. Current method (2026-11-26): save only by manually clicking iClone File > Save Project / Save Project As; no shortcut, script or helper. Preserve the last valid project after a crash.
 - Launch popups, read each one's text with UIA (`QMessageBox`) before clicking: connection error → OK; signup → "No, thank you."; "iCloneStoryBridge ... not compatible" → OK (loads the watcher, check `mcp_autostart_status.txt` has a NEW time); "Unsaved project data found" → Cancel. Window is on monitor 1 (24V2W1G5); if the screenshot shows only wallpaper, `switch_display` / Win32 ShowWindow+SetForegroundWindow.
 - File > Import audio puts the clip at the playhead: stop and `SetTime(0)` first (else it starts at the playhead frame; undo with Ctrl+Z).
 - Part 4 (ดวงเมียน้อย): `ท่อน4.wav` = master 155.2–208.6 s (53.4 s). 4.1+4.2 merged = local 0–30.3 s (+5 s tail) at the factory (shot plan in docs/part4_event_plan.md). 4.3 (worry about money, last line "แม่ส่งลูกได้แค่มัธยมต้นนะนารี" spoken by Sunee) needs lip-sync.
@@ -304,7 +313,7 @@ The user has repeated every item below many times and is furious about repeating
 
 - (superseded 2026-11-17) audio cutting: see `scripts/cut_audio.py` rule above.
 - **(2026-11-14, learned) Driving iClone without asking the user:** launch `C:\Program Files\Reallusion\iClone 8\Bin64\iClone.exe` yourself; click startup popups via UIA InvokePattern (connection error OK, signup "No, thank you.", plugin-not-compatible OK → watcher STARTS; check mcp_autostart_status.txt time). See the screen with `PrintWindow` (flag 2) on the iClone hwnd or CopyFromScreen of monitor 2 (iClone is on DISPLAY2); menus via SetCursorPos+mouse_event. File dialog: Ctrl+V types "v" on the Thai keyboard — set the filename with UIA ValuePattern, then Invoke the "เปิด" button. Loading an .iAvatar with an avatar selected replaces it: ClearSelectObjects first. Verify audio with `RGlobal.RenderAudio(start,end,path)` and check the wav is not silent. Never ask the user to open iClone or load ic8_watch.py by hand.
-- **(2026-11-14, user) NEVER save with `RFileIO.SaveProject` from a script.** User reports script-saved projects often fail to open ("Failed to load the file.") and much work was lost; ท่อน2 (บ้านนายสมหวัง + 5 avatars) script-saved twice and both failed to reopen. Save only through the GUI (File > Save Project As… / Ctrl+S), then reopen the file once to prove it loads before reporting it saved. Never Ctrl+S over a scene template on the Drive.
+- **(2026-11-14, historical; superseded 2026-11-26) NEVER save with `RFileIO.SaveProject` from a script. Script-saved projects failed to reopen and work was lost. Current method: click iClone File > Save Project / Save Project As manually; no helper or shortcut; reopen via File > Open.
 - **(2026-11-14, user, Claude Code only) Chat length:** work at most TWO clips (parts) per chat; after the second clip is finished and saved, tell the user to open a NEW chat (saves limit). Supersedes the older "new chat every part" rule. Applies to Claude Code sessions only; keep CURRENT_STORY.md up to date so the next chat can resume.
 - **(2026-11-14, user, found in ท่อน2) RENDER MUST USE THE SWITCHER.** Scripts that call `RScene.SetCurrentCamera(Cam_X)` (stills) leave the viewport on that camera, and RenderVideo then renders ONLY that camera (ท่อน1.mp4 and the first ท่อน2 previews were rendered like this = wrong). Before saving/rendering set the viewport camera dropdown (toolbar, ~x1213,y75 on DISPLAY2) to **Switch** and confirm it reads "Switch"; after the render extract frames at 3-4 times (ffmpeg -ss) and check different cameras appear at the shot cuts.
 - **(2026-11-14, user: "ไม่ตรงบท บทให้นั่งก็ไม่นั่ง ชาวบ้านคนแรกต้องเป็นผู้หญิง") STAGE FROM THE SCRIPT, not from the cast list.** Before building a part, read its lines in the .docx and take from them: who sits/stands/walks, who speaks (and the speaker's sex — check the voice in the audio too), who reacts how (smile, blush, indifferent). If the story's avatar folder has the wrong sex for a speaker, use a matching villager avatar from another story's folder on G: and say which one. Sitting = library motions (MographMotion `SitC01B_L_*` listen, `SitC01A_T_*` talk, chairs = Reallusion `Chair_Wood.iProp`; chair 14 cm behind the hip bone). Read bone positions in a SEPARATE job after SetTime (same-job reads are stale/0).
@@ -353,10 +362,10 @@ The user has repeated every item below many times and is furious about repeating
 - (user 2026-11-15) Bed scenes: the character just needs to sit on the bed; hide pose problems with camera angles (MCU/close-ups, over-the-shoulder). Don't burn time chasing an exact pose or showing the whole bed.
 - (user 2026-11-15, angry) NO SHOT may show the mattress/bed under a seated character if the body sinks. Frame chest-up (long lens) so the frame bottom stays above the mattress, and check start AND end of each moving shot.
 
-- (user 2026-11-15) **Codex = Codex: do NOT use GPT/ChatGPT-side tools.** The ChatGPT tunnel = "MyComp Bot for Windows" (one per PC; the user has 3 PCs, each tunnel has its own name, e.g. Dino) (OpenAI Tunnel over Tailscale) is the user's ChatGPT tool (their Minecraft bot / PC control for GPT), not Codex's; also no ChatGPT connectors, Computer Use, Agent Desktop, subagents. They failed on ท่อน9 and burned ~80% of the limit with no result. Codex (and any AI) drives iClone ONLY with this project's local tools: write a .py into ic8_jobs/run/ (watcher), the generic scripts in scripts/ (ic8_pose_place.py, ic8_cams.py, ic8_render2.py), and scripts/ic8_ui.ps1 / PowerShell (DPI-aware screenshot + click on DISPLAY2) for GUI-only steps (Ctrl+I sound, Switch dropdown, Ctrl+S). If a route fails twice, stop and switch to the watcher; never cycle through other tool families.- (user 2026-11-15) Popups must be closed by SCRIPT, not by screenshot+click: the background guard scripts/ic8_startup_popup_guard.ps1 (logon task) does it. When a new popup type blocks work, add a row to its $RULES (text regex + button) and restart the task; never click it by hand repeatedly.
+- (user 2026-11-15) **Codex = Codex: do NOT use GPT/ChatGPT-side tools.** The ChatGPT tunnel = "MyComp Bot for Windows" (one per PC; the user has 3 PCs, each tunnel has its own name, e.g. Dino) (OpenAI Tunnel over Tailscale) is the user's ChatGPT tool (their Minecraft bot / PC control for GPT), not Codex's; also no ChatGPT connectors, Agent Desktop or subagents; Computer Use is allowed only to click iClone File > Save Project / Save Project As and reopen a saved project. They failed on ท่อน9 and burned ~80% of the limit with no result. Codex (and any AI) drives iClone ONLY with this project's local tools: write a .py into ic8_jobs/run/ (watcher), the generic scripts in scripts/ (ic8_pose_place.py, ic8_cams.py, ic8_render2.py), and scripts/ic8_ui.ps1 / PowerShell (DPI-aware screenshot + click on DISPLAY2) for non-save GUI steps (Ctrl+I sound, Switch dropdown); save only through the manually clicked File menu. If a route fails twice, stop and switch to the watcher; never cycle through other tool families.- (user 2026-11-15) Popups must be closed by SCRIPT, not by screenshot+click: the background guard scripts/ic8_startup_popup_guard.ps1 (logon task) does it. When a new popup type blocks work, add a row to its $RULES (text regex + button) and restart the task; never click it by hand repeatedly.
 - (user 2026-11-15) Finished รักลำเอียง videos go to {DRIVE}\รักลำเอียง (นิทาน 3D)\วีดีโอ\บีม\ (1.mp4…10.mp4; ท่อน8 = 8.mp4 only, not 8.2.mp4). This is the one allowed write into G: (copy only, never edit other G: files).
 - (2026-11-15) iClone 'Python plugin is not compatible' popup = the plugin's main.py lacks `rl_plugin_info = { "ap": "iClone", "ap_version": "8.0" }`. Fix with scripts/fix_ic8_plugin_compat.ps1 [-Plugin <folder>] (UAC). Never delete iCloneStoryBridge: it auto-loads the watcher.
-- (2026-11-15) **Use scripts/ic8_gui.ps1 for every GUI chore** (save/saveas/open/reopen/switch/sound/lip/render/press/shot); do not screenshot+click step by step. It sends keys only after proving iClone is the foreground window, saves only through the GUI (backup to ic8_jobs\backup first, then checks title, disk time/size), and `reopen` waits for iClone's progress window to come and go. Lessons built in: MainWindowHandle points at an open dropdown/popup (read the window rect once); Qt popups and file dialogs are found with EnumWindows (a desktop-wide UIA search takes minutes); ffmpeg -t trims renders whose frame range was ignored.
+- (2026-11-15, historical; superseded 2026-11-26) Use `scripts/ic8_gui.ps1` only for non-save chores (`open/reopen/switch/sound/lip/render/press/shot`). Save only by manually clicking iClone File > Save Project / Save Project As; helper save commands are disabled. `reopen` waits for iClone progress to finish.
 
 ## Part 1 rebuild from scratch (user 2026-11-16)
 - Rebuild รักลำเอียง ท่อน 1 in a new blank iClone project. Do not use the existing ท่อน1.iProject or its rendered MP4 as a starting point, and do not carry over their scene, timeline, camera setup, poses, or motion. Import source characters and source assets afresh, then build and review the scene from zero. The old project/video may be inspected only to identify and avoid prior work; never copy or edit them for this rebuild.
@@ -451,7 +460,7 @@ The user has repeated every item below many times and is furious about repeating
 - **(2026-11-21, user) Switch view before the user checks:** after stills, set the iClone viewport camera dropdown to **Switch** (`ic8_gui.ps1 switch`, verify the toolbar reads Switch) BEFORE asking the user to check. Preview shows this as its own step "เปลี่ยนวิวเป็นกล้อง Switch" before "ผู้ใช้ตรวจ".
 - **(2026-11-21, user) Check motion and light BEFORE the Switch view / asking the user:** (1) motion check: sample every character's root every 0.5 s over the whole part; no walking forward then snapping back (root-motion clips repeated), no jitter; fix by using in-place motions or one stretched clip. (2) light check: faces must not be half white / half black; the added fill comes from the camera side, soft, no hard side light. Preview shows both steps before "เปลี่ยนวิวเป็นกล้อง Switch". Only then ask the user.
 
-- (2026-11-21) Keyboard shortcuts sent to iClone (Ctrl+S save etc.) fail while the Thai input layout is active. ic8_gui.ps1 switches iClone to English (0409) before every key. Save is always the GUI (Ctrl+S in iClone), never a script save.
+- (2026-11-21, historical; superseded 2026-11-26) Keyboard shortcuts sent to iClone may fail in the Thai input layout. Do not use Ctrl+S or scripted keys for project saving; click the File menu manually.
 - (2026-11-21) Face light = one weak SHADOWLESS spotlight per cast member, straight in front of the face, short range (~220), soft wide falloff, warm colour, linked to the head (ic8_cams.py face_lights; docs/lighting_notes.md). Added on top of scene lights, never replacing them.
 - (2026-11-21) Preview shows every step to the checked video. It includes the motion plan (who gets which motion, at what speed) before loading, and live % + current item for cast loading, pose (which motion is loading) and cams (which shot). A new part starts all grey.
 - 2026-11-21: Preview (progress_app.py) must move to the next part by itself - no manual step. A part shows as soon as story.json or parts/<story>_<n>.json has it; when all parts have videos, the next number shows (grey).
@@ -512,7 +521,7 @@ The user has repeated every item below many times and is furious about repeating
 - (2026-11-22, user: camera looked static; "คำนวณจากเวลาต่อกล้อง", middle ground, not fast) Camera move is TIME based: 1.5% of the camera->face distance per second of the shot, total clamped 6-20% (ic8_cams.move_cm). Every shot then moves at the same steady ~4-5 cm/s at 320 cm, instead of a fixed 26 cm that crawled at 1.5 cm/s in long shots. Spec "move" sign = direction; "move_rate" overrides; "move_fixed": true keeps the old fixed cm. Applies from part 5 on (part 4 rendered with the old 26 cm).
 - (2026-11-22, user, ท่อน 5 ชัยชนะฯ) Camera bounce found with a small read-back (no full re-run): iClone camera keys were smooth inside every shot, but the part 4 VIDEO showed a jump on the LAST frame before each cut (frame diff 0.3-3.2 vs 0.05 normal). Cause: ic8_cams keyed the shot end 1 frame before the cut, so the last frame showed the camera already travelling to its next shot. Fix in ic8_cams.py: end key on the first frame at/after the cut. Find causes like this with a small job/ffmpeg frame-diff first, never a full step re-run.
 - (2026-11-22) Spec `think` may hold several moments: [[t0, t1], [t2, t3]] (e.g. hesitate early, agree with a smile later).
-- **(2026-11-22, user angry: "เรื่องง่ายๆ ต้องบอกซ้ำ")** If `open` fails because iClone has unsaved changes in the PREVIOUS project: just save it through the normal GUI save flow (ic8_gui.ps1 save), then run the step again. Do not stop to ask.
+- **(2026-11-22, historical; superseded 2026-11-26)** If `open` fails because iClone has unsaved changes in the previous project, manually click iClone File > Save Project, then run the step again. Never use `ic8_gui.ps1 save`.
 - (2026-11-22) Preview (topmost) covers iClone's top-left menu: ic8_gui.ps1 lip minimises it (PreviewWin) during menu clicks. Any new GUI menu click must do the same.
 - (2026-11-22) pose: stale visibility keys from the previous part are overwritten even when the spec has ONE visible key (part 5 ชัยยศ vanished in 2 shots because part 4 hide keys stayed).
 - **(2026-11-22, user, ท่อน 5 ชัยชนะฯ)** Lip sync: every spoken line must move the mouth, and the mouth must CLOSE when a line ends (no mouth left open after speaking). Read the viseme keys back before showing the user.
@@ -526,10 +535,10 @@ The user has repeated every item below many times and is furious about repeating
 - The Preview window is now the **Ai-iclone** program. AI works ONLY through `Ai-iclone.cmd`: no arguments = manual + status + next; `do` = one step (script steps run by the program, AI steps give a rules card + a file to fill, user steps STOP).
 - The AI reads state as text from the same files as the window; no screenshots of the window.
 - User approvals typed in chat are recorded with `Ai-iclone approve --said "..."`; the working range with `Ai-iclone range m:ss-m:ss`. Never invent either.
-- A step that FAILs twice stops; tell the user in Thai.
+- A step that FAILs twice stops the unchanged method, not the whole authorized task. AI must diagnose and repair independently, then retry once after a verified correction. No repeated user 'try again' message required.
 - Ai-iclone.exe (user 2026-11-22): the program is an exe next to scripts/ (launcher/AiIclone.cs, build launcher/build.ps1). Terminal = text for AI; double-click = the window. Ai-iclone.cmd still works.
 - Ai-iclone.exe self-installs and self-updates (user 2026-11-22): one exe, no unzip; downloads the latest GitHub Release to %LOCALAPPDATA%\Ai-iclone and copies newer releases over it (work data + paths.local.json kept). New version = bump VERSION + GitHub Release vX.Y.Z with Ai-iclone.exe attached.
-- No hidden junk (user 2026-11-22, after deleting 90+ GB): never keep timestamped copies anywhere. Save backup = ONE <name>.backup.iProject next to the project in the save folder (overwritten each save). Raw renders are deleted (not Recycle Bin) once the final mp4 passes. Temp size of ic8_jobs is shown in Ai-iclone status and the window; files older than 2 days are deleted automatically after each part (video_check OK) or with `Ai-iclone clean`.
+- No hidden junk (user 2026-11-22, after deleting 90+ GB): never keep timestamped copies anywhere. Any necessary rollback copy goes in the single scratch directory, never next to the working project; retain at most one per active part, remove after verification. Raw renders are deleted (not Recycle Bin) once the final mp4 passes. Temp size of ic8_jobs is shown in Ai-iclone status and the window; files older than 2 days are deleted automatically after each part (video_check OK) or with `Ai-iclone clean`.
 
 ## Ai-iclone MCP for ChatGPT (user 2026-11-22)
 - `mcp_server/server.py` is a thin wrapper: each tool runs ONE Ai-iclone command (status, steps, rules, do_next_step, use_part, new_story, set_range, approve, clean_temp_files, version). No part-specific tools, no free Python. New features go into Ai-iclone, never as new MCP tools.
@@ -588,3 +597,155 @@ The user has repeated every item below many times and is furious about repeating
 - iClone time: RTime is 6000 per second (`RTime.FromValue(int(s*6000))`, `GetTime().ToFloat()/6000`).
 - iClone freezes on Play/click (user 2026-11-24 "ลองกดเล่นลองกดเลื่อนดู"): it is not the character size. Test in this order: restart iClone → Play on an empty scene → load the character + motion → Play. On 2026-11-24 the same character + library motion froze in the old session (Not Responding, low CPU/GPU, no dialog) and played fine after a restart, so restart first before blaming the motion or character.
 - Blender AI-keyed body motion works (2026-11-24): Blender keys CC_Base bones on the CC3 base FBX (Hip = yaw only, tilt on Waist), exports the armature only, copies .fbxkey/.3dxProfile beside it, then tools/motion_ai/ic_imp2.ps1 imports it onto the selected avatar. Face stays on the normal pipeline.
+- 2026-11-25: ผู้ใช้สั่งให้ทำตามโปรแกรมพรีวิวนิทาน (Ai-iclone) เป็นขั้นตอนหลัก ไม่ข้ามขั้นหรืออนุมัติแทนผู้ใช้
+- 2026-11-26: ทำงานท่อนที่ผู้ใช้สั่งต่อเนื่องเองตาม Ai-iclone do ไม่ให้ผู้ใช้สั่งซ้ำทุกขั้น แก้ปัญหาและตรวจคุณภาพเอง หยุดเฉพาะจุดอนุมัติจริงหรือข้อผิดพลาดที่แก้ไม่ได้ ไม่เริ่มท่อนอื่นก่อนท่อนปัจจุบันเสร็จ
+
+## 2026-11-26 — Preview is the controller; semantic/age QA
+- Run Ai-iclone.exe first, follow its current step/card and Ai-iclone do; no independent step jumping, no fabricated green flags, no changing validators to make a rejected image pass. A failed step gets one corrected retry per verified change; if no safe correction is possible, stop with the exact blocker. Never loop --force or bypass approval.
+- Plan from timed narration and visible action, verify actual wardrobe, hair/color, age, props and venue, not just camera framing or numerical checks. Children must use age-specific motions; a two-year-old must never stand hands-on-hips or perform adult idle gestures. Carrying needs a real matched mother/child pose, hand support, contact and relative motion; inspect multiple frames before marking pass.
+- แม่สื่อหรือมือที่สาม ท่อน1: rejected previous draft. นงลักษณ์ชุดธรรมดาอุ้มลูกชายอายุสองขวบในฉากเปิด; ไม่ใช้ชุดแต่งงาน. ตรวจผม/สีผมของพ่อจากตัวละครจริงก่อนใช้. เล่าตามบทจริง: ครอบครัว หย่า เรียนตัดผม ประกวดรองชนะเลิศ. ห้ามเอาหน้าร้านมาแทนทุกเหตุการณ์หรือให้คนยืนนิ่งประกอบบทโดยไม่มีการกระทำที่ตรงบท. ห้ามอนุมัติภาพหรือเรนเดอร์แทนผู้ใช้.
+
+- 2026-11-26: ผู้ใช้ไม่ผ่านมุมกล้องเปิดท่อน 1 ให้แก้ภาพเปิดก่อน: เห็นนงลักษณ์ชุดธรรมดาอุ้มลูกวัยสองขวบทั้งแม่และลูกในเฟรมเดียว มีพื้นที่เหนือศีรษะ ไม่ตัดแขนที่ประคองลูก ไม่แยกเด็กยืนเท้าเอว ไม่ใช้ฉากหรือมุมที่ไม่ตรงบท. ตรวจภาพจริงก่อนผ่าน.
+
+- 2026-11-26: ท่อน 1 แยกงานตามฉากเป็น 1.1, 1.2, 1.3 รวมเสียงเดิม 65.48 วินาที โดยไม่เปลี่ยนท่อนอื่น เพื่อไม่ใช้สถานที่ผิดบท. ทำภาพเปิดจริงก่อน.
+
+- 2026-11-26: ผู้ใช้ขอทำท่อนที่ 1 ของเรื่องที่เปิดอยู่ ดำเนินต่อจาก 1.1 ตามสถานะใน Ai-iclone
+
+- 2026-11-26: ผู้ใช้ย้ำให้ทำท่อน 1 ตามขั้นตอนของ Ai-iclone Preview เมื่อภาพเผยปัญหาท่าอุ้มให้กลับไปแก้ที่ขั้นวางโมชั่นและใส่ท่าก่อนตรวจกล้องซ้ำ
+
+- 2026-11-26: ผู้ใช้ยืนยันให้ยึดรายการใน Preview ท่อน 1 ถึง 10 เลือกท่อน 1 ตามที่สั่ง และทำผ่านโปรแกรม Preview
+
+- 2026-11-26: ถ้าผู้ใช้บอกให้ทำตาม Preview ให้อ่านชื่อเรื่องและเลขท่อนจากหน้าต่างจริงก่อน เพราะตัวเลือกบนหน้าต่างอาจต่างจาก CLI; งานนี้คือ ชัยชนะของคนไม่ยอมแพ้ ช่วง 14m38 ท่อน 1 จาก 10
+
+- 2026-11-26: ผู้ใช้ให้ Preview แสดงเฉพาะเรื่องที่ใช้งานล่าสุด งานปัจจุบันคือแม่สื่อหรือมือที่สาม ย้ายใบงานเรื่องที่เลิกทำออกจากรายการเรื่องของ Preview
+
+- 2026-11-26: ทำแม่สื่อหรือมือที่สามจากบทล่าสุด ออกแบบการกระทำและกล้องตามเหตุการณ์ของบท ทำงานใน Preview
+
+- 2026-11-26: ผู้ใช้ให้ AI ทำต่อเองครบทุกขั้นจน Preview เปลี่ยนกล้องเป็น Switch สำเร็จ แล้วจึงส่งภาพให้ผู้ใช้ตรวจ
+
+## 2026-11-26 — user rule: save iClone projects only through the visible menu
+- **Never save an iClone project with a Python/RLPy script, watcher job, CLI, PowerShell helper, simulated Ctrl+S, or simulated Ctrl+Shift+S.** This supersedes all older instructions that allowed scripted GUI save commands.
+- Save only by manually using the visible iClone File > Save Project or File > Save Project As menu. Use the live app UI; do not use a shortcut or a script to trigger the save.
+- Remove/disable save automation. `scripts/ic8_save.py` is forbidden and removed. `scripts/ic8_gui.ps1 save/saveas` must refuse without saving. Any step that used to auto-save must stop and direct the operator to the File menu.
+- After the menu save, verify the updated nonempty file and clean title. Render the current open scene without reopening. Preserve the previous valid project until this check passes.
+
+## 2026-11-26 — iClone freeze diagnosis: session memory pressure
+- When clicks or Play hang, record iClone private/working memory, free physical RAM, pagefile use, and timeline movement before blaming a character or motion.
+- In this incident the old iClone session reached 35.5–36.1 GB private memory and 22.5–23.4 GB working set; the PC had 0.17–0.45 GB free RAM and 22.5–23.8 GB pagefile in use. Play stayed active without moving the timeline for about 22–25 seconds; hiding Timeline and disabling cloth did not help, while scrubbing was about 45–49 ms.
+- After preserving the scene with visible File > Save Project As and restarting the stuck process, free RAM rose to 26.64 GB. Play worked in an empty scene. Both the recovery copy and original `ท่อน1.1.iProject` reopened through File > Open; the original played through the part with 18.17 GB free RAM and 9.12 GB private memory. The earlier load failure was session memory pressure; there is no evidence that the project file or motion was corrupt.
+- Freeze triage order: preserve through the visible File menu only, restart iClone, test Play in the empty scene, reopen the same project through File > Open, then test its playback. If it works, keep Preview progress and continue at its current review gate. Rebuild from step 1 only if a clean-session test still fails or the user explicitly requests a fresh production pass.
+
+## 2026-11-26 — Opening scene correction: mother and child
+- The male character added to this story is นงลักษณ์’s coworker, not the child’s father. Show him only in work contexts; do not place him in the opening family scene.
+- Opening shot: mother holds her child, looks at the child’s face and gives a gentle smile; the child looks back and smiles softly. Keep the acting slow and restrained, with only small natural movement.
+- Emphasize the mother’s and child’s expressions. Use a light, simple set if the current set contributes to memory pressure or playback stalls, and use camera depth of field / background blur to keep attention on their faces.
+
+- ท่อน 1.1 ใช้ผนังบ้านสีอุ่นและหน้าต่างเล็ก เบลอฉากหลัง ซ่อนพร็อพเดิม ช็อตแรกเห็นแม่อุ้มลูกและบริบท ช็อตถัดมาเปลี่ยนขนาดภาพให้เห็นสีหน้าใกล้ขึ้นอย่างชัดเจน
+- ตัดช็อตคนเดิมหรือคู่เดิมให้ขนาดตัวแบบในเฟรมเปลี่ยนชัดเจน เทียบภาพนิ่งจริงก่อนผ่าน เปลี่ยนซ้ายขวาอย่างเดียวไม่พอ ถ้าตัดไปคนละคนให้ใช้ขนาดภาพเท่ากันได้
+
+## Texture-only PBR
+
+For texture-only PBR work, keep the mesh and UVs. Generate or extract one Base Color / Normal / Roughness / Metallic / Height set per material, with AO when supported. Keep plaster and ordinary wood nonmetallic. Supply separate maps for iClone and an ORM pack when using glTF. Use the normal convention required by the destination renderer. For an open window, leave the hole open so the scene artist can place their own exterior. Verify under neutral and angled light; identify approximate maps separately from model-derived or scanned maps.
+- 2026-11-26: ทำตาม Preview ทีละขั้น แก้ข้อที่ไม่ผ่าน แล้วทำต่อจนเปลี่ยนเป็นกล้อง Switch สำเร็จ ค่อยหยุดให้ตรวจ
+
+- 2026-11-26 (user): ใช้ GitHub main และ Ai-iclone Preview เป็นหลัก ทำท่อนที่เลือกจากข้อแรกที่ไม่ผ่านถึง Switch โดยไม่ถามต่อทีละขั้น อ่านการ์ดกฎทุกข้อ แก้และทดสอบใหม่เมื่อผิดพลาดตามกฎ ตรวจบท ตัวละคร อายุ การแสดง อารมณ์ ฉาก กล้อง และภาพจริงทุกช็อต (ตัวเลขอย่างเดียวไม่พอ) ตรวจกล้อง โมชั่น แสง สีหน้า Switch; เมื่อ timeout ให้ตรวจและกู้สถานะเดิมก่อน ห้ามเริ่มซ้ำโดยไม่ตรวจ ห้ามแก้หรือลบงานเดิมโดยไม่สำรอง ห้าม render ก่อนอนุมัติ หยุดเมื่อ Switch ผ่านจริงหรือพบข้อผิดพลาดที่แก้ไม่ได้ตามกฎ
+
+- 2026-11-26: ก่อนส่งคำสั่งเข้า iClone ทุกครั้ง ต้องตรวจภาพหน้าจอจริงและหน้าต่างที่เปิดอยู่ก่อน ว่าไม่มีการโหลดฉาก/อัปเดตฉาก/บันทึก/ประมวลผลหรือกล่องข้อความค้าง และตรวจคิวงานเดิม ห้ามส่งคำสั่งซ้อนหรือถือว่า Responding=True เพียงอย่างเดียวคือพร้อม หากจับภาพไม่สำเร็จ ให้กู้การเชื่อมต่อและตรวจใหม่ก่อนส่งคำสั่ง
+
+## 2026-11-26 — iClone hangs on every click/Play: an outside UI Automation client (real cause, measured)
+- User: restarting iClone never fixed it ("รีปิดเปิดเป็น100รอบแล้ว"). Do not answer a hang with "restart iClone".
+- Measured on ท่อน1.2: iClone Not Responding 24/25 s with free RAM 17 GB, GPU 2%, no disk/paging, no watcher job, no dialog. A Frida stack sample of the main thread showed it inside UIAutomationCore (UiaRaiseAutomationEvent / UiaClientsAreListening / UiaReturnRawElementProvider) walking Qt Quick items: iClone was serving another program's accessibility (UI Automation) listener for every UI change.
+- Stopping ic8_startup_popup_guard.ps1 did NOT help (still 20/20 hung). Killing Codex's computer-use helpers (`codex-computer-use.exe` and `codex-computer-use-swift.exe`, children of the Codex ChatGPT.exe) fixed it at once: 0/30 then 0/30 hung, without restarting iClone. Restarting iClone cannot help because the listener lives in the Codex app, not in iClone.
+- When iClone hangs: check `Get-Process codex-computer-use*` first and stop those helpers (Codex starts a fresh one when it needs it), then measure Responding for 30 s. Avoid Codex/ChatGPT "computer use" / "work with apps" on iClone while it is open.
+- 2026-11-26: ผู้ใช้จัดฉากท่อน 1.2 เองและยืนยันทุกขั้นพร้อมเรนเดอร์ อนุมัติให้เรนเดอร์ท่อนนี้โดยไม่แก้กล้องหรือโมชั่นที่ผู้ใช้จัด ตรวจสถานะจริงและบันทึกการอนุมัติตามระบบก่อนเรนเดอร์
+- 2026-11-26: ผู้ใช้สั่งทำท่อนที่สาม (1.3) ต่อหลังเรนเดอร์ท่อน 1.2 สำเร็จ; ท่อนใหม่ทำตาม Preview ปกติ ไม่ใช้การอนุมัติของท่อนก่อน
+
+- 2026-11-26: ท่อน 1.3 เปิดฉากที่เลือก วางตัวละครและใส่เสียงให้ครบ แล้วหยุดให้ผู้ใช้ฟังและตรวจเองก่อนทำกล้องหรือเรนเดอร์
+
+- 2026-11-26: ผู้ใช้ให้ย้าย iClone ไปทำงานในจอที่สอง
+
+- 2026-11-26: ไม่บังคับ foreground สำหรับงาน Python watcher; ยังต้องตรวจหน้าจอ โหลด modal และคิวเดิม; คำสั่งเมาส์/คีย์บอร์ดยังคงตรวจ foreground
+
+- 2026-11-26: ยึดสถานะ Preview สดเป็นแหล่งอ้างอิงเดียวในการเลือกขั้นงาน อ่าน Ai-iclone ก่อนลงมือ เรียก do ทีละข้อ รอผลจริงก่อนข้อถัดไป ห้ามอาศัยความจำเลือกสคริปต์ย่อยเอง เว้นแต่การ์ดกฎของข้อปัจจุบันระบุให้ใช้; ท่อน 1.3 หยุดหลัง sound เพื่อให้ผู้ใช้ฟังเอง
+
+- 2026-11-26: Preview dispatch guard installed on local PC: single flight, per-step permit for ic8_part and GUI helper; camera repair via repair-cams; no direct calls. Raw watcher and generic tunnel not OS-sandboxed; no reload during active user review.
+
+- 2026-11-27: เก็บข้อเสนอเปลี่ยนลำดับ Preview ไว้ก่อน ยังไม่แก้: ผู้ใช้ต้องการฟังเสียงก่อนร่วมคิดโมชั่น. งานปัจจุบันแก้เฉพาะท่อน 1.3 ให้นงรักษ์ยืนถือถ้วยรองชนะเลิศ มองถ้วยและยิ้มธรรมชาติ ย้ายจุดยืน ทดลองโมเดล 3D เดิมสร้างถ้วยสวยๆ ก่อน.
+2026-11-27: ท่อน 1.3 ผู้ใช้ให้เปลี่ยนเป็นเวทีประกวด มีป้ายประกวดการแข่งขัน นงรักษ์ยืนถือถ้วย มองถ้วยและยิ้ม ให้เห็นเวทีเพียงเล็กน้อย ไม่เปลี่ยนลำดับ Preview ตอนนี้
+
+- 2026-11-27: ท่อน 1.3 ยกเลิกการส่งตัวละครไป Blender เนื่องจากข้อจำกัดไลเซนส์ กลับไปทำใน iClone ตาม Preview เดิม ใช้เวทีใหม่และถ้วยรองชนะเลิศสีเงินโลหะขัดเงา นงรักษ์ถือถ้วยอย่างธรรมชาติ
+
+- 2026-11-27 ท่อน 1.3 ผู้ใช้ปิด AI อีกตัวแล้ว อนุญาตให้ทำต่อใน iClone: ใช้เวที PBR รุ่นใหม่และถ้วยเงิน ตรวจภาพก่อนเรนเดอร์ ไม่เขียนทับงานเดิมโดยไม่สำรอง
+
+- 2026-11-27 ผู้ใช้อณุญาตให้ใช้คีย์บอร์ดตามปกติสำหรับงานท่อน 1.3 ไม่ต้องแก้ระบบควบคุมเพิ่ม
+
+- ท่อน 1.3 นงรักษ์ ยิ้มพอดี ภูมิใจในตัวเอง ไม่แสดงเกินจริง
+
+- ท่อน 1.3 ให้ยกมือและถ้วยขึ้นระดับอก ไม่แค่เลื่อนถ้วยลอย ตรวจภาพจริง
+
+- Native Python jobs: no foreground/window bounds/screen OCR blocking. Keep process response, single-flight, active watcher, and Qt modal/progress checks. Only real keyboard/mouse GUI chores require foreground protection.
+
+- Goal Tracker: ใช้บริบทล่าสุดของแชตเป็นเป้าหมาย ไม่ล็อกชื่อเรื่อง ท่อน หรือช็อต ให้ลงมือทำต่อจริง ตรวจผล และใช้ Achievement Key เฉพาะเมื่อบรรลุเป้าหมาย โดยรักษาจุดรออนุมัติของผู้ใช้.
+
+- 2026-11-27 (user): เรื่องแม่สื่อหรือมือที่สาม ท่อน 1 แบ่งแล้วเป็น 1.1, 1.2, 1.3 เท่านั้น โฟลเดอร์ Save เก็บเฉพาะ ท่อน1.1.iProject, ท่อน1.2.iProject, ท่อน1.3.iProject ห้ามสร้าง ท่อน1.iProject ซ้ำ ห้ามวาง backup/recovery/test/SaveTemp ที่หมดการใช้งานในโฟลเดอร์งาน ทุกเรื่องให้ใช้ชื่อไฟล์หลักเดียวต่อท่อน สำรองชั่วคราวเฉพาะเมื่อจำเป็นในโฟลเดอร์ scratch เดียว ล้างหลังตรวจผ่าน ไม่แตะ avatar_cache, scene_cache, props หรือไฟล์ต้นฉบับ
+
+## AccuPOSE-first — mandatory for static contact/holding (2026-11-27)
+Before choosing any body motion, consult docs/accupose_presets.md (420 poses) and docs/motion_catalog.md. For static holding, handing, seated or supported/contact poses, choose a suitable existing AccuPOSE preset first (e.g. Basic Stand for upright trophy holding), then adapt wrists, elbows and fingers. Do not layer an incompatible idle clip on top of the pose. Preserve the base pose; use subtle head motion and blink. Inspect actual contact through the shot. Gesture .iHand library: resolve the installed Reallusion Templates/Animation/Gesture folder on this PC; inspect suitable hand presets, not just filenames. For complex existing motion, inspect DataLink connection and linked avatar identity; send the current pose/motion to Blender, adjust the existing animation and send back only the intended actor/range. DataLink roundtrip is not yet verified in this story. Never invoke RFileIO.LoadFile on .rlDikPreset (known crash); use the AccuPOSE panel. Do not render before approval. If a relevant reference already exists, read and reuse it before writing a new helper. Do not treat this rule as evidence a pose was applied.
+
+## Attach after pose — mandatory (2026-11-27)
+For a prop intended to remain on a body part, fit the pose and prop contact first; use Attach (permanent parent to the correct sub-node, e.g. hand for held trophy, head for glasses/hair). Preserve world placement, scale and orientation at attach time; inspect parent and parent node, check relative transform at start/middle/end and actual contact. Do not use repeated world-position tracking as a substitute for Attach when the prop must stay on the body. Native Link is also acceptable for ordinary held props, including continuous holding; use time keys for handoff/release. For hair, parenting a prop to head does not convert it into a skinned hair asset; distinguish the two. Save the same main file via the authorized visible File > Save Project workflow at the approval gate; no duplicate files or render before approval. If the attachment API or GUI is not verified, stop and report the actual blocker rather than marking success.
+- 2026-11-27: Once grip or head alignment is visually correct, Attach or Link the intended prop to the exact hand/head bone (not just avatar root); verify actual parent and stable local offset over time, then save only at authorized menu-save gate. Do not use repeated world keys as a substitute for verified Attach or Link. A hair prop attached to head follows head but is not automatically converted to native skinned hair.
+- 2026-11-27 (user clarification): Ordinary handheld props may use native Link instead of Attach; no need to convert to Accessory. Prefer exact hand sub-node and preserve world alignment. Attach for permanent accessories only when useful. Verify link target at start/middle/end and actual grip before save; use the visible existing Modify controls for small position fixes rather than rerunning Pose. No render before approval.
+- Before Attach/Link a held prop, clear the avatar Look At target pointing to that same prop using Modify > Look at > Set Free; zero weights alone leave a dependency cycle. Verified in iClone 8.71: Pick Parent on avatar, Link ... > search exact CC_Base_R_Hand > Align None > OK. Verify actual sub-node and relative offset across the clip. Do not rerun pose for small prop changes.
+
+- 2026-11-27: หลัง 1.3 ผ่าน Video Check ให้ยึดแผนท่อนที่มีอยู่แล้ว ห้ามแบ่งท่อนย่อยหรือเปลี่ยนแผนเดิมเองโดยผู้ใช้ไม่ได้สั่ง ตรวจ WAV/บทก่อนทำ เก็บไฟล์ต้นฉบับและงานเก่า ใช้จอที่สองเมื่อทำได้; หยุดที่ Switch/พรีวิวเพื่อรอผู้ใช้อนุมัติก่อนเรนเดอร์.
+
+- 2026-11-27 (user): เกณฑ์ Video Check ด้านความยาว: วิดีโอต้องครอบคลุมเสียงต้นฉบับทั้งหมด ห้ามสั้นกว่าเสียงที่กำหนด เพราะภาพ/Motion จะขาดช่วง; วิดีโอยาวกว่าเสียงได้ ผู้ตัดต่อตัดส่วนท้ายเอง ไม่ต้องตัดภาพทิ้งหรือเรนเดอร์ใหม่เพียงเพราะยาวเกิน. ตรวจเสียงและจังหวะภาพแยกจากความยาว.
+- 2026-11-27: Both New Story and Continue Part prompts must contain the same detailed reusable project/tool handbook, live Script Catalog, plugin instructions and Skills. Continue adds active story and current progress only. Never rely on chat memory for tool availability. Use installed plugin, Preview and existing scripts before writing new ones. Goal tracker interval 90 seconds; preserve preview priority, busy/draft guards and completion stop.
+
+# Chrome Preview Bridge / Goal Tracker — ใช้ทุกแชตและทุกท่อน
+
+- Chrome Extension iClone Preview to Chat คือเครื่องมือทำงานจริง ไม่ใช่แค่ปุ่มคัดลอก Prompt. เปิด Chrome ที่แชต CC5 เป้าหมายและกด “ผูกแชตนี้สำหรับส่งภาพ” หลังตรวจชื่อเรื่องปัจจุบัน; ต้องผูกใหม่เมื่อย้ายแชตหรือเปลี่ยนเรื่อง. ไม่ส่งภาพไปแชตเดิมโดยเดา URL. Relay: tools/chrome_preview_bridge/start-relay.cmd (ถ้าทำงานอยู่แล้วไม่เปิดซ้ำ).
+- ใช้ Dino Bot Tunnel shell จาก project root. ตรวจ progress/now.json และหน้าต่าง iClone ให้ตรงท่อนก่อนจับภาพ. คำสั่งจับภาพหน้าต่างจริงโดยไม่เรนเดอร์: py -3 -B tools/chrome_preview_bridge/capture_preview.py. เพิ่ม --send เพื่อส่งภาพหน้าต่างเข้าแชตที่ผูกไว้สำหรับตรวจงาน/หน้าต่าง Modify/ข้อผิดพลาด: py -3 -B tools/chrome_preview_bridge/capture_preview.py --send. ไม่ต้องจับภาพเดสก์ท็อปทั้งหมด ไม่ต้องให้ผู้ใช้กดส่งเอง. ถ้า iClone ยังไม่เปิดท่อนตรงกัน ให้แก้ที่สาเหตุ ไม่ส่งภาพเก่า.
+- ภาพตรวจกล้อง: ใช้ Ai-iclone.exe do ตาม rules card ขั้น cams; ic8_part.py สร้าง part_cams.jpg และเรียก queue_preview.py อัตโนมัติ. ไม่สร้างระบบซ้ำ ไม่เรนเดอร์วิดีโอเพื่อแคป. หากต้องจัดคิวภาพ JPEG ที่ตรวจว่าใหม่และตรงงานแล้ว: py -3 -B tools/chrome_preview_bridge/queue_preview.py "<path.jpg>" "<story>" "<part>". ตรวจว่าเป็น JPEG และชื่อเรื่อง/ท่อนตรงสถานะสด. ปุ่ม “แนบภาพกล้องล่าสุด” ใช้แนบ contact sheet ด้วยมือ ไม่กดส่งเอง.
+- อ่าน tools/preview_bridge_local/job.json เฉพาะสถานะ id/state/phase/result; pending = รอ, claimed = กำลังส่ง, sent = พบใบตอบรับ, needs_review = ต้องตรวจข้อความจริงก่อนตัดสินใจ ห้ามส่งซ้ำหรือปลอมใบตอบรับ. หลังเห็นภาพในแชต ให้ตรวจองค์ประกอบจริงและแก้เฉพาะส่วนที่ผิดตาม flow; ห้ามอนุมัติแทนผู้ใช้.
+- Goal Tracker: ปุ่มเริ่มติดตามทันที/พักติดตาม ใน popup หรือกล่องลอย. ใช้บริบทแชตปัจจุบันทุก 90 วินาที. รอ GPT ตอบจบ ไม่ทับ draft หรือรูปแนบของผู้ใช้; ภาพพรีวิวมีสิทธิ์ก่อนข้อความติดตาม. เมื่องานถึงเป้าหมายจริงหรือ gate ที่ผู้ใช้กำหนด ให้ตอบรหัส ACHIEVEMENT ที่ระบบส่งมาเป็นบรรทัดสุดท้ายเดี่ยว ๆ เท่านั้น; ไม่เดารหัส ไม่ใช้รหัสจากแชตเก่า ไม่พิมพ์ถ้ายังไม่ผ่าน. ถ้าระบบไม่หยุดให้พักก่อนและตรวจข้อผิดพลาด.
+- ใช้ได้ทั้งแชตเริ่มเรื่องใหม่และแชตทำท่อนต่อไป. หากไม่พบปุ่ม/Relay/การผูกแชต ให้ตรวจการติดตั้งและสถานะจริงก่อนสรุปว่าเครื่องมือไม่พร้อม. เก็บคีย์และ URL ผูกแชตไว้ในเครื่อง ไม่คัดลอกลง Prompt/GitHub.
+
+อ่าน docs/CHROME_PREVIEW_GUIDE.md ฉบับสดก่อนใช้ส่วนขยาย
+- 2026-11-27: Cast → Sound → Pose → Lip → Cams. ใส่ Project Sound ครั้งเดียวหลังวางตัวละคร ตรวจชื่อคลิปและช่วงเวลา Timeline ที่เฟรม 0. การแก้ Pose/Motion/สีหน้า/กล้องหรือเพิ่มตัวละครในฉากเดิมไม่ต้องนำเสียงเข้าซ้ำ. ใส่ใหม่เมื่อเปิดโปรเจกต์ใหม่ เปลี่ยนไฟล์เสียง หรือยืนยันว่าเสียงผิด/หาย. Lip Sync หลัง Pose เฉพาะผู้พูด ไม่ใช่ใส่ Project Sound ซ้ำ. ไม่ข้ามจุดอนุมัติ.
+
+- 2026-11-27 (user): ห้ามถ่ายแต่ใบหน้าซ้ำๆ ในเสียงบรรยาย ต้องออกแบบภาพตามเหตุการณ์: establishing, medium/action, two-shot, insert ของสำคัญ, reaction เมื่อจำเป็น; เห็นมือ สิ่งของ สถานที่ และความสัมพันธ์เมื่อบทกล่าวถึง ไม่ใช้ข้อจำกัด 80/100mm เป็นข้ออ้างตัดกิจกรรมออกจากเฟรม. เลนส์ 28–100mm ตามหน้าที่ช็อต ห้ามภาพกว้างไร้ความหมาย. ตรวจว่าภาพสื่อบทจริงก่อนส่ง.
+
+## 2026-11-27 — Mandatory shot-size rhythm (user)
+- Plan the entire shot sequence by visible framing and narrative function, not lens or left/right angle alone. For each shot record subject, size (contextual chest-up / MCU / CU / OTS / insert / establishing), purpose, and the visible difference from adjacent shots. 80/100 mm is a lens constraint, NOT a shot-size category. Change distance and target to vary the actual composition while keeping established framing constraints.
+- FAIL a sequence dominated by same-scale face-only shots (including 80 mm left, 80 mm right, other faces at the same size). Small angle shifts, switching Camera_A/B, or changing 80 to 100 without a visible size change do not count as diversity. Same-subject cuts require visibly different scale AND meaningful angle; matching reverse shots of different speakers are allowed for a motivated dialogue pair, not as the entire sequence.
+- Use a wider contextual chest-up/OTS composition to establish relationship or action, MCU for normal storytelling, CU for emotional emphasis, and a relevant insert/reaction when the script and existing framing rules permit. Do not force a wide/full-body shot, insert, or arbitrary cut. Preserve screen direction, speaker coverage, continuity and slow motion. A close-up is a storytelling accent, not the default for every shot.
+- At cam_check inspect the full actual contact sheet as a sequence, not isolated thumbnails. Label each shot's actual framing and compare the visible head/body size, composition and purpose. If the sequence reads as repeated faces with minor left/right changes, mark the affected differs=false and describe the framing repair; do not pass until revised fresh images visibly solve it. Compare previous part's last shot and current first shot. In future Sleep Mode, repeat this review independently as director/editor before render; score cannot override a repetitive sequence. This is a visual QA rule, not a demand to alternate focal lengths.
+
+- 2026-11-27 (user): Motion ที่มือใกล้หัว/ร่างกายคนอื่น ห้ามอนุมัติจากภาพกลางช็อตหรือระยะระหว่างกระดูกเพียงอย่างเดียว ตรวจภาพทุกช่วงการเคลื่อนและรอยต่อคลิป เพิ่มความถี่ในช่วงเสี่ยง ตรวจทั้งมือ นิ้ว ศีรษะ ผม และพร็อพจริงหลายมุม; ถ้าชน/ทะลุหรือท่าไม่ธรรมชาติให้ FAIL และซ่อม Pose ก่อนกล้อง หากไม่ต้องสัมผัสจริง ให้ใช้ท่าจากคลังที่สื่อกิจกรรมและเว้นระยะ ไม่ฝืน IK.
+
+
+## Current save/render rule (2026-11-27)
+Switch -> frame zero -> native File > Save Project -> Render the current open scene. Do not reopen merely to test saving. If save cannot be verified and the user authorizes live rendering, use Ai-iclone do --render-live at Ready, then Ai-iclone do to Render. The save remains pending; verify video separately. Preserve the live scene and do not advance to another part until saved. Never use scripted project save or mark a failed save complete. This supersedes earlier mandatory reopen instructions.
+
+
+## 2026-11-27 — AI execution ownership
+ข้อความติดตามนี้เป็นคำสั่งให้ AI ลงมือทำงานต่อเองตามสิทธิ์และขอบเขตที่ผู้ใช้ให้ไว้ ไม่ใช่คำสั่งให้ผู้ใช้ลงมือแทน ห้ามโยนคำสั่ง CLI/PowerShell/Python การพิมพ์ข้อความ การกดปุ่ม หรือขั้นตอนแก้ไขกลับไปให้ผู้ใช้ทำ หากมีเครื่องมือที่ทำได้ ให้เรียกใช้เอง ตรวจผลจริง แล้วทำขั้นถัดไปทันที ไม่ต้องขอให้ผู้ใช้พิมพ์ ลองใหม่ หรืออนุญาตซ้ำสำหรับการแก้ไขและลองใหม่ที่อยู่ในขอบเขตเดิม เมื่อเจอข้อผิดพลาดให้แก้ต้นเหตุหรือเลือกวิธีที่ได้รับอนุญาตแตกต่างจากเดิมก่อนลองใหม่ ไม่วนคำสั่งเดิมที่ไม่เกิดผล ขอผู้ใช้เฉพาะการอนุมัติที่จำเป็นจริง การให้สิทธิ์ที่เครื่องมือกำหนด หรือข้อมูลที่หาเองไม่ได้; หากทำไม่ได้จริงให้แจ้งข้อจำกัดที่พิสูจน์แล้ว ไม่อ้างว่างานสำเร็จ
+กฎนี้แทนข้อความเก่าที่บังคับให้ผู้ใช้พิมพ์ลองใหม่หลังแก้ไขงานเดิม; จุดอนุมัติจริงยังคงเดิม.
+
+
+## 2026-11-27 — ซ่อมเฉพาะจุดและป้องกันเสียงซ้อน
+- ใช้กับทุกเรื่องทุกท่อน ไม่กำหนดจำนวนท่อนหรือช็อตตายตัว: Pose → Motion Check ก่อน Lip/Scene/Camera; ตรวจโมชั่นก่อนเสียเวลาสร้างกล้อง หากแก้กล้องไม่ต้องตรวจโมชั่นเดิมใหม่ เว้นแต่เปลี่ยนโมชั่นจริง.
+- การแก้เสียงเดิมในท่อนเดียวกันต้องรักษาฉาก ท่า และกล้องที่ผ่านแล้ว; ตรวจรายการ Sound/Voice/Viseme ลบคลิปเสียงเก่าที่ตรวจยืนยันได้ ตรวจว่าไม่มีคลิปค้างก่อน import เสียงเพียงครั้งเดียว ตรวจคลิป Project Sound ชื่อถูกต้องเริ่มเฟรม 0; ถ้ามีคลิปซ่อนหรือหลักฐานไม่ครบ ห้าม import ซ้ำโดยเดา. ถ้าเปลี่ยนบทหรือเวลาเสียง ให้ตรวจความสอดคล้องของแผนใหม่.
+- ตรวจชื่อโปรเจกต์และตัวตน process iClone จริงก่อนใช้สถานะ live เดิม; หากเปิดผิดไฟล์หรือ restart ห้ามนำ QA/approval เดิมไปใช้กับฉากอื่น และห้ามทิ้งงานที่ยังไม่เซฟ. รักษาจุดอนุมัติและกฎ Save Project ผ่านเมนูเท่านั้น.
+
+
+## 2026-11-27 — Focus: preserve verified work
+หลักทำงานแบบเดินหน้า: ขั้นตอนที่ลงมือเสร็จและตรวจผ่านแล้วถือว่าจบ ให้เก็บผลงานและหลักฐานเดิม ห้ามย้อนทำซ้ำ เซฟซ้ำ เรนเดอร์ซ้ำ หรือรีเซ็ตสถานะผ่านเพื่อเริ่มใหม่โดยไม่มีเหตุผลจากหลักฐานจริง. เมื่อพบข้อผิดพลาด ให้ระบุจุดที่เสียจากผลจริง แก้เฉพาะจุดนั้นและตรวจซ้ำเฉพาะส่วนที่ได้รับผลกระทบโดยตรงตาม dependency ของ validator. รักษาส่วนอื่นที่ผ่านแล้ว ไม่รื้อทั้งงานหรือย้อนท่อนเก่า. เมื่อแก้ผ่านให้เดินหน้าจากขั้นที่ยังไม่เสร็จทันที. หากผู้ใช้สั่งเปลี่ยนงานให้ยึดคำสั่งล่าสุด ห้ามปลอมผลผ่านหรือข้ามจุดอนุมัติจริง.
+
+
+## 2026-11-28 — แก้ต้องนับถอยหลัง ห้ามวน
+ผู้ใช้: เวลาแก้จุดที่พัง (ท่า ปาก กล้อง เสียง ฯลฯ) ถ้ามี 5–6 จุด ต้องค่อยๆ ลดลง 5→4→3→2→1 จนเสร็จ ไม่ใช่วนอยู่จนไม่เสร็จสักที.
+- ทุกขั้นที่มีหลายรายการ (นักแสดง/ช็อต) ต้องบันทึกผลรายตัวลง progress/<story>_<part>_repair_queue.json; รอบซ่อมทำเฉพาะตัวที่ยังไม่ผ่าน ตัวที่ผ่านแล้วข้าม ไม่ทำซ้ำ.
+- ถ้าลองใหม่แล้ว "ที่เหลือ" ไม่ลดลง และวิธีเดิม (สเปก+สคริปต์ไม่เปลี่ยน) กับอาการเดิม ซ้ำ 2 รอบ ให้ Ai-iclone หยุดเองแม้ใช้ --force; ต้องเปลี่ยนวิธีจริงก่อนจึงลองได้อีก หรือรายงานจุดที่ติดพร้อมหลักฐาน.

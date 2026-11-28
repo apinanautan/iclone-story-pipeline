@@ -1,0 +1,8 @@
+---
+name: motion-analysis
+description: Inspect actual evaluated Blender armature motion, choose and repair natural motions, and recheck real iClone staging. Candidate tool; DataLink transport needs validation.
+---
+# Motion Analysis
+Use before choosing a difficult motion, for a suspect library clip, and after retargeting or modifying a staged actor. Read acting skill and Blender animation/rigging/export skills. Transfer an isolated copy using installed Auto Setup/DataLink or an authorized FBX workflow; do not export from a live project under another task. Verify armature, source clip, frame range, fps, and rest bone map. Preserve originals.
+Run py -3 scripts/motion_analyze.py <transferred.blend> <bone-map.json>. JSON fields rig, frames [start,end], bones (explicit role->actual bone names for root, hips, spine, neck, head, left_hand, right_hand, left_foot, right_foot; add other joints), limits (metric->action-specific threshold), optional contacts (bone, target object, frames).
+Inspect report's flagged frames and every relevant bone; analyze visual playback, contact, intentional action, root motion and joins. Rest-relative angle magnitude is not anatomical flexion; acceleration metric is change of scalar angular speed. Do not fix intended movement mechanically. Use actual iClone pose and prop context after transfer. Keep motion corrections versioned, test round-trip before automated application. Cache by source/settings/revision; new actor or retargeting requires new sample. Current tool only analyzes saved Blender files; native .iMotion decoding and automatic DataLink transport not implemented.

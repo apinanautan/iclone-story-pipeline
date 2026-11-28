@@ -1,3 +1,8 @@
+# งานปัจจุบัน
+- เรื่อง: ชัยชนะของคนไม่ยอมแพ้ ช่วง 14m38
+- ช่วงเสียง 14:38.00–21:57.69 แบ่ง 9 ท่อน ตัดเสียงแล้ว และเลือกใบงานใน Ai-iclone แล้ว
+- ขั้นถัดไป: อนุมัติแผนเรื่องใน Ai-iclone ก่อนจัดฉากและกล้อง
+
 # CURRENT STORY — updated 2026-11-22 (read this block first; older notes below are history)
 - เรื่อง: ชัยชนะของคนไม่ยอมแพ้
 - ท่อน 6 (ท่อนสุดท้าย, 376.39–434.00 จากเสียงต้นฉบับ, 57.61 วินาที): ใช้ Preview และ `parts/ชัยชนะของคนไม่ยอมแพ้_6.json` ฉากโรงทำอิฐมอญต้นฉบับเปิดจากสำเนาในเครื่องที่ `{SAVE}/_pipeline_cache/ชัยชนะฯ_ต้นฉบับโรงทำอิฐมอญ.iProject` หลังเปิดจากไดรฟ์แชร์ไม่ผ่าน. บันทึกโปรเจกต์ `{SAVE}/ชัยชนะของคนไม่ยอมแพ้/ท่อน6.iProject` พร้อมเสียงบรรยายท่อน 6 ที่เฟรม 0. ใช้โมเดลน้องชายชัยยศจากโฟลเดอร์เรื่อง, ลูกค้าใช้โมเดลสมทบจากคลังเรื่อง. มี 11 ช็อตและป้ายขายอิฐหน้าอาคารกับริมทาง. ตรวจภาพจริง 53 ภาพครบ 11 ช็อต, motion_check, light_check และ face_check ผ่าน, Project Sound มีท่อน6 ที่เฟรม 0, ตั้ง Switch แล้ว. รอขั้นผู้ใช้ตรวจ (ผ่าน) ใน Preview ก่อนเซฟกล้องรอบสุดท้ายและเรนเดอร์. ภาพตรวจอยู่ที่ {DESKTOP}/ชัยชนะของคนไม่ยอมแพ้/ภาพตรวจ/ท่อน6.
@@ -6,8 +11,8 @@
 - ท่อน 3 (บ้าน, 83.72 s): DONE. Rendered {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน3_20261121.mp4 (re-render with textures, OCR texture wait before render).
 - ท่อน 4 (บ้านนายชัยยศ / ร้านชำหน้าบ้าน, 84.90 s, master 225.92-310.82): RENDERED 2026-11-22 (user ผ่าน): {VIDEO}/ชัยชนะของคนไม่ยอมแพ้/GPT_ท่อน4_20261121.mp4, 84.9 s 1080p60, video_check OK. Camera bounce left for later parts. Only อัมพร + ชัยยศ (no siblings). Spec parts/ชัยชนะของคนไม่ยอมแพ้_4.json; project {SAVE}/ชัยชนะของคนไม่ยอมแพ้/ท่อน4_บ้านชัยยศ_20261121.iProject. All motions slow 0.65-0.7, heroine calm/modest poses, smile keys (couple 0.7), clips back to back with 2 s transition (no overlap), face_light_multiplier 0.2. iClone crashed 2026-11-22 after the 22:14 save; reopened, cams re-run. 2026-11-22 added TV shot (user): 62.68-68.12 อัมพร_ทีวี sits on a stool (PRK_Bench_Sit_Relax_01A_F 0.65) watching an old CRT TV, camera behind her shoulder, TV blank. Props via spec "props" (Tidmunz old_crt_tv + wood_stool, fbx scale 100). Newspaper shot now 47.7-62.68. Saved 07:37. Stills: docs/review/p4_cams_v4_tv.jpg, docs/review/p4_tv_shot.png. 2026-11-22 09:4x full re-run with the new face flow (blink + Digital Soul face clips 70% + smile ramp 10->max 80%, thinking face) and clip joins (clips only on screen, 1 s gap, crossing X); อัมพร_ร้าน motion_from 0 (calm phase of the cashier motion). All checks pass. Stills: docs/review/p4_cams_v5.jpg. Next: user ผ่าน -> ready -> render --approved -> video_check.
 - WORK THROUGH THE PREVIEW (user 2026-11-22): run every change as ic8_part.py steps so progress_app.py shows the true state; after any iClone (re)open, OCR-check until no popup / Texture Loading is left.
-- Pipeline (ic8_part.py) ORDER: check, motion_plan, open, cast, pose, sound, lip, cams, motion_check, light_check, switch -> user says ผ่าน -> ready (GUI save) -> render --approved (+video_check). Preview (progress_app.py) shows every step with live %.
-- New since 2026-11-21: Thai keyboard breaks Ctrl+S (ic8_gui.ps1 switches to English); per-cast shadowless face spotlight linked to the head (untested in iClone yet); render wait limit 2 h.
+- Pipeline (ic8_part.py) ORDER: check, motion_plan, open, cast, pose, sound, lip, cams, motion_check, light_check, switch -> user says ผ่าน -> ready prepares Switch/frame 0 and pauses at AI WORK; save by manually clicking iClone File menu, reopen there, then run Ai-iclone do again to verify -> render --approved (+video_check). Preview (progress_app.py) shows every step with live %.
+- Save rule (2026-11-26): manually click iClone File > Save Project / Save Project As; no shortcuts or save helpers. per-cast shadowless face spotlight linked to the head (untested in iClone yet); render wait limit 2 h.
 
 - เรื่อง: ชัยชนะของคนไม่ยอมแพ้ / ท่อน 1 / เสียงต้นฉบับ 0:00–1:06.13 (66.13 วินาที)
 - สถานะที่ผู้ใช้ยืนยัน: **ท่อน 1 ยังไม่เสร็จ**; ยังไม่ผ่าน QA การเล่าเรื่อง ภาพ และกล้อง; ห้ามอ้างว่าเป็น final หรือเรนเดอร์
@@ -97,3 +102,14 @@
 - ntfy Pic-Gptz confirmed HTTP 200, event id 6JQy28tHY7Dg, attachment https://ntfy.sh/file/6JQy28tHY7Dg.mp4. Receipt saved part1_color_front_house_ntfy_receipt.json; NEVER duplicate on retry.
 - Independently extracted 7 representative frames from the FINAL 60fps video and inspected visibly in color; shot1 truly shows stair-front view of node_0. Other shots show working father/mother/child but work poses are not final QA-approved.
 - IMPORTANT: this is a preview and does not supersede user approval for 1080p final. Previous rejected 480p ntfy video remains separate and must not be mistaken for current.
+
+
+## 2026-11-26 — แม่สื่อหรือมือที่สาม ท่อน 1 (working preview)
+- User approved the whole-story plan. Part1 user review is a separate required gate, not yet approved; no final render.
+- Saved part1 project: {SAVE}/แม่สื่อหรือมือที่สาม/ท่อน1.iProject (1,456,231,089 bytes at 02:49:18). Has four cast avatars, body and facial motion, narration WAV at frame 0, and ten camera shots over 65.48s.
+- Steps through Switch in Ai-iclone Preview are green, Lip sync N/A narrator only; user_ok/ready/render/video_check pending.
+- Camera QA stills: {VIDEO}/แม่สื่อหรือมือที่สาม/ตรวจท่อน1/ท่อน1_รวม10ช็อต.jpg and ten separate pages, opened on the Windows desktop.
+- CRITICAL: the real wedding scene from {DRIVE}/แม่สื่อหรือมือที่สาม/ฉาก/งานแต่ง.iProject fails to load. Local copy caused iClone crash in mimalloc-override.dll 0xc0000005. The current draft uses the smaller storefront building scene from {SAVE}/แม่สื่อหรือมือที่สาม/scene_cache/อาคารด้านล่างเปิดร้านเสริมสวย.iProject; it is not story-correct as a wedding or school. Do NOT approve as final until venue assets are addressed.
+- QA: initial characters back-facing and cropped; fixed yaw and cameras to actual head Z. 73 reviewed stills, camera keys within 0.1 cm; motion QA passed (bride max18cm drift, protagonist37cm, son2cm, husband17cm; zero jump); face/blink pass; light-check passed after excluding black hair from skin measurements. Performer gesture at shot7 triggered camera detector; static background confirmed camera remained fixed.
+- Local fixes: scripts/ic8_gui.ps1 Win32 DLL compilation, scripts/ai_iclone.py motions flag parser, scripts/still_check.py distinguish actor gestures from camera jumps, scripts/light_check.py skin ROI, scripts/ic8_cams.py optional side fill propagated via scripts/ic8_part.py. No GitHub push or source Drive edits.
+- Next: fix the actual wedding/beauty-school scene issue before finalizing, then ask approval for actual images once, not micro-step requests.

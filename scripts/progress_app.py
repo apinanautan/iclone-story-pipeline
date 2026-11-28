@@ -29,13 +29,14 @@ SPIN = "◐◓◑◒"
 STEPS = [("plan", "วางแผนบท + กล้อง"), ("audio", "ตัดเสียงท่อน"), ("check", "ตรวจสเปกท่อน"),
          ("motion_plan", "วางแผนโมชั่น (ใครใช้ท่าอะไร)"),
          ("open", "โหลดฉาก (≤3 นาที)"), ("cast", "วางตัวละครรอบแลนด์มาร์ก (≤3 นาที)"),
-         ("pose", "รอเท็กซ์เจอร์ แล้วใส่ท่าทาง"), ("sound", "ใส่เสียง (≤3 นาที)"), ("lip", "ลิปซิงก์"),
-         ("cams", "ตั้งกล้อง 80/100 มม. + ไฟหน้า + ภาพนิ่ง"),
+         ("sound", "ใส่เสียงครั้งเดียว (≤3 นาที)"), ("pose", "รอเท็กซ์เจอร์ แล้วใส่ท่าทาง"), ("motion_check", "ตรวจโมชั่น (ไม่เดินถอย/ไม่กระตุก)"), ("lip", "ลิปซิงก์"),
+         ("scene_review", "สำรวจฉากจริง + หลักฐานภาพ"), ("prop_review", "ตรวจ/สร้างพร็อพที่จำเป็น"), ("camera_replan", "วางแผนกล้องจากฉากจริง"),
+         ("cams", "ตั้งกล้องตามบท + ไฟหน้า + ภาพนิ่ง"),
          ("cam_check", "AI ตรวจมุมกล้องทุกช็อต (รวมในรูปเดียว)"),
-         ("motion_check", "ตรวจโมชั่น (ไม่เดินถอย/ไม่กระตุก)"), ("light_check", "ตรวจแสงหน้า (ไม่ขาว/ดำครึ่งซีก)"),
+         ("light_check", "ตรวจแสงหน้า (ไม่ขาว/ดำครึ่งซีก)"),
          ("face_check", "ตรวจหน้าทุกตัว: ①กระพริบ ②ท่าหน้า 65-75% ③ความรู้สึก + รอยต่อคลิปห่างและไขว้ X (อ่านจาก iClone)"),
-         ("switch", "เปลี่ยนวิวเป็นกล้อง Switch"), ("user_ok", "ผู้ใช้ตรวจ (ผ่าน)"),
-         ("ready", "เซฟผ่านโปรแกรม (Ctrl+S)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ (ความยาว = เสียง)")]
+         ("editorial_review", "ตรวจจังหวะภาพรอบสอง"), ("switch", "เปลี่ยนวิวเป็นกล้อง Switch"), ("user_ok", "ผู้ใช้ตรวจ (ผ่าน)"),
+         ("ready", "เตรียม Switch / เซฟเมนู (ไม่เปิดซ้ำ)"), ("render", "เรนเดอร์วิดีโอ"), ("video_check", "ตรวจไฟล์วิดีโอ"), ("final_review", "ตรวจภาพเคลื่อนไหวและเสียงจริง")]
 # Story setup: done ONCE per story, before any part (user 2026-11-22). All read from the central sheet
 # stories/<story>.json; nothing per part here.
 STORY_STEPS = [("sheet", "ใบงานกลาง (เรื่องอะไร)"),          # user 2026-11-22: BIG picture only; details belong to each part
@@ -186,9 +187,8 @@ def parts_of(story):
     s = load(ROOT / "stories" / f"{story}.json", {})
     ns = {str(p.get("n")) for p in s.get("parts", [])}
     ns |= {p.stem[len(story) + 1:] for p in (ROOT / "parts").glob(f"{story}_*.json")}
-    ps = sorted((n for n in ns if n.isdigit()), key=int)
-    if ps and all(video_done(spec_of(story, n)) for n in ps):
-        ps.append(str(int(ps[-1]) + 1))
+    import re
+    ps = sorted((n for n in ns if re.fullmatch(r"\d+(?:\.\d+)?", n)), key=lambda n: tuple(map(int,n.split("."))))
     return ps or ["1"]
 
 
@@ -203,13 +203,17 @@ def video_done(spec):
 def current_part(story):
     now = load(PROG / "now.json", {})
     ps = parts_of(story)
+    from workflow_state import selected_target
+    target=selected_target(ROOT,story)
+    if target and target["part"] in ps:return target["part"]
     if now.get("story") == story and time.time() - now.get("time", 0) < 3 * 3600:
         n = str(now.get("part"))
         # finished part (video checked) -> move on: the next part starts with every dot grey
-        if not (now.get("step") == "video_check" and now.get("state") == "done" and n in ps and ps.index(n) + 1 < len(ps)):
+        if not (now.get("step") == "final_review" and now.get("state") == "done" and n in ps and ps.index(n) + 1 < len(ps)):
             return n
         return ps[ps.index(n) + 1]
-    return next((n for n in ps if not video_done(spec_of(story, n))), ps[-1] if ps else "1")
+    from sleep_session import complete
+    return next((n for n in ps if not complete(ROOT,story,n)), ps[-1] if ps else "1")
 
 
 def plan_complete(spec):
@@ -257,13 +261,21 @@ def step_states(story, n):
     now = load(PROG / "now.json", {})
     live = now if now.get("story") == story and str(now.get("part")) == n and time.time() - now.get("time", 0) < 3 * 3600 else {}
     narr_only = bool(spec) and all(L.get("who") in ("บรรยาย", "narrator") for L in spec.get("lines", []))
+    from sleep_session import complete
+    legacy_complete = "scene_review" not in done and bool(ok.get("step5")) and "video_check" in done and "render" in done and complete(ROOT,story,n)
     out = {}
     for k, _ in STEPS:
-        if k == "plan": s = "done" if plan_complete(spec) else "todo"
+        if legacy_complete and k in ("scene_review","prop_review","camera_replan","editorial_review","final_review"): s = "skip"
+        elif k == "plan": s = "done" if plan_complete(spec) else "todo"
         elif k == "audio": s = "done" if spec and Path(expand(spec.get("wav", ""))).exists() else "todo"
+        elif k == "sound":
+            from workflow_state import source_changed
+            s = "done" if k in done and spec and not source_changed(st.get("sound_source"), expand(spec.get("wav", ""))) else "todo"
         elif k == "motion_plan": s = "done" if k in done else "todo"
-        elif k == "user_ok": s = "done" if ok.get("step5") else "todo"
-        elif k == "render": s = "done" if k in done or (video_done(spec) and "render" not in live.get("step", "")) else "todo"
+        elif k == "user_ok":
+            from sleep_session import approval_valid
+            s = "done" if ok.get("step5") or approval_valid(ROOT,story,n,st) or ("render" in done and "ready" in done and video_done(spec)) else "todo"
+        elif k == "render": s = "done" if k in done and video_done(spec) else "todo"
         elif k == "lip" and narr_only: s = "skip"
         else: s = "done" if k in done else "todo"
         if live.get("step") == k:
@@ -390,6 +402,10 @@ class App(tk.Tk):
 
     def tick_ok(self):
         story = self.story.get(); n = current_part(story)
+        from sleep_session import state
+        if state(ROOT).get("enabled"):return
+        states,_=step_states(story,n)
+        if next((k for k,_ in STEPS if states[k] not in ("done","skip")),None)!="user_ok":return
         f = PROG / f"{story}_{n}.json"
         d = load(f, {"ok": {}, "orders": []}); d.setdefault("ok", {})["step5"] = True
         f.write_text(json.dumps(d, ensure_ascii=False, indent=1), encoding="utf-8")
@@ -415,6 +431,9 @@ class App(tk.Tk):
         if cur and tr[1] > 0 and cur.get("master", [0])[0] >= tr[1] - 0.5: txt += "   ⚠ ท่อนนี้เกินเวลาที่ทำงาน"
         b, _ = jobs_usage()
         txt += "   ไฟล์ชั่วคราว %s%s" % (gb(b), "  ⚠ สั่ง Ai-iclone clean" if b > 5e9 else "")
+        from repair_queue import lines as repair_lines
+        checks=repair_lines(PROG,story,n)
+        if checks: txt += "\n" + "\n".join(checks)
         self.head.configure(text=txt)
         ss = story_states(story); sdone = sum(1 for s, _ in ss.values() if s == "done")
         allok = sdone == len(STORY_STEPS)
@@ -484,7 +503,7 @@ class App(tk.Tk):
             elif first_todo and ai_pct(story, n, first_todo): part = ai_pct(story, n, first_todo)[0] / 100
         self.draw_bar(nd, tot, part, any(v == "fail" for v in states.values()) and pg != "story")
         try:
-            lines = (PROG / "now_log.txt").read_text(encoding="utf-8").splitlines()[-2:]
+            lines = (PROG / "now_log.txt").read_text(encoding="utf-8").splitlines()[-2:] if live else []
         except Exception:
             lines = []
         self.log.configure(text="\n".join(l[:70] for l in lines))

@@ -14,3 +14,13 @@ stories/*
 !stories/_template.json
 parts/*
 !parts/_example.json
+
+# local-only (2026-11-28): backups, trial renders, review images, machine config, one-off loaders
+*.bak
+*.mp4
+docs/review/
+*.local.json
+tools/preview_bridge_backup_*/
+tools/motion_ai/trophy_pose_13/
+scripts/zz_load_*.py
+tools/hair_training_kit.py

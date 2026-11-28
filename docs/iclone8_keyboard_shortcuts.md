@@ -17,8 +17,8 @@
 |---|---|---|---|
 | File — New Project | `Ctrl+N` | สร้างโปรเจกต์ใหม่ | หน้าต่างหลัก; File > New Project |
 | File — Open Project | `Ctrl+O` | เปิดโปรเจกต์ | File > Open Project; ตรวจชื่อไฟล์ก่อนยืนยัน |
-| File — Save Project | `Ctrl+S` | บันทึกโปรเจกต์ปัจจุบัน | File > Save Project; ตรวจ path/ไฟล์บนดิสก์ตามกฎโครงการ |
-| File — Save Project As | `Ctrl+Shift+S` | บันทึกเป็นไฟล์ใหม่ | File > Save Project As; ตรวจ path ใน dialog |
+| File — Save Project | **ห้ามใช้คีย์ลัด** | บันทึกโปรเจกต์ปัจจุบัน | คลิกเมนู File > Save Project ด้วยตัวเองเท่านั้น ตามกฎผู้ใช้ 2026-11-26 |
+| File — Save Project As | **ห้ามใช้คีย์ลัด** | บันทึกเป็นไฟล์ใหม่ | คลิกเมนู File > Save Project As ด้วยตัวเองเท่านั้น ตามกฎผู้ใช้ 2026-11-26 |
 | File — Import | `Ctrl+I` | เปิดนำเข้าไฟล์ที่รองรับ | File > Import; ต้องเลือกชนิด/แทร็กด้วย UI เอง |
 | File — Merge Project | `Ctrl+Shift+I` | รวม objects จาก iProject เข้ามาในโปรเจกต์ปัจจุบัน | File > Merge Project; ตรวจโปรเจกต์ปลายทางก่อน |
 | File — Exit | `Alt+F4` | ปิด iClone | File > Exit; ระวัง dialog บันทึกงาน |

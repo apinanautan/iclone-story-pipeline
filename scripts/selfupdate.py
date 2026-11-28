@@ -30,8 +30,13 @@ def _get(url, t=20):
 
 def check(force=False, say=lambda s: print(s, file=sys.stderr, flush=True)):
     """returns the new version string if it installed one, else None."""
-    if os.path.isdir(os.path.join(ROOT, ".git")):
-        if force: say("Ai-iclone: this folder is a git checkout: update it with git pull")
+    if os.path.isdir(os.path.join(ROOT, ".git")) or os.path.isfile(os.path.join(ROOT, ".git")):
+        from pathlib import Path
+        root=Path(ROOT)
+        if (root/"progress"/"managed_release.json").is_file():
+            from checkout_update import check_managed
+            return check_managed(root, _get, REPO, force, say)
+        if force: say("Ai-iclone: unmanaged Git checkout; not auto-updated")
         return None
     if not force:
         try:
@@ -78,4 +83,4 @@ def check(force=False, say=lambda s: print(s, file=sys.stderr, flush=True)):
 
 
 if __name__ == "__main__":
-    check(force=True, say=print)
+    check(force="--check" not in sys.argv[1:], say=print)

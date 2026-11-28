@@ -62,7 +62,7 @@ Data you get for free (no need to re-derive):
 ## 5. Cameras (last)
 - Copy `scripts/ic8_part3_cams.py` / `ic8_part4_cams.py`, edit SHOTS only. Two cameras (create Camera_0 via Create > Camera >
   Linear Camera if missing). MODE "stills" → `python scripts/contact_sheet.py "<ic8_jobs>\c4_*.png" sheet.jpg` → look, fix, send.
-- Save (File > Save Project), check file time.
+- Manually click iClone File > Save Project (never use a shortcut or script), then check file time.
 
 ## 6. Render — ONLY when the user says. User currently renders themselves.
 - If asked: `scripts/ic8_render2.py` (whole project, 60 fps) → ffmpeg mux N.mp3 → `{VIDEO}\N.mp4`. Check the raw file exists
@@ -70,7 +70,7 @@ Data you get for free (no need to re-derive):
 
 - Step 3b (after chained clips exist): run scripts/ic8_blend_clips.py so every chained face/body clip crossfades (no head snap).
 
-- Part 5/6 recipe (narration only): Save As previous -> N.iProject (confirm overwrite dialog: Yes), delete old Sound clip, set playhead 0 by script, Ctrl+I N.mp3, run scripts/ic8_partN_setup.py (SetProjectLength+SetEndTime), run scripts/ic8_partN_cams.py (stills -> contact sheet), pick Switch in the camera dropdown (menu is slow: click, wait 3 s, zoom, click Switch), Ctrl+S, check file time.
+- Part 5/6 recipe (narration only): Save As previous -> N.iProject (confirm overwrite dialog: Yes), delete old Sound clip, set playhead 0 by script, Ctrl+I N.mp3, run scripts/ic8_partN_setup.py (SetProjectLength+SetEndTime), run scripts/ic8_partN_cams.py (stills -> contact sheet), pick Switch in the camera dropdown (menu is slow: click, wait 3 s, zoom, click Switch), manually click File > Save Project; check file time.
 
 - Part 7 added standing characters (นายอิ่ม, สีกาอ๋อย): scripts/ic8_part7_cast.py (STAND body, ONLY per job) + scripts/ic8_part7_cast_extras.py (nods + look-at monk head). Part 7 = 23 s audio, 28 s timeline.
 - **Dedicated multi-camera dialogue rule (2026-11-11):** สำหรับ dialogue/event coverage เช่น 3.1 ให้สร้าง custom camera object แยกตามหน้าที่ เช่น Mom CU, Dad CU, two-shot/depth, kids reaction, OTS/profile แล้วใช้ Project > Switcher / AddSwitchCameraKey ตัดระหว่างกล้อง. ห้ามใช้กล้องตัวเดียว teleport/hard-step ไปทุกมุมเป็นวิธีหลัก เพราะแก้ framing/DOF/continuity ยากและทำให้ coverage ดูซ้ำ/ง่อย. กล้องแต่ละตัวควรมีชื่อสื่อหน้าที่, transform/focal/DOF ของตัวเอง; ใช้กล้องเดิมซ้ำได้เมื่อกลับมาที่มุมเดิม. เปลี่ยนกล้องไม่ใช่ event boundary. ก่อน Save ต้องตรวจ camera count, switch-key sequence และ still framing ทุก beat; moving playback QA ยังต้องทำแยกต่างหาก.

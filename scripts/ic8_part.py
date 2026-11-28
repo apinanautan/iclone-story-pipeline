@@ -12,7 +12,7 @@ Steps (in order; `all` = check..ready, never render):
   lip     AccuLips per speaker (GUI), keep only that speaker's line windows; non-speakers' mouths cleared
   cams    Cam_A/Cam_B, 2 keys per shot, switcher, 1 still per shot (quick; --shot 3,5 re-shoots only those, --full = ~1/s) -> ic8_jobs/part_cams.jpg (look at it!)
   cam_check ALL shots in ONE image (part_cams_all.jpg) + the AI fills progress/<story>_<N>_camcheck.json per shot; any fail = FAIL
-  ready   Switch, playhead 0, play range 0..end, GUI save, reopen  -> STOP: user presses Play
+  ready   Switch, playhead 0, play range 0..end; operator saves via the visible File menu; no reopen
   render  ONLY with --approved (user said ผ่าน): 1080p60 + clean wav + checks + publish
 `<step> --from` runs that step and every later one up to ready (fix a number in the spec, re-run from there).
 
@@ -37,6 +37,7 @@ Spec (parts/<story>_<N>.json):
 """
 import time
 import json, os, re, subprocess, sys, math
+from pathlib import Path
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from paths import expand, root   # {MOTION} / {DRIVE} placeholders: never hardcode a drive letter
 
@@ -49,7 +50,7 @@ FF, FFP = _ff("ffmpeg"), _ff("ffprobe")   # found on any PC (no one-PC path)
 os.environ["IC8_FF"], os.environ["IC8_FFP"] = FF, FFP   # ic8_gui.ps1 uses the same ones
 NARR = ("บรรยาย", "narrator")
 # "all" stops after switch: the user checks the stills; ready (save) and render come only after ผ่าน
-ORDER = ["check", "motion_plan", "open", "cast", "pose", "sound", "lip", "cams", "cam_check", "motion_check", "light_check", "face_check", "switch"]
+ORDER = ["check", "motion_plan", "open", "cast", "sound", "pose", "motion_check", "lip", "scene_review", "prop_review", "camera_replan", "cams", "cam_check", "light_check", "face_check", "editorial_review", "switch"]
 
 
 import ailog   # real % + timing + fail report for GPT (user 2026-11-23)
@@ -74,7 +75,29 @@ def ensure_watch():
     open(pf, "w").write(str(p.pid))
 
 
+def wait_desktop_idle(seconds=4,timeout=45):
+    """Wait before foreground-only actions; no cursor movement or failure counter."""
+    import ctypes
+    from ctypes import wintypes
+    class LastInput(ctypes.Structure):
+        _fields_=[("cbSize",wintypes.UINT),("dwTime",wintypes.DWORD)]
+    tick=ctypes.windll.kernel32.GetTickCount;tick.restype=wintypes.DWORD
+    end=time.monotonic()+timeout
+    said=False
+    while time.monotonic()<end:
+        v=LastInput(ctypes.sizeof(LastInput),0)
+        if ctypes.windll.user32.GetLastInputInfo(ctypes.byref(v)):
+            if ((tick()-v.dwTime)&0xffffffff)>=seconds*1000:return True
+        if not said:
+            say("WAIT: user input active; foreground action deferred")
+            said=True
+        time.sleep(1)
+    return False
+
 def gui(*a):
+    if a[0] in ("open","reopen","sound","lip","prop") and not wait_desktop_idle():
+        say("AI WORK: user is using mouse/keyboard; no foreground command sent. Retry when idle; not a failed production step.")
+        sys.exit(3)
     ensure_watch()
     # Hard time limit (user 2026-11-21: 13 min stuck behind a Yes/No/Cancel box). Save ~20 s, open of a 4 GB
     # project ~2 min: anything longer is a dialog nobody answered -> stop at once and say which one.
@@ -86,7 +109,9 @@ def gui(*a):
     if "iClone.exe" not in subprocess.run(["tasklist", "/FI", "IMAGENAME eq iClone.exe", "/NH"], capture_output=True, text=True).stdout:
         fail("iClone is not running (open iClone 8 first, then run again): %s not started" % what)
     ailog.log("รอ iClone: %s (หยุดเองถ้าเกิน %d วินาที)" % (what, lim), count=False)
-    p = subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a])
+    gout = os.path.join(J, "gui_last.txt")   # the ps1's own words, so a FAIL says why (2026-11-28)
+    gf = open(gout, "w", encoding="utf-8", errors="replace")
+    p = subprocess.Popen(["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", GUI] + [str(x) for x in a], stdout=gf, stderr=subprocess.STDOUT)
     t0 = time.time(); nxt = 10
     try:
         while p.poll() is None:
@@ -107,7 +132,11 @@ def gui(*a):
     except subprocess.TimeoutExpired:
         p.kill()
         fail("iClone did not finish %s in %d s: stopped (see the iClone windows' text below)" % (what, lim))
-    if r.returncode: fail("ic8_gui.ps1 %s failed (exit %d) after %.0f s" % (what, r.returncode, time.time() - t0))
+    gf.close()
+    try: said = [x.strip() for x in open(gout, encoding="utf-8", errors="replace").read().splitlines() if x.strip()]
+    except OSError: said = []
+    if said: print("\n".join(said[-20:]), flush=True)
+    if r.returncode: fail("ic8_gui.ps1 %s failed (exit %d) after %.0f s: %s" % (what, r.returncode, time.time() - t0, " | ".join(said[-2:])[:300] or "no message"))
 
 
 def job(code, name):
@@ -199,7 +228,7 @@ def scene_checks(S, errs, warns):
     room = sc.get("room") or sc.get("area")   # [xmin, ymin, xmax, ymax]: indoor = walls, outdoor = where the action is
     # solid things from the scan (houses, trees, cars, beds). Skip ground/sky/terrain (huge) and tiny props.
     solid = {n: o for n, o in sc.get("objects", {}).items()
-             if 30 < o["max"][0] - o["min"][0] < 4000 and 30 < o["max"][1] - o["min"][1] < 4000 and o["max"][2] - o["min"][2] > 30}
+             if not o.get("interior_shell", False) and 30 < o["max"][0] - o["min"][0] < 4000 and 30 < o["max"][1] - o["min"][1] < 4000 and o["max"][2] - o["min"][2] > 30}
     inside = lambda p, o: all(o["min"][k] <= p[k] <= o["max"][k] for k in range(3))
     for i, s in enumerate(S["shots"]):
         for n, o in solid.items():
@@ -296,11 +325,14 @@ def step_check(S, base):
         a, b = s["t"]
         if b - a < 2.0: errs.append("shot %d shorter than 2 s" % (i + 1))
         if i and abs(sh[i - 1]["t"][1] - a) > 0.01: errs.append("gap/overlap before shot %d" % (i + 1))
-        if s.get("wide"):   # establishing/view shot: any lens, no DOF
+        if s.get("coverage") in ("establishing","action","two_shot","insert"):
+            if not 24 <= s["focal"] <= 150 or not s.get("story_beat"): errs.append("shot %d: narrative coverage needs lens 24-150 and story_beat" % (i+1))
+        elif s.get("wide"):   # establishing/view shot: any lens, no DOF
             if not 20 <= s["focal"] <= 200: errs.append("shot %d focal %s (20-200)" % (i + 1, s["focal"]))
-        elif s["focal"] not in (80, 100): errs.append("shot %d focal %s: character shots use 80 or 100 mm only (rules: Camera). Mark view shots \"wide\": true" % (i + 1, s["focal"]))
+        elif not 75 <= s["focal"] <= 150: errs.append("shot %d character focal must be 75-150 mm" % (i + 1))
         d = math.dist(s["pos"], s["target"]); h = d * 24 / s["focal"]   # cm of body visible top-to-bottom
-        if s.get("wide"):   # user hates full bodies: a view shot must not frame any cast member
+        if s.get("coverage") in ("establishing","action","two_shot","insert"): pass
+        elif s.get("wide"):   # user hates full bodies: a view shot must not frame any cast member
             hx = math.atan(18 / s["focal"])
             for n, c in S["cast"].items():
                 if not c.get("pos"): continue
@@ -355,13 +387,14 @@ def title():
 def step_open(S, base):
     proj = os.path.normpath(S["project"]); t = title()
     if not t: fail("iClone is not running")
-    if t.rstrip(" *").endswith(os.path.basename(proj)): say("OK already open: " + t); return
-    # a '*' title is checked by ic8_gui.ps1 open (stale '*' right after a GUI save is fine, real changes fail)
+    if os.path.isfile(proj) and t.rstrip(" *").endswith(os.path.basename(proj)): say("OK already open: " + t); return
+    # Saving is deliberately a live menu action, never a script/helper action.
     if os.path.exists(proj): gui("open", proj)
     else:
-        gui("open", os.path.normpath(S["from"])); gui("saveas", proj)
+        gui("open", os.path.normpath(S["from"]))
+        say("AI WORK: create the new project through iClone File > Save Project As manually, then run Ai-iclone do again: " + proj)
+        sys.exit(3)
     say("OK open " + proj)
-
 
 def step_cast(S, base):
     """Load missing story avatars in iClone via watcher, one avatar per job, then verify names."""
@@ -533,6 +566,58 @@ def wait_textures(limit=300):
 
 
 def step_pose(S, base):
+    if S.get("attach_only_pending"):
+        name, h = next((n,c["hold_prop"]) for n,c in S["cast"].items() if c.get("hold_prop",{}).get("attach"))
+        code = """import RLPy,json,os,math
+from PySide2 import QtWidgets
+name,h,end,refine=%r,%r,%r,%r
+T=lambda s:RLPy.RTime.FromValue(round(s*6000))
+a=next(x for x in RLPy.RScene.GetAvatars() if x.GetName()==name)
+p=next(x for x in RLPy.RScene.GetProps() if x.GetName()==h['name'])
+bone=next(x for x in a.GetSkeletonComponent().GetSkinBones() if x.GetName()==h['bone'])
+def settle(t):
+ RLPy.RGlobal.SetTime(T(t));QtWidgets.QApplication.processEvents();a.Update();p.Update();RLPy.RGlobal.ForceViewportUpdate()
+def xyz(tr):
+ v=tr.T();return [v.x,v.y,v.z]
+def tag(o):return o.GetName() if o is not None else None
+RLPy.RGlobal.Stop()
+if refine:
+ sk=a.GetSkeletonComponent(); head=next(x for x in sk.GetSkinBones() if x.GetName()=="CC_Base_Head")
+ for i in range(sk.GetClipCount()):
+  c=sk.GetClip(i);db=c.GetControl("Layer",head).GetDataBlock()
+  for axis,deg in zip("XYZ",refine["head"]):
+   ctrl=db.GetControl("Rotation/Rotation"+axis)
+   for tick in (T(0),c.GetClipLength()):ctrl.SetValue(tick,math.radians(deg))
+ a.Update()
+ fc=a.GetFaceComponent()
+ nm=["Mouth_Corner_Up_L","Mouth_Corner_Up_R","Mouth_Corner_Pull_L","Mouth_Corner_Pull_R","Eye_Cheek_Raise_L","Eye_Cheek_Raise_R","Eye_Look_Down_L","Eye_Look_Down_R","Eye_Look_Up_L","Eye_Look_Up_R","Eye_Look_Left_L","Eye_Look_Left_R","Eye_Look_Right_L","Eye_Look_Right_R"]
+ clips=sorted([(fc.GetClip(i).ClipTimeToSceneTime(T(0)).ToFloat()/6000.,fc.GetClip(i).GetClipLength().ToFloat()/6000.) for i in range(fc.GetClipCount())])
+ def kt(t):
+  for (s,l),(n,_) in zip(clips,clips[1:]):
+   if s+l-.02<t<n+.02:return T(s+l-.08 if t-s-l<n-t else n+.08)
+  return T(t)
+ fc.BeginKeyEditing()
+ for t in [0.]+[i*1.5 for i in range(1,int(end/1.5)+1)]+[end]:
+  w=refine["smile"]*(.7+.3*t/end)
+  vals=[.8*w,.8*w,.55*w,.55*w,.6*w,.6*w,refine["eyes"],refine["eyes"]]+[0.]*6
+  fc.AddExpressionKeys(kt(t),nm,vals,T(.5))
+ fc.EndKeyEditing()
+ a.Update()
+ print("Targeted head and expression edits only")
+info=[]
+for t in (0,end*.5,end-.05):
+ settle(t);link=p.GetLinkedObject(T(t));tr=RLPy.RTransform();tr.From(p.WorldTransform().Matrix()*bone.WorldTransform().Matrix().Inverse())
+ info.append(dict(time=t,link=tag(link),hand=xyz(bone.WorldTransform()),prop=xyz(p.WorldTransform()),relative=xyz(tr),distance=math.dist(xyz(p.WorldTransform()),xyz(bone.WorldTransform()))))
+settle(0)
+path=os.path.join(os.environ['LOCALAPPDATA'],'Tidmunz Studio','snapgen_data','ic8_jobs','link_verify.json')
+with open(path,'w',encoding='utf-8') as f:json.dump(info,f,ensure_ascii=False,indent=2)
+if any(x['link'] not in (name,h['bone']) or x['distance']>20 or math.dist(x['relative'],info[0]['relative'])>1.5 for x in info):raise RuntimeError('Link or relative grip failed: see link_verify.json')
+print('Verified linked object and stable grip at three times')
+""" % (name,h,duration(S["wav"]),S.get("face_refinement"))
+        job(code,"zz_part_attach_only")
+        say("OK pose repair: existing pose preserved; Link to hand verified")
+        return
+    if S.get("reposition_props_on_pose"): step_props(S)
     live("pose", 0, "รอเท็กซ์เจอร์โหลดเสร็จ")
     wait_textures()
     end = duration(S["wav"]); av = {}
@@ -540,6 +625,42 @@ def step_pose(S, base):
         av[n] = dict(c); av[n].setdefault("visible", [[0, 1]])
         if av[n].get("lookfront") is True: av[n]["lookfront"] = expand(os.path.join("{MOTION}", "Digital Soul 100+", "1.Watch", "Look front.iTalk"))
     for n in S.get("hide", []): av[n] = {"visible": [[0, 0]]}
+    for name, actor in av.items():
+        if not actor.get("external_motion"): continue
+        fbx = expand(actor["external_motion"])
+        if not all(os.path.isfile(os.path.splitext(fbx)[0]+x) for x in (".fbx", ".fbxkey", ".3dxProfile")):
+            fail("external motion or profile missing: "+fbx)
+        select_code = """import RLPy, os, json
+from PySide2 import QtWidgets
+name, fbx, end = %r, %r, %r
+a = next(x for x in RLPy.RScene.GetAvatars() if x.GetName()==name)
+sk=a.GetSkeletonComponent()
+zero=RLPy.RTime.FromValue(0)
+def clips():
+    return [(c.ClipTimeToSceneTime(zero).ToFloat(),c.GetClipLength().ToFloat()) for c in (sk.GetClip(i) for i in range(sk.GetClipCount()))]
+RLPy.RGlobal.Stop()
+RLPy.RScene.ClearSelectObjects()
+RLPy.RScene.SelectObject(a)
+RLPy.RGlobal.SetTime(zero)
+RLPy.RGlobal.SetTime(zero)
+before=clips()
+result=RLPy.RFileIO.LoadMotion(fbx,zero,a)
+a.Update()
+QtWidgets.QApplication.processEvents()
+RLPy.RGlobal.ForceViewportUpdate()
+after=clips()
+print('Direct FBX API: before='+str(before)+' after='+str(after)+' status='+str(result))
+if result is None or result.IsError(): raise RuntimeError('Direct FBX API rejected input')
+if before==after or not after or after[-1][1]<end*6000*.9:
+    raise RuntimeError('Direct FBX API did not verify a new full-length motion')
+if sk.GetClipCount()!=1: raise RuntimeError('Direct FBX loaded but clip count must be reviewed')
+""" % (name, fbx, end)
+        job(select_code, "zz_external_motion_direct")
+        actor["motions"]=[]
+        actor.pop("motion",None)
+        actor.pop("bones",None)
+        actor.pop("chest_grip",None)
+        actor.pop("upright_grip",None)
     wjson("pose_place.json", {"end": end, "avatars": av, "cuts": [sh["t"][0] for sh in S["shots"][1:]]})
     job(open(os.path.join(SCR, "ic8_pose_place.py"), encoding="utf-8").read(), "zz_part_pose")
     open(os.path.join(J, "pose.done"), "w").write(time.strftime("%H:%M:%S"))   # lip must run AFTER this (face clips cover the mouth)
@@ -550,16 +671,17 @@ def step_pose(S, base):
     # user 2026-11-22 (said many times): clips APART with a small gap, the transition fills the gap - never butted
     bad_gap = [l for l in re.findall(r"^.* gap (-?[\d.]+).*$", log, re.M) if not 0.3 <= float(l) <= 2.0]
     if bad_gap: fail("pose: clip gap not 0.3-2.0 s (clips touching/overlapping): " + ", ".join(bad_gap[:5]))
-    if not re.search(r" gap [\d.]+", log): fail("pose: no clip gap logged - clips are butted together")
+    if any(len(c.get("motions", [])) > 1 for c in S["cast"].values()) and not re.search(r" gap [\d.]+", log):
+        fail("pose: no clip gap logged - clips are butted together")
     noface = [n for n in S["cast"] if not re.search(r"^%s face .* speed 0\.(6[5-9]|7[0-5])" % re.escape(n), log, re.M)]
     if noface: fail("pose: no face motion clips (65-75%) for " + ", ".join(noface))
     say("OK pose (look: gui shot)")
 
 
 def step_sound(S, base):
-    live("sound", 0, "ใส่เสียง"); gui("sound", os.path.normpath(S["wav"]), "-Replace")
-    live("sound", 50, "เซฟ"); gui("save"); live("sound", 100, "เสร็จ"); say("OK sound (check ic8_jobs/gui_tl.png: Sound row at frame 0)")
-
+    live("sound", 0, "ใส่เสียง"); gui("sound", os.path.normpath(S["wav"]), "-VerifyExisting" if S.get("sound_verify_existing") else "-Replace")
+    live("sound", 100, "เสร็จ")
+    say("OK sound: native inventory verified one Project Sound clip at frame zero. Keep it unchanged during repairs; save only at the ready gate.")
 
 def windows(S):
     w = {n: [] for n in S["cast"]}
@@ -570,11 +692,45 @@ def windows(S):
 
 def step_lip(S, base):
     w = windows(S); wav = os.path.normpath(S["wav"])
-    talk = [n for n, ws in w.items() if ws]; tot = len(talk) + 3   # each talker + trim + check + save
-    for i, n in enumerate(talk):
-        count("lip", i, tot, "ปาก %s" % n); gui("lip", n, wav, w[n][0][0], w[n][-1][1])
+    talk = [n for n, ws in w.items() if ws]; tot = len(talk) + 2   # each talker + trim + check
+    if S.get("lip_retrim_existing"):
+        say("Repair existing AccuLips keys only")
+    else:
+        preserve = set(S.get("lip_preserve_existing", []))
+        if preserve:
+            job(open(os.path.join(SCR, "ic8_lip_check.py"), encoding="utf-8").read(), "zz_part_lip_resumecheck")
+            current = rlog("lip_check.txt")
+            for n in preserve:
+                m = re.search(r"^%s visemes (\d+)" % re.escape(n), current, re.M)
+                if n not in talk or not m or int(m.group(1)) <= 0: fail("cannot preserve missing visemes: " + n)
+                say("Preserving verified existing visemes: %s (%s)" % (n, m.group(1)))
+        # Countdown (user 2026-11-28): an actor whose mouth already passed is not redone; only the rest.
+        from repair_queue import record, line, _doc
+        old = _doc(Path(ROOT) / "progress", S["story"], S["part"])[1].get("stages", {}).get("lip", {}).get("items", {})
+        kept = [n for n in talk if n not in preserve and old.get(n, {}).get("state") == "pass"]
+        if kept:
+            job(open(os.path.join(SCR, "ic8_lip_check.py"), encoding="utf-8").read(), "zz_part_lip_resumecheck")
+            current = rlog("lip_check.txt")
+            for n in kept:
+                m = re.search(r"^%s visemes (\d+)" % re.escape(n), current, re.M)
+                if m and int(m.group(1)) > 0: preserve.add(n); say("Lip already passed, kept: %s (%s visemes)" % (n, m.group(1)))
+        items = {n: {"state": "pass" if n in preserve else "pending", "detail": old.get(n, {}).get("detail")} for n in talk}
+        row = record(Path(ROOT) / "progress", S["story"], S["part"], "lip", items); say(line("lip", row))
+        for i, n in enumerate(talk):
+            if n in preserve: continue
+            count("lip", i, tot, "ปาก %s" % n)
+            try: gui("lip", n, wav, w[n][0][0], w[n][-1][1], "-DeferTrim")
+            except SystemExit as e:
+                if e.code != 3:
+                    try: why = open(os.path.join(ROOT, "progress", "now_log.txt"), encoding="utf-8").read().splitlines()[-1][:200]
+                    except OSError: why = "lip failed"
+                    items[n] = {"state": "fail", "detail": why}
+                    say(line("lip", record(Path(ROOT) / "progress", S["story"], S["part"], "lip", items)))
+                raise
+            items[n] = {"state": "pass", "detail": "AccuLips keys created"}
+            say(line("lip", record(Path(ROOT) / "progress", S["story"], S["part"], "lip", items)))
     count("lip", len(talk), tot, "ตัดปากให้ตรงช่วงพูด")
-    job(pyjob("os.environ['LIPWIN']=%r\nexec(open(r'%s',encoding='utf-8').read())" % (json.dumps(w, ensure_ascii=False), os.path.join(SCR, "ic8_lip_trim.py"))), "zz_part_lip")
+    job(pyjob("os.environ['LIPWIN']=%r\nexec(open(r'%s',encoding='utf-8').read())" % (json.dumps(dict(w, __end__=duration(wav)), ensure_ascii=False), os.path.join(SCR, "ic8_lip_repair_existing.py" if S.get("lip_repair_existing_keys") else "ic8_lip_trim.py"))), "zz_part_lip")
     say(rlog("lip_trim.txt"))
     job(open(os.path.join(SCR, "ic8_lip_check.py"), encoding="utf-8").read(), "zz_part_lipcheck")
     count("lip", len(talk) + 1, tot, "ตรวจปาก"); chk = rlog("lip_check.txt"); say(chk)
@@ -582,8 +738,8 @@ def step_lip(S, base):
         m = re.search(r"^%s visemes (\d+)" % re.escape(n), chk, re.M)
         if ws and (not m or int(m.group(1)) == 0): fail("%s speaks but has no visemes" % n)
     open(os.path.join(J, "lip.done"), "w").write(time.strftime("%H:%M:%S"))
-    count("lip", len(talk) + 2, tot, "เซฟ"); gui("save"); count("lip", tot, tot, "เสร็จ"); say("OK lip")
-
+    count("lip", tot, tot, "เสร็จ")
+    say("OK lip. Save only at the ready gate.")
 
 def cams_args():
     """cams [--shot 3,5] [--full]: default quick pass = 1 still (middle) per shot; --shot re-shoots only those
@@ -591,18 +747,41 @@ def cams_args():
     only = []
     if "--shot" in sys.argv:
         only = [int(x) for x in sys.argv[sys.argv.index("--shot") + 1].split(",") if x.strip()]
+    if not only and os.environ.get("AIICLONE_REPAIR_SHOTS"):
+        only = [int(x) for x in os.environ["AIICLONE_REPAIR_SHOTS"].split(",")]
     return only, ("--full" in sys.argv)
 
 
 def step_cams(S, base):
+    from cinematic_qa import require_replan,capture_cams
+    if not require_replan(S,Path(ROOT)): fail("camera replan missing or stale; repair camera_replan")
     end = duration(S["wav"])
     only, full = cams_args()
-    rate = S.get("review_per_sec", 1) if full else 0
-    wjson("cams.json", {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
+    rate = max(1,S.get("review_per_sec",1))
+    config = {"end": end, "per_sec": rate, "only": only, "shots": S["shots"],
                         "face_light_multiplier": S.get("face_light_multiplier", 0.04),
                         "face_light_overrides": S.get("face_light_overrides", {}),
-                        "face_light_source": S.get("face_light_source")})
-    job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
+                        "side_fill_overrides": S.get("side_fill_overrides", {}),
+                        "face_light_source": S.get("face_light_source")}
+    resume = S.get("resume_completed_cams", False) or os.environ.get("AIICLONE_RESUME_CAMS") == "1"
+    if resume:
+        cfgpath = os.path.join(J, "cams.json")
+        if json.load(open(cfgpath, encoding="utf-8")) != config: fail("cams: completed job config differs")
+        run = os.path.join(J, "run", "zz_part_cams")
+        if os.path.exists(run + ".py") or not os.path.isfile(run + ".done"): fail("cams: job still pending or incomplete")
+        if "OK" not in open(run + ".log", encoding="utf-8").read(): fail("cams: completed job did not report OK")
+        stamp = os.path.getmtime(cfgpath)
+        if os.path.getmtime(os.path.join(J,"cams.log.txt")) < stamp or os.path.getmtime(run + ".done") < stamp: fail("cams: stale job receipt")
+        import glob
+        for i, sh in enumerate(S["shots"], 1):
+            if only and i not in only: continue
+            files = glob.glob(os.path.join(J, "cam_%02d_*.png" % i))
+            expected = max(3, min(8, int(round((sh["t"][1]-sh["t"][0])*rate))+1))
+            if len(files) != expected or any(os.path.getmtime(f)<stamp for f in files): fail("cams: missing or stale stills")
+        say("Resume verified completed camera job; no new capture.")
+    else:
+        wjson("cams.json", config)
+        job(open(os.path.join(SCR, "ic8_cams.py"), encoding="utf-8").read(), "zz_part_cams")
     log = rlog("cams.log.txt"); say(log)
     if "ERROR" in log or "DONE" not in log: fail("cams")
     if "STILL_MISMATCH" in log: fail("cams: some stills were taken before the camera reached its planned position (see STILL_MISMATCH lines). Re-run cams; do not show these stills")
@@ -615,7 +794,16 @@ def step_cams(S, base):
                            capture_output=True, text=True)
         say(r.stdout)
         if r.returncode: fail("cams: stills jump/flip inside a shot = bad capture, not the real camera. Re-run cams --full; do not show these stills")
-    subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), os.path.join(J, "part_cams.jpg")])
+    sheet = os.path.join(J, "part_cams.jpg")
+    prior = os.stat(sheet).st_mtime_ns if os.path.isfile(sheet) else None
+    result = subprocess.run([sys.executable, os.path.join(SCR, "contact_sheet.py"), os.path.join(J, "cam_*.png"), sheet])
+    if result.returncode or not os.path.isfile(sheet) or (prior is not None and os.stat(sheet).st_mtime_ns == prior):
+        fail("cams: fresh contact sheet not verified; do not send old preview")
+    capture_cams(S,Path(ROOT),Path(J))
+    bridge = os.path.join(ROOT, "tools", "chrome_preview_bridge", "queue_preview.py")
+    if os.path.isfile(bridge):
+        br = subprocess.run([sys.executable, "-B", bridge, sheet, str(S.get("story","")), str(S.get("part",""))], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
+        say("Preview bridge: " + (br.stdout.strip() if not br.returncode else "queue failed"))
     say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % os.path.join(J, "part_cams.jpg"))
 
 
@@ -649,10 +837,18 @@ def step_motion_check(S, base):
     wjson("motion_check.json", {"end": duration(S["wav"]), "cast": list(S.get("cast", {}))})
     job(MOTION_JOB, "zz_part_motion")
     if "DONE" not in rlog("motion_check.log.txt"): fail("motion_check job")
-    d = json.load(open(os.path.join(J, "drift.json"), encoding="utf-8")); bad = []
-    for n, r in d.items():
+    d = json.load(open(os.path.join(J, "drift.json"), encoding="utf-8")); bad = []; items={}
+    for n in S.get("cast",{}):
+        r=d.get(n)
+        if not r:
+            bad.append(n);items[n]={"state":"fail","detail":"missing live motion evidence"};continue
         say("  %s drift %s cm, jumps %s" % (n, r["range"], r["big"][:4]))
-        if max(r["range"]) > S.get("max_drift", 60) or r["big"]: bad.append(n)
+        failed=max(r["range"]) > S.get("max_drift", 60) or bool(r["big"])
+        if failed: bad.append(n)
+        items[n]={"state":"fail" if failed else "pass","detail":{"range":r["range"],"jumps":r["big"]}}
+    from repair_queue import record,line
+    row=record(Path(ROOT)/"progress",S["story"],S["part"],"motion_check",items)
+    say(line("motion_check",row))
     if bad: fail("motion_check: %s walk away/snap back or jerk. Use an in-place motion or lower speed, re-run pose" % ", ".join(bad))
     say("OK motion_check: everyone stays in place")
 
@@ -782,18 +978,19 @@ def step_light_check(S, base):
 
 def step_switch(S, base):
     gui("switch")   # user 2026-11-21: viewport on the Switch camera before the user checks
-    say("OK viewport = Switch camera. STOP: send the stills; the user checks and says ผ่าน")
+    from sleep_session import active
+    say("OK viewport = Switch camera. "+("Sleep Mode: verify evidence and use sleep-approve." if active(Path(ROOT),S["story"],str(S["part"])) else "STOP: user reviews and approves."))
 
 
 def step_video_check(S, base):
     v = expand(S["video"])
     if not os.path.exists(v): fail("video_check: no video at %s" % v)
-    out = subprocess.run([FFP, "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", v], capture_output=True, text=True).stdout.strip()
-    got, want = float(out or 0), duration(S["wav"])
-    if abs(got - want) > 1.0: fail("video_check: video %.1fs, sound %.1fs" % (got, want))
-    aud = subprocess.run([FFP, "-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", v], capture_output=True, text=True).stdout.strip()
-    if not aud: fail("video_check: video has no sound track")
-    say("OK video_check: %s %.1fs (%.0f MB)" % (os.path.basename(v), got, os.path.getsize(v) / 1e6))
+    from media_qa import probe_video
+    want=duration(S["wav"])
+    try: got=probe_video(FFP,v,want)
+    except (ValueError,RuntimeError,OSError,subprocess.SubprocessError) as e:fail("video_check: "+str(e))
+    say("OK video_check: %s video %.2fs audio %.2fs" % (os.path.basename(v),got["video"],got["audio"]))
+
 
 
 def step_cam_check(S, base):
@@ -810,39 +1007,121 @@ def step_ready(S, base):
     g = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "progress", "%s_%s.json" % (S.get("story"), S.get("part")))
     d = json.load(open(g, encoding="utf-8")) if os.path.exists(g) else {}
     sd = d.get("steps_done", {})
-    miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") != "บรรยาย" for l in S.get("lines", [])))]
+    miss = [k for k in ORDER if k not in sd and not (k == "lip" and not any(l.get("who") not in NARR for l in S.get("lines", [])))]
     if miss: fail("ready: run these steps first, in order: " + ", ".join(miss))
-    if not d.get("ok", {}).get("step5"): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
-    for i, g in enumerate(("switch", "tozero", "save", "reopen")): count("ready", i, 4, g); gui(g)
-    count("ready", 4, 4, "เสร็จ")
-    say("OK ready. STOP: tell the user to press Play in iClone (Switch, frame 0). Render only after they say ผ่าน.")
+    from cinematic_qa import editorial_valid
+    if not editorial_valid(S,Path(ROOT)):fail("ready: editorial evidence stale; repair and review")
+    from sleep_session import approval_valid
+    if not (d.get("ok", {}).get("step5") or approval_valid(Path(ROOT),S["story"],str(S["part"]),d)): fail("ready: the user has not approved the stills (Preview: ผู้ใช้ตรวจ)")
+    from cinematic_qa import write
+    from workflow_state import menu_save_verified,expected_live_title
+    proj = os.path.normpath(S["project"])
+    if not expected_live_title(proj,title()):fail("ready: expected project not open; preserve the current scene")
+    proof = d.get("ready_menu_save")
+    if not proof:
+        for i, gate in enumerate(("switch","tozero")):count("ready",i,2,gate);gui(gate)
+        proof={"baseline_mtime_ns":os.stat(proj).st_mtime_ns if os.path.isfile(proj) else 0,"started":time.time(),"live_identity":live_project_identity()}
+        if not proof["live_identity"]:fail("ready: cannot identify the live iClone session")
+        d["ready_menu_save"]=proof;write(g,d)
+        say("AI WORK: click native File > Save Project; do NOT reopen. Run Ai-iclone do. If save fails or is unavailable, and the user authorizes preserving the live video, use Ai-iclone do --render-live.")
+        sys.exit(3)
+    identity=live_project_identity()
+    if not identity or (proof.get("live_identity") and proof["live_identity"]!=identity):
+        fail("ready: live session changed; do not reopen or render blindly")
+    if menu_save_verified(proj,proof,title()):
+        d.pop("ready_menu_save",None);write(g,d)
+        count("ready",2,2,"ตรวจเซฟ ไม่เปิดซ้ำ")
+        say("OK ready: native save observed; render the current scene without reopening.")
+        return
+    if proof.get("live_render_pending_save") or os.environ.get("AIICLONE_RENDER_LIVE")=="1":
+        proof.update(live_render_pending_save=True,live_identity=identity)
+        write(g,d)
+        count("ready",2,2,"พร้อมเรนเดอร์ฉากสด — ยังไม่ได้เซฟ")
+        say("WARNING: project save NOT verified. Render the approved open scene; do not open another part until saved.")
+        return
+    say("AI WORK: save not verified. Keep the scene open. Retry File > Save Project or use Ai-iclone do --render-live when authorized. Never reopen just to test.")
+    sys.exit(3)
+
+
+def live_project_identity():
+    p=subprocess.run(["powershell","-NoProfile","-Command","$p=@(Get-Process iClone -EA 0 | Where-Object MainWindowHandle -ne 0);if($p.Count -eq 1){'{0}:{1}' -f $p[0].Id,$p[0].StartTime.ToFileTimeUtc()}"],capture_output=True,text=True,timeout=10)
+    v=p.stdout.strip()
+    return v if p.returncode==0 and re.fullmatch(r"\d+:\d+",v) else None
 
 
 def step_render(S, base, approved):
-    if not approved: fail("render needs --approved (the user must say ผ่าน first)")
+    from cinematic_qa import editorial_valid
+    if not editorial_valid(S,Path(ROOT)):fail("render: editorial evidence stale")
+    from sleep_session import approval_valid
+    d=json.load(open(os.path.join(ROOT,"progress",f'{S["story"]}_{S["part"]}.json'),encoding="utf-8"))
+    if not approved or not (d.get("ok",{}).get("step5") or approval_valid(Path(ROOT),S["story"],str(S["part"]),d)) or not all(k in d.get("steps_done",{}) for k in ORDER+["ready"] if k!="lip" or any(l["who"] not in NARR for l in S["lines"])): fail("render requires actual QA, ready and authorization")
+    from workflow_state import expected_live_title
+    pending=d.get("ready_menu_save",{})
+    if not expected_live_title(S["project"],title()):fail("render: expected approved live project not open")
+    if pending.get("live_render_pending_save") and pending.get("live_identity")!=live_project_identity():
+        fail("render: approved live session changed; do not reopen automatically")
+    if Path(S["video"]).exists():
+        import shutil
+        backup=Path(ROOT)/"progress"/"render_backups"/S["story"]/str(S["part"]);backup.mkdir(parents=True,exist_ok=True)
+        dest=backup/(str(time.time_ns())+".mp4");shutil.copy2(S["video"],dest)
+        say("Existing video preserved in "+str(dest))
     wait_textures()   # 2026-11-21: a render started during Texture Loading came out with white, untextured people
     end = duration(S["wav"]); mids = ",".join("%.2f" % ((s["t"][0] + s["t"][1]) / 2) for s in S["shots"])
     a = ["render", os.path.normpath(S["video"]), end, os.path.normpath(S["wav"]), "-Shots", mids]
-    if S.get("publish"): a += ["-Publish", os.path.normpath(S["publish"])]
+    # Publication is a separate user action after final review; never publish unreviewed output.
     gui(*a)
 
 
-STEPS = {"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
+def step_scene_review(S,base):
+    from cinematic_qa import scene_review
+    scene_review(S,Path(ROOT),Path(J),job,fail,say)
+
+def step_prop_review(S,base):
+    from cinematic_qa import prop_review
+    prop_review(S,Path(ROOT),Path(J),job,step_props,fail,say)
+
+def step_camera_replan(S,base):
+    from cinematic_qa import check_replan
+    check_replan(S,Path(ROOT),Path(J),fail,say)
+
+def step_editorial_review(S,base):
+    from cinematic_qa import check_editorial
+    check_editorial(S,Path(ROOT),Path(J),fail,say)
+
+def step_final_review(S,base):
+    from cinematic_qa import check_final,read,write
+    from workflow_state import menu_save_verified
+    g=Path(ROOT)/"progress"/f'{S["story"]}_{S["part"]}.json'
+    d=read(g);proof=d.get("ready_menu_save",{})
+    if proof.get("live_render_pending_save"):
+        if proof.get("live_identity")!=live_project_identity() or not menu_save_verified(S["project"],proof,title()):
+            say("AI WORK: rendered video is preserved; project save is still pending. Keep the scene open, save via File menu. Do not reopen or start another part.")
+            sys.exit(3)
+        d.pop("ready_menu_save",None);write(g,d)
+    check_final(S,Path(ROOT),fail,say)
+
+STEPS = {"scene_review":step_scene_review,"prop_review":step_prop_review,"camera_replan":step_camera_replan,"editorial_review":step_editorial_review,"final_review":step_final_review,"audio": step_audio, "check": step_check, "motion_plan": step_motion_plan, "open": step_open, "cast": step_cast, "pose": step_pose,
          "sound": step_sound, "lip": step_lip, "cams": step_cams, "cam_check": step_cam_check, "motion_check": step_motion_check,
          "light_check": step_light_check, "face_check": step_face_check, "switch": step_switch, "ready": step_ready, "video_check": step_video_check}
 
 if __name__ == "__main__":
     if len(sys.argv) < 3: print(__doc__); sys.exit(1)
     spec, step = sys.argv[1], sys.argv[2]
+    from preview_gate import require, Blocked
+    try:
+        require(spec, step, sys.argv[3:])
+    except Blocked as e:
+        print("STOP: " + str(e) + "; use Ai-iclone do", flush=True)
+        sys.exit(2)
     S = expand(json.load(open(spec, encoding="utf-8"))); base = os.path.splitext(spec)[0]
     resolve(S, spec); S["_spec"] = spec
-    if step == "render": run = ["render", "video_check"]   # the render is always followed by the video check
+    if step == "render": run = ["render"]   # video_check is the next explicit Preview step
     elif step == "all": run = ORDER
     elif step in STEPS: run = ORDER[ORDER.index(step):] if "--from" in sys.argv and step in ORDER else [step]
     else: fail("unknown step " + step)
     if run: story_gate(S)   # user 2026-11-22: stage 1 first, for every step of every part
     if run and run[0] not in ("check", "render") and step != "audio": step_check(S, base)   # never act on a broken spec
-    FULL = ORDER + ["ready", "render", "video_check"]   # every pipeline step the Preview shows, in order
+    FULL = ORDER + ["ready", "render", "video_check","final_review"]   # every pipeline step the Preview shows, in order
     def _now(st, state):   # live status for the Preview program (scripts/progress_app.py)
         try:
             f = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "progress", "now.json")
@@ -851,25 +1130,33 @@ if __name__ == "__main__":
             if (old.get("story"), str(old.get("part"))) != (S.get("story"), str(S.get("part"))):
                 open(os.path.join(os.path.dirname(f), "now_log.txt"), "w", encoding="utf-8").close()   # new part: clean log
             json.dump({"story": S.get("story"), "part": str(S.get("part")), "step": st, "state": state,
-                       "time": time.time()}, open(f, "w", encoding="utf-8"), ensure_ascii=False)
+                       "time": time.time(), "pid": os.getpid()}, open(f, "w", encoding="utf-8"), ensure_ascii=False)
             # per-part record of finished steps (Preview dots). Re-running a step = it and the steps built
             # on it are not done any more (grey again) until they finish again.
             g = os.path.join(os.path.dirname(f), "%s_%s.json" % (S.get("story"), S.get("part")))
             d = json.load(open(g, encoding="utf-8")) if os.path.exists(g) else {"ok": {}, "orders": []}
             sd = d.setdefault("steps_done", {})
             if state == "running":
-                # every later step must run again (sound/lip only touch the save/render steps)
-                # check / motion_check / light_check / video_check only READ: they never grey out other steps
-                after = FULL[FULL.index(st) + 1:] if st in FULL and not st.endswith("check") else []
-                if st in ("sound", "lip"): after = [k for k in after if k in ("lip", "ready", "render", "video_check")]
-                if st == "render": after = ["video_check"]
-                if st == "motion_plan": after = FULL[FULL.index("pose"):]   # new motions: pose onward again
+                # Invalidate only actual dependencies; read-only rechecks retain unrelated production steps.
+                from workflow_state import invalidated_steps
+                invalidate = invalidated_steps(st, FULL)
                 try: os.remove(os.path.join(J, "live.json"))   # no stale % from the previous step
                 except OSError: pass
-                for k in [st] + after: sd.pop(k, None)
-                if st in ("cast", "pose", "cams", "open"): d.get("ok", {}).pop("step5", None)   # stills change -> user must look again
+                for k in invalidate: sd.pop(k, None)
+                if "lip" in invalidate and st != "lip":
+                    from repair_queue import clear_stage
+                    clear_stage(os.path.dirname(f), S.get("story"), S.get("part"), "lip")
+                if st in ("cast", "pose", "cams", "open", "sound", "lip", "motion_plan","scene_review","prop_review","camera_replan","editorial_review","cam_check","motion_check","light_check","face_check"):
+                    d.get("ok", {}).pop("step5", None); d.pop("sleep_approval",None)
+                if st != "ready" and "ready" in invalidate: d.pop("ready_menu_save", None)
+                if "sound" in invalidate: d.pop("sound_source", None)
             elif state == "done":
                 sd[st] = time.time()
+                if st in ("open","switch"):
+                    d["live_receipt"]={"identity":live_project_identity(),"title":title()}
+                if st == "sound":
+                    from workflow_state import sound_source
+                    d["sound_source"] = sound_source(S["wav"])
             json.dump(d, open(g, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
         except Exception:
             pass
@@ -880,6 +1167,8 @@ if __name__ == "__main__":
         try:
             if s == "render": step_render(S, base, "--approved" in sys.argv)
             else: STEPS[s](S, base)
+        except SystemExit as e:
+            _now(s, "todo" if e.code==3 else "failed"); raise
         except BaseException:
             _now(s, "failed"); raise
         _now(s, "done"); ailog.done(); ailog.clean_fails()

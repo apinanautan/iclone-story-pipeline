@@ -142,9 +142,17 @@ static class AiIclone
     static bool Update(string app, bool force, bool always = false)
     {
         bool have = File.Exists(Path.Combine(app, "scripts", "ai_iclone.py"));
-        if (Directory.Exists(Path.Combine(app, ".git")))
+        if (Directory.Exists(Path.Combine(app, ".git")) || File.Exists(Path.Combine(app, ".git")))
         {
-            if (force) Log("this folder is a git checkout: update it with git pull (not auto-updated)");
+            if (have && File.Exists(Path.Combine(app, "progress", "managed_release.json")))
+            {
+                try {
+                    var psi = new ProcessStartInfo("py", "-3 -B " + Quote(Path.Combine(app, "scripts", "selfupdate.py")) + ((force || always) ? "" : " --check"));
+                    psi.UseShellExecute = false; psi.WorkingDirectory = app;
+                    using (var proc = Process.Start(psi)) { proc.WaitForExit(); }
+                } catch (Exception e) { Log("managed update failed: " + e.Message); }
+            }
+            else if (force) Log("unmanaged Git checkout; not auto-updated");
             return have;
         }
         string stamp = Path.Combine(app, "progress", "update_check.txt");

@@ -166,6 +166,32 @@ def face_lights():
         LOG.append("face light %s: %s Z=%.1f cm at %.2fs, light Z=%.1f cm, strength=%.2f, linked=%s" %
                    (a.GetName(), bone.GetName() if bone is not None else "bounds fallback", face[2],
                     visible_at, pos[2], multiplier, link))
+        side_strength = p.get("side_fill_overrides", {}).get(a.GetName(), 0)
+        if side_strength:
+            # Fill the cheek opposite the stage's main light, only for casts with observed half-shadow.
+            sid = src.Clone()
+            sid.SetName("FaceLight_" + a.GetName() + "_Side")
+            spos = (face[0] + fx * 100 + math.cos(yaw) * 90,
+                    face[1] + fy * 100 + math.sin(yaw) * 90, face[2] + 10)
+            if hasattr(RLPy.RScene, "Show"): RLPy.RScene.Show(sid)
+            if hasattr(sid, "SetActive"):
+                sid.SetActive(T(0), True); sid.SetActive(anchor, True)
+            sc = sid.GetControl("Transform")
+            st = RLPy.RTransform(); sc.GetValue(T(0), st)
+            st.T().x, st.T().y, st.T().z = spos
+            st.R().x, st.R().y, st.R().z, st.R().w = look(spos, face)
+            sc.SetValue(anchor, st)
+            sid.SetColor(T(0), RLPy.RRgb(1.0, 0.90, 0.81))
+            sid.SetMultiplier(T(0), side_strength)
+            sid.SetRange(T(0), 240)
+            sid.SetCastShadow(False)
+            try: sid.SetSpotLightBeam(T(0), 45.0, 90.0, 1.0)
+            except Exception: pass
+            if hasattr(sid, 'SetVisible'): sid.SetVisible(T(0), True)
+            try: sid.LinkTo(bone or a, RLPy.ELinkObjectAlignType__None, anchor)
+            except Exception as e: LOG.append("side fill link: %s" % e)
+            LOG.append("face side fill %s strength=%.3f" % (a.GetName(), side_strength))
+
     RLPy.RGlobal.SetTime(T(0))
 
 
@@ -183,31 +209,40 @@ try:
         RLPy.RGlobal.SetProjectLength(T(END + float(p.get("tail", 5.0))))
         RLPy.RGlobal.SetEndTime(T(END + float(p.get("tail", 5.0))))
     FACE_LIGHT_MULTIPLIER = p.get("face_light_multiplier", 0.04)
-    bad = [i + 1 for i, s in enumerate(p["shots"]) if not s.get("wide") and s["focal"] not in (80, 100)]
-    if bad: raise ValueError("shots %s: character shots must use 80 or 100 mm (or mark \"wide\": true)" % bad)
-    LIVE(2, "ไฟหน้าตัวละคร")
-    face_lights()
-    LIVE(8, "สร้างกล้อง Cam_A / Cam_B")
-    RLPy.RGlobal.Stop(); RLPy.RScene.ClearSelectObjects()
-    for _ in range(50):   # some old cameras report no Transform control: delete them all, by name loop
-        old = RLPy.RScene.GetCameras()
-        if not old:
-            break
-        RLPy.RScene.RemoveObject(old[0])
-    cams = []
-    for name in ("Cam_A", "Cam_B"):
-        before = {c.GetID() for c in RLPy.RScene.GetCameras()}
-        RLPy.RFileIO.LoadFile(ICAM); QtWidgets.QApplication.processEvents(); time.sleep(0.3)
-        new = [c for c in RLPy.RScene.GetCameras() if c.GetID() not in before]
-        new[0].SetName(name); RLPy.RGlobal.RemoveAllAnimations(new[0]); cams.append(new[0])
-    RLPy.RScene.ClearSwitchCameraKeys()
+    bad = [i + 1 for i, s in enumerate(p["shots"]) if not (s.get("wide") or s.get("coverage") in ("establishing","action","two_shot","insert")) and not 75 <= s["focal"] <= 150]
+    if bad: raise ValueError("shots %s: character shots must use 75-150 mm (or mark \"wide\": true)" % bad)
+    repair_only = set(p.get("only") or [])
+    if repair_only:
+        RLPy.RGlobal.Stop()
+        existing = {c.GetName():c for c in RLPy.RScene.GetCameras()}
+        if set(existing) != {"Cam_A","Cam_B"}: raise RuntimeError("targeted repair requires existing Cam_A and Cam_B")
+        cams = [existing["Cam_A"],existing["Cam_B"]]
+        LOG.append("targeted repair: existing cameras, lights and switch keys retained")
+    else:
+        LIVE(2, "ไฟหน้าตัวละคร")
+        face_lights()
+        LIVE(8, "สร้างกล้อง Cam_A / Cam_B")
+        RLPy.RGlobal.Stop(); RLPy.RScene.ClearSelectObjects()
+        for _ in range(50):   # some old cameras report no Transform control: delete them all, by name loop
+            old = RLPy.RScene.GetCameras()
+            if not old:
+                break
+            RLPy.RScene.RemoveObject(old[0])
+        cams = []
+        for name in ("Cam_A", "Cam_B"):
+            before = {c.GetID() for c in RLPy.RScene.GetCameras()}
+            RLPy.RFileIO.LoadFile(ICAM); QtWidgets.QApplication.processEvents(); time.sleep(0.3)
+            new = [c for c in RLPy.RScene.GetCameras() if c.GetID() not in before]
+            new[0].SetName(name); RLPy.RGlobal.RemoveAllAnimations(new[0]); cams.append(new[0])
+        RLPy.RScene.ClearSwitchCameraKeys()
     fr = 1 / 60.0
     # "subject": like select + Home in iClone: read that avatar's real bounds at the shot middle, aim at the face
     # (top - face_drop cm) and shift the camera by the same offset, keeping the planned angle and distance.
     avs = {x.GetName(): x for x in RLPy.RScene.GetAvatars()}
     for i, s in enumerate(p["shots"]):
+        if repair_only and i+1 not in repair_only: continue
         sub = avs.get(s.get("subject") or "")
-        if not sub: continue
+        if not sub or s.get("coverage") in ("establishing","action","two_shot","insert") or s.get("size") in ("EST","MS","OTS","TWO","INSERT"): continue
         LIVE(12 + 8.0 * i / len(p["shots"]), "เล็งหน้า ช็อต %d: %s" % (i + 1, s["subject"]))
         RLPy.RGlobal.SetTime(T(sum(s["t"]) / 2)); QtWidgets.QApplication.processEvents()
         mx, c, mn = RLPy.RVector3(), RLPy.RVector3(), RLPy.RVector3(); sub.GetBounds(mx, c, mn)
@@ -216,6 +251,7 @@ try:
         s["pos"] = [s["pos"][k] + dv[k] for k in range(3)]; s["target"] = new
         LOG.append("shot %d subject %s -> target %s" % (i + 1, s["subject"], [round(v) for v in new]))
     for i, s in enumerate(p["shots"]):
+        if repair_only and i+1 not in repair_only: continue
         cam = cams[i % 2]; a, b = s["t"]
         # 2026-11-22 camera bounce fix (read back from part 4 video): the end key used to sit 1 frame BEFORE the cut,
         # so the last frame(s) of every shot already showed the camera leaving for its next shot = a jerk before the cut.
@@ -226,7 +262,7 @@ try:
         c1 = [c0[k] + (tg[k] - c0[k]) * m / d for k in range(3)]
         key(cam, a, c0, tg, s["focal"]); key(cam, stop, c1, tg, s["focal"])
         dof(cam, a, c0, tg, not (s.get("wide") or s.get("no_dof"))); dof(cam, stop, c1, tg, not (s.get("wide") or s.get("no_dof")))
-        RLPy.RScene.AddSwitchCameraKey(T(a), cam)
+        if not repair_only: RLPy.RScene.AddSwitchCameraKey(T(a), cam)
         LOG.append("shot %d %s %.1f-%.1f focal %d move %+d" % (i + 1, cam.GetName(), a, b, s["focal"], m))
     import glob as _g
     only = set(p.get("only") or [])   # 1-based shot numbers to re-shoot; empty = all shots

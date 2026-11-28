@@ -1,0 +1,22 @@
+# Cinematic and Sleep workflow (1.7.9)
+
+Both modes use the same cinematic, prop and editorial standards. Normal mode keeps user approval; Sleep Mode changes only authorization and automatic chat handoff.
+
+## Preview order
+plan > audio > check > motion_plan > open > cast > sound > pose > lip > scene_review > prop_review > camera_replan > cams > cam_check > motion_check > light_check > face_check > editorial_review > switch > user_ok > ready > render > video_check > final_review.
+
+- Follow Ai-iclone do and the current rules card. Repair via Ai-iclone repair <step>, then do. No direct ic8_part dispatch. Preserve Project Sound during pose, camera and prop repair.
+- Scene Review captures actual staged scene angles. Inspect all source images under progress/cinematic_qa and record real observations. Prop Review resolves missing narrative props using existing library or Blender; verify imported scale, material, contact and placement with a fresh survey. Build authored props using py -3 scripts/blender_prop_build.py <source.py> <new output directory>. The source saves model.blend. Geometry QA and FBX export receipts are separate from visual and iClone import QA. See blender-prop-production.
+- Camera Replan: use real evidence, narrative purpose, meaningful framing and cut reasons. Character lenses 75–150 mm; contextual location/action/insert coverage 24–150 mm with story_beat. Normal hold 6–12 s, longer where useful; short cuts require reasons. No staccato cuts or repetitive same-scale faces. Preserve dialogue and story beats. See cinematic-direction.
+- Editorial Review is a second ordered visual check, plus native motion/light/face checks. Final Review needs actual rendered moving video and audio; stills alone do not certify playback. Both video/audio streams must cover original sound; no auto-publish before review.
+- Normal mode: real user approval at user_ok. Sleep: explicit scoped authorization via extension and sleep-approve after fresh QA. Never impersonate the user. Same File-menu save/reopen procedure. Pause stops new work; select a part manually to return to normal.
+- Extension 0.4.11: configure.py creates local credentials. Never commit keys. Bind conversation in the exact project, select Sleep Mode and confirm scope. Controller opens a fresh project chat, sends scoped prompt, verifies posted receipt, rebinds tracker and preview, advances only after final QA and approved plan. Ambiguous sends do not retry blindly.
+- Motion Analyzer candidate: use motion_analyze.py on a transferred animated .blend and explicit bone map. It samples evaluated skeleton per frame, local rest-relative rotation magnitude, angular speed/change, world-space position and speed, root drift and configured point contacts; report cache keyed by source bytes/settings/analyzer. This does not prove anatomical flexion, collision, realistic motion or DataLink transport. Recheck the actual staged actor. Never treat unverified transfer as passed.
+- Stable release requires isolated real tests of survey camera restore, FBX prop import, image attachment, fresh chat handoff, File save/reopen, actual video and DataLink round-trip. Offline tests are not evidence of those live integrations. Do not enable Sleep on a production story for testing.
+
+## Goal Tracker 0.4.11
+Local relay exposes an explicit stop latch and checks actual Preview authorization status for the bound chat. Stop is independent of text recognition; start manually to resume. Reload the unpacked extension after installing new files. The runtime release is available through ordinary Ai-iclone auto-update; a dirty Git checkout is deliberately excluded.
+
+
+## Current save/render rule (2026-11-27)
+Switch -> frame zero -> native File > Save Project -> Render the current open scene. Do not reopen merely to test saving. If save cannot be verified and the user authorizes live rendering, use Ai-iclone do --render-live at Ready, then Ai-iclone do to Render. The save remains pending; verify video separately. Preserve the live scene and do not advance to another part until saved. Never use scripted project save or mark a failed save complete. This supersedes earlier mandatory reopen instructions.

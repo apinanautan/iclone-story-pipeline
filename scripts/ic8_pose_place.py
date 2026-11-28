@@ -76,6 +76,76 @@ def head(avatar):
     return next(b for b in avatar.GetSkeletonComponent().GetSkinBones() if b.GetName().endswith("Head"))
 
 
+
+def reach_actor(a, target_avatar, spec, end):
+    # Reuse the measured Edit Motion Layer Jacobian method used by chest_grip.
+    # Only the declared work windows get an arm adjustment. No root/face edits.
+    from PySide2 import QtWidgets
+    sk=a.GetSkeletonComponent()
+    bones={b.GetName():b for b in sk.GetSkinBones()}
+    side=spec.get("side","R")
+    joints=["CC_Base_"+side+"_Upperarm","CC_Base_"+side+"_Forearm"]
+    hand=bones["CC_Base_"+side+"_Hand"]
+    th=head(target_avatar)
+    def xyz(b):
+        v=b.WorldTransform().T(); return [v.x,v.y,v.z]
+    def settle(t):
+        RLPy.RGlobal.SetTime(T(t));QtWidgets.QApplication.processEvents()
+        a.Update();target_avatar.Update();RLPy.RGlobal.ForceViewportUpdate()
+    def dist(x,y):return math.sqrt(sum((a-b)**2 for a,b in zip(x,y)))
+    def solve3(M,b):
+        z=[list(row)+[v] for row,v in zip(M,b)]
+        for k in range(3):
+            q=max(range(k,3),key=lambda i:abs(z[i][k]));z[k],z[q]=z[q],z[k]
+            v=z[k][k];z[k]=[x/v for x in z[k]]
+            for j in range(3):
+                if j!=k:
+                    v=z[j][k];z[j]=[x-v*y for x,y in zip(z[j],z[k])]
+        return [row[3] for row in z]
+    for i in range(sk.GetClipCount()):
+        c=sk.GetClip(i);ln=c.GetClipLength()
+        start=c.ClipTimeToSceneTime(T(0)).ToFloat()/6000.
+        stop=min(end,c.ClipTimeToSceneTime(ln).ToFloat()/6000.)
+        for wi,(w0,w1) in enumerate(spec["windows"]):
+            lo,hi=max(start,w0),min(stop,w1)
+            if hi-lo<.7:continue
+            sec=(lo+hi)/2.;tick=c.SceneTimeToClipTime(T(sec))
+            controls=[]
+            for bn in joints:
+                db=c.GetControl("Layer",bones[bn]).GetDataBlock()
+                controls.extend(db.GetControl("Rotation/Rotation"+ax) for ax in "XYZ")
+            settle(sec)
+            target=[x+y for x,y in zip(xyz(th),spec.get("window_offsets",[spec["offset"]]*len(spec["windows"]))[wi])]
+            def apply(q):
+                for ctrl,deg in zip(controls,q):ctrl.SetValue(tick,math.radians(deg))
+                settle(sec);return xyz(hand)
+            angles=[0.]*6;current=apply(angles);initial=dist(current,target)
+            for _ in range(9):
+                err=dist(current,target)
+                if err<4.:break
+                jac=[]
+                for k in range(6):
+                    q=angles[:];q[k]+=6.;v=apply(q)
+                    jac.append([(v[j]-current[j])/6. for j in range(3)])
+                M=[[sum(col[j]*col[k] for col in jac)+(.055 if j==k else 0) for k in range(3)] for j in range(3)]
+                step=solve3(M,[target[j]-current[j] for j in range(3)])
+                delta=[max(-22.,min(22.,sum(col[j]*step[j] for j in range(3)))) for col in jac]
+                best=None
+                for gain in (1.,.5,.25):
+                    q=[max(-115.,min(115.,x+gain*d)) for x,d in zip(angles,delta)]
+                    v=apply(q)
+                    if dist(v,target)<err-.1:best=(q,v);break
+                if best is None:break
+                angles,current=best
+            residual=dist(apply(angles),target)
+            LOG.append("%s reach %d %.2fs initial %.1f cm final %.1f cm"%(a.GetName(),i,sec,initial,residual))
+            if residual>14:raise RuntimeError("work hand target not reachable: %.1fcm"%residual)
+            # Keep the achieved position across each work segment; ease out only outside the window.
+            for t,q in [(max(start,lo-.5),[0.]*6),(lo,angles),(sec,angles),(hi-.02,angles),(min(stop,hi+.5),[0.]*6)]:
+                if t<=lo-.01 or t>=hi+.01 or q is angles:
+                    kt=c.SceneTimeToClipTime(T(t))
+                    for ctrl,deg in zip(controls,q):ctrl.SetValue(kt,math.radians(deg))
+
 try:
     p = json.load(open(os.path.join(J, "pose_place.json"), encoding="utf-8"))
     END = p["end"]
@@ -90,6 +160,21 @@ try:
         LIVE(100.0 * ai / NAV, "%s: เริ่ม" % name)
         sk = a.GetSkeletonComponent()
         motions = s.get("motions") or ([s["motion"]] if s.get("motion") else [])
+        if s.get("external_motion"):
+            if not sk.GetClipCount(): raise RuntimeError("external motion not imported")
+            clips=[sk.GetClip(i) for i in range(sk.GetClipCount())]
+            lengths=[round(c.GetClipLength().ToFloat()/6000.0,2) for c in clips]
+            LOG.append("%s external motion clips %s" % (name,lengths))
+            if len(clips)!=1 or lengths[0]<END*.9: raise RuntimeError("external motion length/count not verified: "+str(lengths))
+        if s.get("blender_pose") and s.get("neutral_body"):
+            while sk.GetClipCount(): sk.DeleteClip(sk.GetClip(0))
+            c=sk.AddClip(T(0))
+            if c is None: raise RuntimeError("could not create neutral edit-layer clip")
+            c.SetLength(T(END))
+            if c.GetClipLength().ToFloat()<T(END-.1).ToFloat():
+                raise RuntimeError("neutral clip length not supported: "+str(c.GetClipLength().ToFloat()))
+            motions=[]
+            LOG.append("%s neutral Blender pose base %.2fs" % (name,c.GetClipLength().ToFloat()/6000.0))
         if motions:   # clips back to back, each slowed, until the part end
             while sk.GetClipCount():
                 sk.DeleteClip(sk.GetClip(0))
@@ -190,6 +275,13 @@ try:
             LOG.append("%s face NONE" % name)
         cl = sorted([(fc.GetClip(i).ClipTimeToSceneTime(T(0)).ToFloat() / 6000.0, fc.GetClip(i).GetClipLength().ToFloat() / 6000.0) for i in range(fc.GetClipCount())])
         IVS[:] = [(s0, s0 + l0, s1) for (s0, l0), (s1, _) in zip(cl, cl[1:])]   # (front start, front end, back start)
+        if s.get("lookat_prop"):
+            target = next(p for p in RLPy.RScene.GetProps() if p.GetName() == s["lookat_prop"])
+            la = sk.GetLookAtComponent()
+            result = la.AddLookAtKey(T(0), target)
+            if result is not None and hasattr(result, "IsError") and result.IsError():
+                raise RuntimeError("Look At prop failed: " + str(result))
+            LOG.append("%s lookat prop %s result %s" % (name, target.GetName(), result))
         if s.get("lookat"):
             la = sk.GetLookAtComponent()
             la.AddLookAtKey(T(0), T(1), head(av[s["lookat"]]), s.get("lookat_strength", 1.0), 0.0)
@@ -284,6 +376,246 @@ try:
                             ctl.SetValue(tt, math.radians(deg))
             a.Update()
             LOG.append("%s pose bones %s on %d clip(s)" % (name, s["bones"], sk.GetClipCount()))
+        if s.get("chest_grip") and s.get("hold_prop"):
+            # Solve arm edit-layer angles against a measured chest-space grip target.
+            # The solver uses evaluated hand world coordinates, not guessed axis directions.
+            from PySide2 import QtWidgets
+            bmap = {b.GetName(): b for b in sk.GetSkinBones()}
+            hg = s["hold_prop"]
+            hb = bmap[hg["bone"]]; fb = bmap.get(hg.get("finger"))
+            rb = bmap["CC_Base_R_Upperarm"]; lb = bmap["CC_Base_L_Upperarm"]
+            joints = ["CC_Base_R_Upperarm", "CC_Base_R_Forearm"]
+            def vec(b):
+                v = b.WorldTransform().T()
+                return [v.x, v.y, v.z]
+            def grip():
+                p = vec(hb)
+                if fb:
+                    q = vec(fb); p = [(x+y)*.5 for x,y in zip(p,q)]
+                return p
+            def settle(t):
+                RLPy.RGlobal.SetTime(t)
+                QtWidgets.QApplication.processEvents()
+                a.Update()
+                RLPy.RGlobal.ForceViewportUpdate()
+            def dist(p,q):
+                return math.sqrt(sum((x-y)**2 for x,y in zip(p,q)))
+            def solve3(M, b):
+                z=[list(row)+[v] for row,v in zip(M,b)]
+                for k in range(3):
+                    j=max(range(k,3),key=lambda j:abs(z[j][k]))
+                    z[k],z[j]=z[j],z[k]
+                    d=z[k][k]
+                    if abs(d)<1e-8:return [0,0,0]
+                    z[k]=[v/d for v in z[k]]
+                    for j in range(3):
+                        if j!=k:
+                            d=z[j][k];z[j]=[v-d*w for v,w in zip(z[j],z[k])]
+                return [row[3] for row in z]
+            for i in range(sk.GetClipCount()):
+                c=sk.GetClip(i); ln=c.GetClipLength()
+                start=c.ClipTimeToSceneTime(T(0)).ToFloat()/6000.0
+                sample=T(min(END-.03,start+.7))
+                if s.get("upright_grip"):
+                    # Correct leaning from the underlying idle using evaluated shoulder/pelvis positions.
+                    pelvis=bmap.get("CC_Base_Hip") or bmap.get("CC_Base_Pelvis")
+                    spine=bmap.get("CC_Base_Spine02")
+                    if pelvis is not None and spine is not None:
+                        db=c.GetControl("Layer",spine).GetDataBlock()
+                        sc=[db.GetControl("Rotation/Rotation"+ax) for ax in "XYZ"]
+                        def lean(q):
+                            for ctrl,deg in zip(sc,q):
+                                for tick in (T(0),ln):
+                                    ctrl.SetValue(tick,math.radians(deg))
+                            settle(sample)
+                            rr,ll,pp=vec(rb),vec(lb),vec(pelvis)
+                            v=[(rr[k]+ll[k])*.5-pp[k] for k in range(2)]
+                            return math.hypot(*v)
+                        ang=[0.,0.,0.]; before=lean(ang); err=before
+                        for step in (6.,3.):
+                            for k in range(3):
+                                best=ang[:]
+                                for direction in (-1.,1.):
+                                    trial=ang[:];trial[k]=max(-15.,min(15.,ang[k]+direction*step))
+                                    score=lean(trial)
+                                    if score<err-.15:best,err=trial,score
+                                ang=best
+                        err=lean(ang)
+                        LOG.append("%s upright clip %d lean %.1f -> %.1f cm" % (name,i,before,err))
+                if s.get("blender_pose"):
+                    # Transfer measured Blender rig segment directions through the existing
+                    # edit layer, solving against this avatar rather than assuming bone axes.
+                    segs=s["blender_pose"]["segments"]
+                    rr,ll=vec(rb),vec(lb)
+                    rx,ry=rr[0]-ll[0],rr[1]-ll[1]
+                    norm=math.hypot(rx,ry)
+                    if norm<1: raise RuntimeError("invalid shoulder frame")
+                    rx,ry=rx/norm,ry/norm
+                    def unit(v):
+                        length=math.sqrt(sum(x*x for x in v))
+                        if length<1e-4: raise RuntimeError("invalid segment vector")
+                        return [x/length for x in v]
+                    for bn in ("CC_Base_R_Upperarm","CC_Base_R_Forearm","CC_Base_R_Hand","CC_Base_L_Upperarm","CC_Base_L_Forearm","CC_Base_L_Hand"):
+                        seg=segs[bn]; child=bmap[seg["child"]]
+                        db=c.GetControl("Layer",bmap[bn]).GetDataBlock()
+                        ctrls=[db.GetControl("Rotation/Rotation"+ax) for ax in "XYZ"]
+                        x,y,z=seg["direction"]
+                        wanted=unit([rx*x-ry*y,ry*x+rx*y,z])
+                        def evaluate(q):
+                            for ctrl,deg in zip(ctrls,q):
+                                for tick in (T(0),ln): ctrl.SetValue(tick,math.radians(deg))
+                            settle(sample)
+                            v,w=vec(bmap[bn]),vec(child)
+                            return unit([b-a for a,b in zip(v,w)])
+                        q=list(s.get("bones",{}).get(bn,[0.,0.,0.]))
+                        actual=evaluate(q)
+                        for iteration in range(9):
+                            err=dist(actual,wanted)
+                            if err<.075:break
+                            jac=[]
+                            for k in range(3):
+                                v=q[:];v[k]+=5.
+                                w=evaluate(v)
+                                jac.append([(w[j]-actual[j])/5. for j in range(3)])
+                            M=[[sum(col[j]*col[k] for col in jac)+(.000045 if j==k else 0) for k in range(3)] for j in range(3)]
+                            step=solve3(M,[wanted[j]-actual[j] for j in range(3)])
+                            delta=[max(-35.,min(35.,sum(col[j]*step[j] for j in range(3)))) for col in jac]
+                            improved=False
+                            for gain in (1.,.5,.25):
+                                v=[max(-160.,min(160.,old+gain*d)) for old,d in zip(q,delta)]
+                                w=evaluate(v)
+                                if dist(w,wanted)<err-.002:
+                                    q,actual=v,w;improved=True;break
+                            if not improved:break
+                        actual=evaluate(q)
+                        deg=math.degrees(math.acos(max(-1.,min(1.,sum(x*y for x,y in zip(actual,wanted))))))
+                        LOG.append("%s Blender direction %s error %.1f deg layer %s" % (name,bn,deg,[round(v,1) for v in q]))
+                        if deg>22: raise RuntimeError("Blender direction failed for "+bn+": %.1f deg"%deg)
+                    continue
+                controls=[]
+                for bn in joints:
+                    db=c.GetControl("Layer",bmap[bn]).GetDataBlock()
+                    controls.extend(db.GetControl("Rotation/Rotation"+ax) for ax in "XYZ")
+                angles=[float(x) for bn in joints for x in s.get("bones",{}).get(bn,[0,0,0])]
+                def apply(q):
+                    for ctrl,deg in zip(controls,q):
+                        for tick in (T(0),ln):
+                            ctrl.SetValue(tick,math.radians(deg))
+                    settle(sample)
+                    return grip()
+                current=apply(angles)
+                r,l=vec(rb),vec(lb)
+                center=[(x+y)*.5 for x,y in zip(r,l)]
+                side=[r[k]-center[k] for k in range(3)]
+                side_len=max(1.,math.hypot(side[0],side[1]))
+                target=[center[0]+side[0]/side_len*8,center[1]+side[1]/side_len*8+22,center[2]-(18 if s.get("upright_grip") else 13)]
+                if not all(math.isfinite(x) and abs(x)<2000 for x in current+target):
+                    raise RuntimeError("invalid evaluated grip target")
+                initial=dist(current,target)
+                for itr in range(9):
+                    err=dist(current,target)
+                    if err<3.0:break
+                    jac=[]
+                    for k in range(6):
+                        q=angles[:];q[k]+=6.
+                        p=apply(q)
+                        jac.append([(p[j]-current[j])/6. for j in range(3)])
+                    M=[[sum(col[j]*col[k] for col in jac)+(0.055 if j==k else 0) for k in range(3)] for j in range(3)]
+                    step=solve3(M,[target[j]-current[j] for j in range(3)])
+                    delta=[max(-22.,min(22.,sum(col[j]*step[j] for j in range(3)))) for col in jac]
+                    best=None
+                    for gain in (1.,.5,.25):
+                        q=[max(-115.,min(115.,v+gain*d)) for v,d in zip(angles,delta)]
+                        p=apply(q)
+                        if dist(p,target)<err-.1:
+                            best=(q,p);break
+                    if best is None:
+                        current=apply(angles);break
+                    angles,current=best
+                current=apply(angles)
+                residual=dist(current,target)
+                LOG.append("%s chest grip clip %d initial %.1f cm final %.1f cm target %s actual %s angles %s" % (name,i,initial,residual,[round(x,1) for x in target],[round(x,1) for x in current],[round(x,1) for x in angles]))
+                if residual>12.:
+                    raise RuntimeError("chest grip did not converge (%.1f cm)" % residual)
+
+        if s.get("hand_gesture"):
+            from PySide2 import QtWidgets
+            root=os.path.join(os.environ["PUBLIC"],"Documents","Reallusion","Reallusion Templates","Animation","Gesture")
+            candidates=[os.path.join(d,f) for d,_,fs in os.walk(root) for f in fs if f==s["hand_gesture"]]
+            if len(candidates)!=1 or not candidates[0].lower().endswith(".ihand"): raise RuntimeError("missing or ambiguous native hand preset")
+            RLPy.RGlobal.SetTime(T(0))
+            RLPy.RScene.ClearSelectObjects()
+            RLPy.RScene.SelectObject(a)
+            before=sk.GetClipCount()
+            status=RLPy.RFileIO.LoadFile(candidates[0])
+            QtWidgets.QApplication.processEvents()
+            a.Update()
+            if status is not None and hasattr(status,"IsError") and status.IsError():raise RuntimeError("hand gesture rejected: "+str(status))
+            if sk.GetClipCount()!=before:raise RuntimeError("hand gesture changed body clip count")
+            RLPy.RScene.ClearSelectObjects()
+            LOG.append("%s loaded gesture %s status %s"%(name,s["hand_gesture"],status))
+        if s.get("hold_prop"):
+            # Generic world-space tracking of a handheld prop's grip pivot.
+            from PySide2 import QtWidgets
+            h = s["hold_prop"]
+            prop = next(o for o in RLPy.RScene.GetProps() if o.GetName() == h["name"])
+            bones = {b.GetName(): b for b in sk.GetSkinBones()}
+            hand = bones[h["bone"]]; finger = bones.get(h.get("finger"))
+            ctl = prop.GetControl("Transform"); tr = RLPy.RTransform()
+            ctl.GetValue(T(0), tr); ctl.ClearKeys()
+            samples = int(math.ceil(END * 4))
+            for j in range(samples + 1):
+                tt = min(END, j / 4.0)
+                RLPy.RGlobal.SetTime(T(tt)); QtWidgets.QApplication.processEvents()
+                a.Update(); RLPy.RGlobal.ForceViewportUpdate()
+                v = hand.WorldTransform().T()
+                if finger:
+                    q = finger.WorldTransform().T()
+                    x,y,z = ((v.x+q.x)*.5,(v.y+q.y)*.5,(v.z+q.z)*.5)
+                else:
+                    x,y,z = v.x,v.y,v.z
+                if not all(math.isfinite(k) and abs(k)<2000 for k in (x,y,z)) or z<40: raise RuntimeError("invalid hand world position")
+                tr.T().x,tr.T().y,tr.T().z = x,y,z
+                ctl.SetValue(T(tt),tr)
+            prop.Update()
+            LOG.append("%s tracked prop %s with %d hand keys" % (name,h["name"],samples+1))
+            if h.get("attach"):
+                # Attach only after grip alignment; verify actual parent and spatial offset.
+                RLPy.RGlobal.SetTime(T(0)); QtWidgets.QApplication.processEvents()
+                a.Update(); prop.Update(); RLPy.RGlobal.ForceViewportUpdate()
+                world=prop.WorldTransform()
+                def xyz(tr):
+                    v=tr.T(); return [v.x,v.y,v.z]
+                def separation(u,v): return math.sqrt(sum((a-b)**2 for a,b in zip(u,v)))
+                origin=xyz(world)
+                if not hasattr(prop,"GetParent"): raise RuntimeError("Cannot verify Attach parent with this API")
+                oldparent=prop.GetParent()
+                if oldparent and oldparent.GetName()==hand.GetName():
+                    LOG.append("%s already attached to %s"%(h["name"],hand.GetName()))
+                else:
+                    if oldparent and oldparent.GetName() not in ("Scene Root","Scene Root_root","Root","root"):
+                        raise RuntimeError("Unexpected existing parent: "+oldparent.GetName())
+                    # Preserve frame-zero world pose before converting to a single local key.
+                    ctl.ClearKeys();ctl.SetValue(T(0),world);prop.Update()
+                    status=prop.SetParent(hand)
+                    parent=prop.GetParent()
+                    if not parent or parent.GetName()!=hand.GetName() or (hasattr(status,"IsError") and status.IsError()):
+                        raise RuntimeError("Attach to bone not supported by current API; actual parent "+str(parent.GetName() if parent else None))
+                    prop.Update();RLPy.RGlobal.ForceViewportUpdate()
+                    drift=separation(origin,xyz(prop.WorldTransform()))
+                    if drift>2.0:
+                        prop.SetParent(oldparent)
+                        ctl=prop.GetControl("Transform");ctl.ClearKeys();ctl.SetValue(T(0),world);prop.Update()
+                        raise RuntimeError("Attach changed aligned grip by %.1f cm; reverted parent"%drift)
+                    local=prop.LocalTransform()
+                    ctl=prop.GetControl("Transform");ctl.ClearKeys();ctl.SetValue(T(0),local);prop.Update()
+                    start_local=xyz(local)
+                    for seconds in (0.,END*.5,END-.05):
+                        RLPy.RGlobal.SetTime(T(seconds));QtWidgets.QApplication.processEvents();a.Update();prop.Update()
+                        if separation(start_local,xyz(prop.LocalTransform()))>1.: raise RuntimeError("Attached local offset changed")
+                        if separation(xyz(prop.WorldTransform()),xyz(hand.WorldTransform()))>20.:raise RuntimeError("Attached prop not at hand")
+                    LOG.append("%s ATTACH verified parent=%s, stable local offset, three times"%(h["name"],hand.GetName()))
+                RLPy.RGlobal.SetTime(T(0))
         LIVE(100.0 * (ai + 0.85) / NAV, "%s: ตั้งตำแหน่ง/การมองเห็น" % name)
         vis = sorted(s.get("visible", []))
         for t, v in vis:
@@ -302,6 +634,10 @@ try:
                     continue   # re-check the same time after the fix
                 f += 60
             if fixed: LOG.append("%s visible: overwrote %d stale key(s)" % (name, fixed))
+    for name, cfg in p["avatars"].items():
+        if cfg.get("reach_actor"):
+            LIVE(95, "วางมือให้สัมพันธ์กับตัวละคร")
+            reach_actor(av[name], av[cfg["reach_actor"]["name"]], cfg["reach_actor"], END)
     RLPy.RGlobal.SetTime(T(0))
     LIVE(100, "เสร็จ")
     LOG.append("DONE")

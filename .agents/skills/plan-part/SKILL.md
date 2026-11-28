@@ -27,3 +27,17 @@ Start from the timed transcript (`brief` prints it). For each line ask: who spea
   Then look at the NEXT part's first line: the next part should open on a different angle/person, not the same shot.
 - No shot under ~3 s unless it is a quick reaction the story needs.
 - Close-ups: aim at eye height, full head with a little room above (check every still).
+
+## 2026-11-27 — Mandatory shot-size rhythm (user)
+- Plan the entire shot sequence by visible framing and narrative function, not lens or left/right angle alone. For each shot record subject, size (contextual chest-up / MCU / CU / OTS / insert / establishing), purpose, and the visible difference from adjacent shots. 80/100 mm is a lens constraint, NOT a shot-size category. Change distance and target to vary the actual composition while keeping established framing constraints.
+- FAIL a sequence dominated by same-scale face-only shots (including 80 mm left, 80 mm right, other faces at the same size). Small angle shifts, switching Camera_A/B, or changing 80 to 100 without a visible size change do not count as diversity. Same-subject cuts require visibly different scale AND meaningful angle; matching reverse shots of different speakers are allowed for a motivated dialogue pair, not as the entire sequence.
+- Use a wider contextual chest-up/OTS composition to establish relationship or action, MCU for normal storytelling, CU for emotional emphasis, and a relevant insert/reaction when the script and existing framing rules permit. Do not force a wide/full-body shot, insert, or arbitrary cut. Preserve screen direction, speaker coverage, continuity and slow motion. A close-up is a storytelling accent, not the default for every shot.
+- At cam_check inspect the full actual contact sheet as a sequence, not isolated thumbnails. Label each shot's actual framing and compare the visible head/body size, composition and purpose. If the sequence reads as repeated faces with minor left/right changes, mark the affected differs=false and describe the framing repair; do not pass until revised fresh images visibly solve it. Compare previous part's last shot and current first shot. In future Sleep Mode, repeat this review independently as director/editor before render; score cannot override a repetitive sequence. This is a visual QA rule, not a demand to alternate focal lengths.
+
+
+## Current integrated runtime
+Follow docs/CINEMATIC_SLEEP.md and live Preview cards. New camera and evidence rules supersede old 80/100-only and fixed-cut rules. Preserve sound and actual manual File-menu save without reopen. Normal and Sleep share QA; Sleep requires explicit scoped activation. Do not bypass real checks.
+
+
+## Current save/render rule (2026-11-27)
+Switch -> frame zero -> native File > Save Project -> Render the current open scene. Do not reopen merely to test saving. If save cannot be verified and the user authorizes live rendering, use Ai-iclone do --render-live at Ready, then Ai-iclone do to Render. The save remains pending; verify video separately. Preserve the live scene and do not advance to another part until saved. Never use scripted project save or mark a failed save complete. This supersedes earlier mandatory reopen instructions.

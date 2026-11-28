@@ -19,10 +19,10 @@ J = os.path.join(os.environ.get("LOCALAPPDATA", ""), "Tidmunz Studio", "snapgen_
 SHEET = "part_cams_all.jpg"
 # question -> what must be true (shown in the file and the card)
 ASK = {
-    "subject_face": "the speaker (or the subject of the narration) is in frame and we see the FACE: front or 3/4, not the back/profile only, not dark",
-    "framing": "no head cut at the top, nobody sliced by the frame edge, no big empty wall/sky/ground, not full-body-and-legs (except the wide shot)",
+    "subject_face": "the actual narrative subject/action/location is visible; speaking face readable when dialogue needs it; establishing/insert/action may show relevant props without a face",
+    "framing": "no head cut at the top, nobody sliced by the frame edge, no big empty wall/sky/ground, no unmotivated full-body framing; contextual action/establishing permitted when it serves the story",
     "clean": "no body through a chair/table/bed, nobody floating, no missing/glitchy models, nothing blocking the face",
-    "differs": "clearly different from the shot before it (not the same angle only nearer/farther); shot 1 = true",
+    "differs": "meaningful change in visible scale, composition or narrative beat; small left-right changes or repetitive same-size faces do not count; shot 1 compare previous part if evidence exists",
 }
 
 
@@ -46,10 +46,10 @@ def who_at(S, t):
 
 
 def stills(n_shots, jobs=J):
-    """{shot: middle still} from cams (cam_SS_KK_TTT.Ts.png)."""
+    """{shot: middle still} from cams (cam_SS_mid.png or sampled stills)."""
     by = {}
     for f in sorted(glob.glob(os.path.join(jobs, "cam_*.png"))):
-        m = re.match(r"cam_(\d+)_(\d+)_", os.path.basename(f))
+        m = re.match(r"cam_(\d+)_(?:mid\.png$|\d+_)", os.path.basename(f))
         if m: by.setdefault(int(m.group(1)), []).append(f)
     return {s: fs[len(fs) // 2] for s, fs in by.items() if 1 <= s <= n_shots}
 
@@ -79,16 +79,23 @@ def check(S, jobs=J, prog=os.path.join(ROOT, "progress")):
     if not n: return 1, "FAIL cam_check: the spec has no shots"
     pick = stills(n, jobs)
     miss = [i for i in range(1, n + 1) if i not in pick]
-    if miss: return 1, "FAIL cam_check: no still for shot %s -> run cams first (ic8_part.py <spec> cams)" % ",".join(map(str, miss))
+    if miss: return 1, "FAIL cam_check: no still for shot %s -> return to cams with Ai-iclone repair-cams, then Ai-iclone do" % ",".join(map(str, miss))
     out = os.path.join(jobs, SHEET); make_sheet(S, pick, out)
     vf = os.path.join(prog, "%s_%s_camcheck.json" % (S.get("story"), S.get("part")))
     old = {}
-    try: old = {e.get("img"): e for e in json.load(open(vf, encoding="utf-8")).get("shots", [])}
+    try: old = {(e.get("shot"),e.get("img")): e for e in json.load(open(vf, encoding="utf-8")).get("shots", [])}
     except Exception: pass
     shots = []
     for i, sh in enumerate(S["shots"], 1):
-        h = md5(pick[i]); e = old.get(h) or {}
-        shots.append({"shot": i, "t": sh["t"], "who": who_at(S, sum(sh["t"]) / 2), "img": h,
+        h = md5(pick[i]); e = old.get((i,h)) or {}
+        samples = hashlib.sha256()
+        for f in sorted(glob.glob(os.path.join(jobs,"cam_%02d_*.png" % i))):
+            samples.update(os.path.basename(f).encode("utf-8"))
+            with open(f,"rb") as sample: samples.update(hashlib.sha256(sample.read()).digest())
+        evidence=samples.hexdigest()
+        if e.get("samples") and e["samples"]!=evidence: e={}
+
+        shots.append({"shot": i, "t": sh["t"], "who": who_at(S, sum(sh["t"]) / 2), "img": h, "samples": evidence,
                       "see": e.get("see", ""), **{k: e.get(k) for k in ASK}, "fix": e.get("fix", "")})
     doc = {"image": out, "how": "Open the image. For EVERY shot write 'see' = what is really in the frame, and true/false "
            "for each question. false -> write 'fix' (what to change in the spec). Do not guess from the plan: the image wins.",
@@ -96,6 +103,10 @@ def check(S, jobs=J, prog=os.path.join(ROOT, "progress")):
     os.makedirs(prog, exist_ok=True)
     json.dump(doc, open(vf, "w", encoding="utf-8"), ensure_ascii=False, indent=1)
     blank = [e["shot"] for e in shots if len(e["see"].strip()) < 10 or any(e[k] is None for k in ASK)]
+    from repair_queue import record,line
+    items={str(e["shot"]):{"state":"pending" if e["shot"] in blank else ("pass" if all(e[k] is True for k in ASK) else "fail"),"detail":e["fix"] or e["see"],"image":e["img"]} for e in shots}
+    row=record(prog,S.get("story"),S.get("part"),"cam_check",items)
+    print(line("cam_check",row))
     if blank:
         return 3, ("AI WORK cam_check: open %s (ALL %d shots in one image) and fill %s for shots %s.\n"
                    "Each shot: see = what is really in the frame; true/false: %s. Then run again."
@@ -103,7 +114,7 @@ def check(S, jobs=J, prog=os.path.join(ROOT, "progress")):
     bad = [e for e in shots if not all(e[k] is True for k in ASK)]
     if bad:
         return 1, ("FAIL cam_check: shots %s do not pass:\n%s\nFix those shots in the spec, then "
-                   "ic8_part.py <spec> cams --shot %s, then cam_check again."
+                   "Ai-iclone repair-cams, then Ai-iclone do (failed shots: %s)."
                    % (",".join(str(e["shot"]) for e in bad),
                       "\n".join("  S%02d %s -> %s" % (e["shot"], ",".join(k for k in ASK if e[k] is not True), e["fix"] or "(write fix)")
                                 for e in bad),

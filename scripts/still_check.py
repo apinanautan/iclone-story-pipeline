@@ -32,6 +32,18 @@ def diff(a, b):
     return 100.0 * (bd[0] ** 2 + bd[1] ** 2) ** 0.5 / w
 
 
+def stable_background(a, b):
+    """Separate character gestures from a camera jump using visible scenery at the edges.
+    The capture job also verifies actual iClone camera coordinates against planned keys."""
+    h, w = a.shape
+    shifts = []
+    for xa, xb in ((0, int(w * .22)), (int(w * .78), w)):
+        x, y = a[:, xa:xb], b[:, xa:xb]
+        if min(np.count_nonzero(x > 5), np.count_nonzero(y > 5)) >= 100:
+            shifts.append(diff(x, y) * (xb - xa) / w)
+    return bool(shifts) and min(shifts) < 2.0
+
+
 def check(files, expected_counts=None):
     """Return failures. A clean run requires every expected still, in order, with no duplicate indices."""
     shots = defaultdict(list)
@@ -72,13 +84,19 @@ def check(files, expected_counts=None):
         med = float(np.median(steps))
         for k, d in enumerate(steps, 1):
             if d > JUMP_ABS and d > JUMP_REL * max(med, 1.0):
-                fails.append("FAIL S%02d JUMP %.1fs->%.1fs shift %.1f%% (shot median %.1f%%)" %
-                             (s, items[k - 1][1], items[k][1], d, med))
+                if stable_background(ims[k - 1], ims[k]):
+                    print("WARN S%02d subject moved %.1f%% but background stayed fixed at %.1fs" % (s, d, items[k][1]))
+                else:
+                    fails.append("FAIL S%02d JUMP %.1fs->%.1fs shift %.1f%% (shot median %.1f%%)" %
+                                 (s, items[k - 1][1], items[k][1], d, med))
         for k in range(2, len(ims)):
             d1, d2 = steps[k - 1], diff(ims[k - 2], ims[k])
             if d1 > JUMP_ABS and d2 < FLIP_RATIO * d1:
-                fails.append("FAIL S%02d FLIP %.1fs similar to %.1fs, not %.1fs (inspect capture)" %
-                             (s, items[k][1], items[k - 2][1], items[k - 1][1]))
+                if stable_background(ims[k - 1], ims[k]) and stable_background(ims[k - 2], ims[k]):
+                    print("WARN S%02d performer reverses gesture %.1fs; background unchanged" % (s, items[k][1]))
+                else:
+                    fails.append("FAIL S%02d FLIP %.1fs similar to %.1fs, not %.1fs (inspect capture)" %
+                                 (s, items[k][1], items[k - 2][1], items[k - 1][1]))
         print("S%02d %d stills, estimated shifts %s" %
               (s, len(ims), " ".join("%.1f%%" % d for d in steps)))
     return fails
