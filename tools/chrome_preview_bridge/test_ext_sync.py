@@ -12,6 +12,17 @@ class T(unittest.TestCase):
             self.assertTrue((d/"popup.js").is_file());self.assertEqual((d/"config.local.js").read_text(),"KEY")
             self.assertFalse((d/"old.js.bak").exists());self.assertTrue(done)
             self.assertEqual(relay.sync_installed([d]),[])   # second run: nothing to copy
+    def test_clean_plugin_dir_loads_in_chrome(self):
+        # other PC 2026-11-28: Chrome refused the tools folder because of __pycache__
+        from unittest.mock import patch
+        with tempfile.TemporaryDirectory() as d, patch.object(relay,"PLUGIN_DIR",Path(d)/"Ai-iclone-Chrome"):
+            p=relay.prepare_plugin_dir()
+            names={x.name for x in p.iterdir()}
+            self.assertFalse([n for n in names if n.startswith("_") or n.endswith(".py") or n=="relay.key"],names)
+            self.assertIn("manifest.json",names)
+            self.assertIn(relay.KEY,(p/"config.local.js").read_text())
+            ref=set(__import__("re").findall(r'src="([^"]+)"',(p/"popup.html").read_text(encoding="utf-8")))
+            self.assertTrue(ref<=names,ref-names)   # every file the popup loads is there
     def test_popup_has_no_global_named_top(self):
         # window.top is read-only: `function top` broke the whole popup (found 2026-11-28)
         import re

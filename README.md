@@ -6,6 +6,7 @@
 > 3. [`docs/rules.md`](docs/rules.md): คำสั่งของผู้ใช้ทุกข้อ (ข้อใหม่อยู่ท้ายไฟล์)
 >
 > **ลงเครื่องใหม่:** โหลด `Ai-iclone.exe` จากหน้า [Releases](../../releases/latest) แล้วสั่ง `Ai-iclone.exe setup` ครั้งเดียว
+> ปลั๊กอิน Chrome: Load unpacked โฟลเดอร์ `%LOCALAPPDATA%\Ai-iclone-Chrome` (setup สร้างให้) ห้ามเลือกโฟลเดอร์ `tools`
 
 โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน ให้ AI (Claude, Codex, ...) คุมเป็นขั้นๆ 1 2 3 ...
 

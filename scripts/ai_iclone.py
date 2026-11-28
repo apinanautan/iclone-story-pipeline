@@ -496,8 +496,9 @@ def plugin_line():
     if have == want and age < 600: return "OK   ปลั๊กอิน Chrome %s (อัปเดตตัวเอง)" % want
     if have == want: return "--   ปลั๊กอิน Chrome %s แต่ไม่ได้ติดต่อมา %d นาที (Chrome ปิดอยู่?)" % (want, age // 60)
     if have: return "..   ปลั๊กอิน Chrome %s -> %s กำลังอัปเดตตัวเอง (ไม่เกิน 1 นาที)" % (have, want)
-    return ("FAIL ปลั๊กอิน Chrome ยังเป็นรุ่นเก่าที่อัปเดตตัวเองไม่ได้: ผู้ใช้กด reload ที่ 'iClone Preview to Chat' ใน "
-            "chrome://extensions ครั้งเดียว (หรือปิดแล้วเปิด Chrome ใหม่) ถ้ายังไม่เคยติดตั้ง: Load unpacked โฟลเดอร์ " + str(b))
+    d = Path(os.environ.get("LOCALAPPDATA", str(Path.home()))) / "Ai-iclone-Chrome"   # clean copy made by relay.prepare_plugin_dir
+    return ("FAIL ปลั๊กอิน Chrome ยังไม่ทำงาน: ถ้าติดตั้งแล้ว ปิดแล้วเปิด Chrome ใหม่ 1 ครั้ง · ถ้ายังไม่เคยติดตั้ง: เปิด chrome://extensions "
+            "เปิด Developer mode กด Load unpacked แล้วเลือกโฟลเดอร์ " + str(d) + " (ห้ามเลือกโฟลเดอร์ tools ของโปรแกรม Chrome จะขึ้น __pycache__ error)")
 
 
 def setup():
@@ -520,6 +521,11 @@ def setup():
                         "'-NoProfile','-ExecutionPolicy','Bypass','-File','\"%s\"'" % (ROOT / "mcp_server" / "install_openplugin.ps1")])
         if not os.path.isfile(os.path.join(ic, "OpenPlugin", "iCloneStoryBridge", "main.py")):
             left.append("ใน iClone: Script > Load Python > scripts/ic8_watch.py (ทุกครั้งที่เปิด iClone)")
+    try:   # clean plugin folder + relay key (a new PC has neither)
+        sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+        import relay; relay.prepare_plugin_dir()
+    except Exception as e:
+        out("FAIL เตรียมโฟลเดอร์ปลั๊กอิน Chrome ไม่ได้: %s" % e)
     pl = plugin_line()
     if pl.startswith("OK"): out(pl)
     elif pl: left.append(pl.split(None, 1)[1])

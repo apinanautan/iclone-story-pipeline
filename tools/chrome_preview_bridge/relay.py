@@ -11,7 +11,16 @@ import goal_signal
 from bridge_binding import bind,binding,handoff_options,handoff_create,handoff_bind,handoff_pending
 ROOT=Path(__file__).resolve().parent
 STATE=ROOT.parent/'preview_bridge_local'
-KEY=(ROOT/'relay.key').read_text().strip()
+def ensure_key():
+    # a new PC has no key yet: make one so the relay starts and the plugin can talk to it
+    f=ROOT/'relay.key'
+    if not f.is_file():
+        import secrets;f.write_text(secrets.token_hex(32),encoding='ascii')
+    return f.read_text().strip()
+KEY=ensure_key()
+# Chrome refuses a folder holding __pycache__ (names starting with "_"), and Python makes one next to relay.py.
+# So Chrome loads the plugin from its own clean folder (user 2026-11-28, other PC: "Failed to load extension").
+PLUGIN_DIR=Path(os.environ.get('LOCALAPPDATA',str(Path.home())))/'Ai-iclone-Chrome'
 IMAGE=Path(os.environ['LOCALAPPDATA'])/'Tidmunz Studio'/'snapgen_data'/'ic8_jobs'/'part_cams.jpg'
 LOCK=threading.Lock()
 import hashlib
@@ -296,6 +305,14 @@ def chrome_installs():
                     if json.loads((p/"manifest.json").read_text(encoding="utf-8")).get("name")=="iClone Preview to Chat":out.add(p)
                 except (OSError,ValueError):pass
     return sorted(out)
+def prepare_plugin_dir():
+    """Clean folder to 'Load unpacked' in Chrome: only the plugin files plus this PC's key config."""
+    PLUGIN_DIR.mkdir(parents=True,exist_ok=True)
+    cfg=("const LOCAL_PREVIEW_KEY="+json.dumps(KEY)+";\n").encode()
+    f=PLUGIN_DIR/'config.local.js'
+    if not f.is_file() or f.read_bytes()!=cfg:f.write_bytes(cfg)
+    sync_installed([PLUGIN_DIR])
+    return PLUGIN_DIR
 def sync_installed(targets=None):
     # user 2026-11-28: no manual reloading. Copy new files into the loaded folder; the extension reloads itself.
     done=[]
@@ -308,6 +325,6 @@ def sync_installed(targets=None):
     return done
 if __name__=='__main__':
     STATE.mkdir(exist_ok=True)
-    try:sync_installed()
+    try:prepare_plugin_dir();sync_installed()
     except OSError:pass
     ThreadingHTTPServer(('127.0.0.1',18764),Handler).serve_forever()
