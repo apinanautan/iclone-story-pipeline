@@ -1,8 +1,10 @@
 ---
 name: script-catalog
-description: Mandatory reusable script lookup and source verification before authoring or calling iClone Story Pipeline scripts; route the current Preview step to existing scripts and identify local-only or historical helpers.
+description: For program maintenance ONLY (the user asked to change pipeline code). Find and reuse existing scripts before writing new ones. Never used during story production: production runs only Ai-iclone commands step by step.
 ---
-# Script catalog — reuse first
+# Script catalog — reuse first (maintainers only)
+
+**Not for production.** While making a story part, the AI runs only the `Ai-iclone` commands the program prints (AGENTS.md, user rule 2026-11-28). Open this catalog only when the user asks to change the program itself.
 
 1. Start with Ai-iclone.exe (no arguments), inspect the live story/part/step and rules card. Preview/CLI is the sole workflow controller.
 2. Read `references/SCRIPT_CATALOG.md` in the installed plugin, or `docs/SCRIPT_CATALOG.md` in the repository. Search for the task before writing a script. The catalog covers the observed GitHub main and Windows working tree, not just filenames from an old skill snapshot.

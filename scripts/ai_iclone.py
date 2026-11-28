@@ -54,8 +54,8 @@ PART_KIND = {"plan": "ai", "audio": "script", "check": "script", "motion_plan": 
 STORY_KIND = {"sheet": "ai", "source": "ai", "range": "user", "split": "ai", "chars": "ai", "scenes": "ai",
               "partplans": "ai", "output": "ai", "story_ok": "user"}
 # rules card of a step = these skill files (short, already written for AI) + the notes below
-SKILL_OF = {"prop_review":["blender-prop-production","cinematic-direction"],"scene_review":["cinematic-direction"],"camera_replan":["cinematic-direction"],"editorial_review":["cinematic-direction"],"final_review":["cinematic-direction"],"plan": ["plan-part", "acting"], "audio": ["cut-audio"], "check": ["plan-part"], "motion_plan": ["acting","pose-bones","script-catalog","motion-analysis"],
-            "open": ["build-part"], "cast": ["build-part"], "pose": ["build-part", "pose-bones","script-catalog"], "sound": ["build-part"],
+SKILL_OF = {"prop_review":["blender-prop-production","cinematic-direction"],"scene_review":["cinematic-direction"],"camera_replan":["cinematic-direction"],"editorial_review":["cinematic-direction"],"final_review":["cinematic-direction"],"plan": ["plan-part", "acting"], "audio": ["cut-audio"], "check": ["plan-part"], "motion_plan": ["acting","pose-bones","motion-analysis"],
+            "open": ["build-part"], "cast": ["build-part"], "pose": ["build-part", "pose-bones"], "sound": ["build-part"],
             "lip": ["lip-sync"], "cams": ["review-stills"], "cam_check": ["review-stills"], "motion_check": ["review-stills","motion-analysis"],
             "light_check": ["review-stills"], "face_check": ["review-stills", "acting"], "switch": ["iclone-control"],
             "ready": ["save-render"], "render": ["save-render"], "video_check": ["save-render"],
@@ -76,12 +76,38 @@ NOTES = {
     "user_ok": "STOP: ส่งภาพรวมกล้อง (part_cams_all.jpg) ให้ผู้ใช้ดู รอผู้ใช้คลิก 'ผู้ใช้ตรวจ (ผ่าน)' ในหน้าต่าง หรือพิมพ์ในแชทว่าผ่าน แล้วรัน {cmd} approve --said \"<คำที่ผู้ใช้พิมพ์>\"",
     "render": "เรนเดอร์ได้เพราะผู้ใช้ผ่านแล้ว ใช้เวลานาน (~40 นาที) อย่าแตะ iClone ระหว่างนั้น",
 }
+# Fixed repair path per step (user 2026-11-28: the AI follows the Preview steps, it does not pick scripts).
+# After FAIL number k the AI does item k, nothing else. No item left -> STOP and report to the user.
+SPEC = "parts/<เรื่อง>_<N>.json"
+REPAIR = {
+    "open":   ["{cmd} log ดูข้อความหน้าต่าง iClone ที่ค้าง (popup) แล้ว {cmd} do อีกครั้ง"],
+    "cast":   ["แก้เฉพาะตัวละครที่ FAIL บอกใน " + SPEC + " (ไฟล์ avatar/ตำแหน่ง) แล้ว {cmd} do"],
+    "sound":  ["{cmd} repair sound แล้ว {cmd} do (ใส่เสียงใหม่ครั้งเดียว)"],
+    "pose":   ["แก้เฉพาะ motions/ตำแหน่งของตัวที่ FAIL บอกใน " + SPEC + " แล้ว {cmd} do"],
+    "lip":    ["{cmd} do อีกครั้ง (ทำเฉพาะคนที่ปากยังไม่ผ่าน คนที่ผ่านแล้วข้าม)",
+               "ใส่ \"lip_retrim_existing\": true ใน " + SPEC + " (ซ่อมคีย์ปากที่มีอยู่ ไม่สร้างใหม่) แล้ว {cmd} do"],
+    "motion_check": ["เปลี่ยนท่าของตัวที่ FAIL บอกเป็นท่าอยู่กับที่หรือช้าลงใน " + SPEC + " แล้ว {cmd} repair-pose แล้ว {cmd} do"],
+    "face_check":   ["แก้สีหน้า/ท่าของตัวที่ FAIL บอกใน " + SPEC + " แล้ว {cmd} repair-pose แล้ว {cmd} do"],
+    "cam_check":    ["แก้ shots เฉพาะช็อตที่ตอบ false ใน " + SPEC + " แล้ว {cmd} repair camera_replan แล้ว {cmd} do"],
+    "cams":   ["แก้ shots เฉพาะช็อตที่ FAIL บอกใน " + SPEC + " แล้ว {cmd} do"],
+}
+REPAIR_DEFAULT = ["แก้เฉพาะช่องในสเปกที่ FAIL บอกชื่อไว้ แล้ว {cmd} do"]
+
+
+def repair_text(step, k):
+    """The one thing to do after FAIL number k of this step; None = every fix tried, stop and report."""
+    items = REPAIR.get(step, REPAIR_DEFAULT)
+    if k > len(items): return None
+    return items[k - 1].replace("{cmd}", CMD)
+
+
 HARD = """กฎเหล็ก (ห้ามผิด):
 - ทำตามที่โปรแกรมนี้บอกเท่านั้น ไม่ต้องอ่าน AGENTS.md / rules.md / docs อื่น เว้นแต่การ์ดกฎของข้อนั้นบอก
 - ห้ามข้ามข้อหรือปลอมหลักฐาน โหมดปกติรอผู้ใช้อนุมัติ; Sleep Mode เปิดผ่านส่วนขยายโดยผู้ใช้เท่านั้นและใช้ sleep-approve หลัง QA จริง ห้ามใช้ approve --said แทนผู้ใช้
 - ห้ามเขียนลง {DRIVE} (Google Drive) ยกเว้นคัดลอกวิดีโอเสร็จไปที่ publish
 - เซฟผ่านเมนู File ใน iClone เท่านั้น ไม่ต้องเปิดไฟล์ซ้ำ ห้ามใช้สคริปต์/CLI/คีย์ลัดเซฟ ข้อ ready ตรวจหลักฐาน; ห้าม RFileIO.SaveProject / RGlobal.RenderAudio
-- ข้อไหน FAIL: AI อ่านหลักฐาน แก้ต้นเหตุเอง แล้ว do ใหม่; หากติดเพดานลองซ้ำ ให้หยุดวิธีเดิม ตรวจหลักฐาน เลือก repair ที่ตรงสาเหตุ หรือหลังแก้จริงใช้ do --force เองหนึ่งครั้ง ไม่ต้องให้ผู้ใช้พิมพ์ ลองใหม่ ซ้ำ ห้ามใช้ --force วนโดยไม่แก้ต้นเหตุ และห้ามข้ามการอนุมัติจริง; ถ้าไม่มีวิธีที่ปลอดภัยให้แจ้งเฉพาะข้อจำกัดที่ตรวจแล้ว
+- ห้ามเรียกสคริปต์ใน scripts/ เอง ห้ามเขียนสคริปต์ใหม่ระหว่างทำงาน ห้ามค้นสารบัญสคริปต์ ใช้เฉพาะคำสั่ง Ai-iclone ที่โปรแกรมนี้พิมพ์บอก
+- ข้อไหน FAIL: ทำตามบรรทัด "ทางซ่อม" ที่โปรแกรมพิมพ์ให้ข้อเดียว แล้ว do; ห้ามคิดวิธีอื่นเอง ห้ามใช้ --force; ถ้าโปรแกรมขึ้น STOP ให้รายงานผู้ใช้พร้อมข้อความ FAIL แล้วหยุด
 - ตอบผู้ใช้เป็นภาษาไทยง่ายๆ คำสั่งใหม่ของผู้ใช้ทุกข้อ เขียนต่อท้าย docs/rules.md ทันที
 - Cast -> Sound ครั้งเดียว -> Pose -> Lip -> Scene Review -> Prop Review -> Camera Replan -> Cams -> Editorial Review; แก้ Pose, Motion, กล้อง หรือเพิ่มตัวละครในโปรเจกต์เดิม ไม่ต้องใส่ Project Sound ซ้ำ. เซฟด้วยเมนู File ของ iClone เท่านั้น ไม่ต้องเปิดซ้ำ.
 """
@@ -173,7 +199,7 @@ def show_status():
 
 
 def card(step):
-    txt = []
+    txt = ["(การ์ดนี้คือความรู้ของข้อ %s เท่านั้น คำสั่งที่ทำได้คือ Ai-iclone ที่โปรแกรมพิมพ์บอก ห้ามเรียกสคริปต์ที่การ์ดเอ่ยถึงเอง)" % step]
     if step in NOTES: txt.append(NOTES[step].replace("{cmd}", CMD))
     for sk in SKILL_OF.get(step, []):
         f = SKILLS / sk / "SKILL.md"
@@ -250,14 +276,14 @@ def _do(dry=False, force=False):
         out("STOP: Sleep handoff or scope changed");return 2
     if not nxt: return 0
     kind = (STORY_KIND if stage == "story" else PART_KIND)[nxt]
-    if fails(nxt) >= 2 and not force:
-        out("AI WORK: ข้อ %s FAIL %d ครั้ง. หยุดวิธีเดิม ไม่ใช่รอผู้ใช้ออกคำสั่งซ้ำ. ตรวจ FAIL REPORT แก้ต้นเหตุจริง ใช้ repair ตามขั้นที่รองรับ แล้วทำต่อเอง; หากแก้แล้วแต่ยังติดตัวนับ ให้ AI เรียก %s do --force หนึ่งครั้งหลังตรวจหลักฐาน. ห้าม force ซ้ำโดยไม่แก้ และห้ามข้าม gate อนุมัติ." % (nxt, fails(nxt), CMD))
+    if fails(nxt) and repair_text(nxt, fails(nxt)) is None and not force:
+        out("STOP: ข้อ %s FAIL %d ครั้ง ลองทางซ่อมครบแล้ว รายงานผู้ใช้พร้อมข้อความ FAIL ล่าสุด (%s log) แล้วหยุด ห้ามคิดวิธีอื่นเอง" % (nxt, fails(nxt), CMD))
         return 2
     import repair_queue as RQ
     meth = RQ.method_sig(ROOT / "parts" / f"{story}_{n}.json", SCR) if stage == "part" else None
     why = RQ.stuck(P.PROG, story, n, nxt, meth) if meth else None
     if why:   # user 2026-11-28: count down 5,4,3,2,1; --force does not unlock a loop
-        out("STOP: " + why + ". --force ไม่ช่วย: ต้องเปลี่ยนวิธีจริง (แก้สเปก/สคริปต์ หรือใช้ repair ที่ตรงสาเหตุ) หรือรายงานจุดที่ติดพร้อมหลักฐาน")
+        out("STOP: " + why + ". ทำทางซ่อมข้อถัดไปที่โปรแกรมพิมพ์ไว้ (ถ้ามี) หรือรายงานผู้ใช้พร้อมข้อความ FAIL แล้วหยุด")
         return 2
     if kind == "user":
         if stage=="part" and nxt=="user_ok":
@@ -300,8 +326,9 @@ def _do(dry=False, force=False):
     if rc != 0:
         k = fails(nxt, True)
         if meth: RQ.note_fail(P.PROG, story, n, nxt, meth, last_fail())
-        out("FAIL ข้อ %s (ครั้งที่ %d, %.0f วินาที). อ่าน FAIL REPORT ด้านบน (ข้อไหน กี่วินาที หน้าจอเขียนอะไร) แก้ที่สาเหตุจริง ห้ามเดา%s" % (nxt, k, time.time() - t0,
-            " แก้ต้นเหตุเอง แล้ว %s do อีก 1 ครั้ง" % CMD if k < 2 else " -> AI ตรวจต้นเหตุ เปลี่ยนวิธีหรือ repair แล้วทำต่อเอง ไม่ขอให้ผู้ใช้พิมพ์ลองใหม่; หากติดจริงให้แจ้งเฉพาะข้อจำกัด"))
+        fix = repair_text(nxt, k)
+        out("FAIL ข้อ %s (ครั้งที่ %d, %.0f วินาที). อ่าน FAIL REPORT ด้านบน" % (nxt, k, time.time() - t0))
+        out(("ทางซ่อม (ทำข้อนี้ข้อเดียว): " + fix) if fix else "STOP: ลองทางซ่อมครบแล้ว รายงานผู้ใช้พร้อมข้อความ FAIL แล้วหยุด")
         out("\n" + card(nxt)); return 1
     fails(nxt, False)
     if meth: RQ.clear_attempts(P.PROG, story, n, nxt)

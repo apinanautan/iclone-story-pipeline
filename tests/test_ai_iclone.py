@@ -17,6 +17,8 @@ def fake(monkeypatch, story_states, part_states=None, spec=True):
     monkeypatch.setattr(A.P, "spec_of", lambda s, n: {"shots": [1]} if spec else None)
     monkeypatch.setattr(A, "sel", lambda: {})
     monkeypatch.setattr(A, "save_sel", lambda d: None)
+    import workflow_state   # offline: no live iClone to compare against
+    monkeypatch.setattr(workflow_state, "live_project_problem", lambda *a: None)
 
 
 def all_story_done():
@@ -65,7 +67,7 @@ def test_two_fails_stop(monkeypatch, capsys):
     fake(monkeypatch, all_story_done(), ps)
     monkeypatch.setattr(A, "fails", lambda step, add=None: 2)
     assert A.do(dry=True) == 2
-    assert "FAIL มาแล้ว" in capsys.readouterr().out
+    assert "ลองทางซ่อมครบแล้ว" in capsys.readouterr().out
 
 
 def test_plan_complete():
