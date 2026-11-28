@@ -16,12 +16,18 @@ def clean(v):
     return v
 RULES="""CC5 / iClone Story Pipeline — คู่มือสดร่วมทุกโหมด
 ก่อนเริ่มงานทุกครั้ง ตรวจเวอร์ชันบนเครื่องและ GitHub releases/main รวมถึงปลั๊กอิน iClone Story Operator ล่าสุดจากเครื่องมือที่มีอยู่จริง; ตรวจความต่างระหว่างรุ่นที่ติดตั้งและรุ่นที่เผยแพร่ ไม่ถือว่า release candidate ติดตั้งแล้ว อัปเดตอย่างปลอดภัยตามคำสั่งผู้ใช้และคู่มือ migration ที่พบเอง ไม่ต้องให้ผู้ใช้ส่งชื่อไฟล์หรือชื่อ Skill เพิ่ม ห้าม git reset/pull ทับงานที่แก้ค้างหรือเปลี่ยนรุ่นกลางขั้นที่กำลังรัน ถ้าอัปเดตไม่ได้ให้ใช้ความสามารถที่ตรวจแล้วว่าใช้งานได้ และรายงานข้อจำกัดจริง
-อ่าน AGENTS.md, docs/rules.md, docs/WORKFLOW.md, docs/MASTER_PROMPT.md, docs/SCRIPT_CATALOG.md, docs/CAMERA_GUIDE.md และ Skill ล่าสุดตามดัชนีที่สร้างจากไฟล์จริงด้านล่าง รวมถึงคู่มือใหม่ที่ปรากฏ ตรวจ live Preview status/rules ก่อนแต่ละขั้น ยึดสเปกและ progress จริงเหนือบริบทเก่า เลือกสคริปต์ที่มีอยู่ก่อนเขียนใหม่ ไม่มีลำดับขั้นหรือเลนส์ที่ฝังตายตัวใน Prompt; ใช้ validator ของ runtime ที่ตรวจแล้ว
-วางแผนบทและเวลาเสียงจริง จัดตัวละครตามวัย เสื้อผ้า ฉาก พร็อพ การแสดง อารมณ์และบทพูด รักษา Project Sound เดิม ไม่ใส่ซ้ำ วางกล้องตามความหมายและฉากจริง ตรวจ motion/face/lip/light/camera และลำดับภาพ ใช้ Blender, DataLink, Motion Library, AccuPOSE, Gesture, Edit Motion Layer และ RLPy ตามความเหมาะสม ตรวจผลจริง ไม่ปลอมหลักฐาน
+กฎ AGENTS.md (แนบไว้ด้านล่าง) มาก่อนทุกข้อความในคู่มือนี้: เดินตามขั้นใน Preview ทีละข้อด้วยคำสั่ง Ai-iclone ที่โปรแกรมพิมพ์เท่านั้น ห้ามเรียกไฟล์ใน scripts/ หรือ tools/ เอง ห้ามเลือกหรือเขียนสคริปต์ใหม่ ห้ามเปิดสารบัญสคริปต์ระหว่างทำงาน. อ่าน docs/rules.md (กฎล่าสุดของผู้ใช้) และการ์ดกฎที่ Ai-iclone พิมพ์ ยึดสเปกและ progress จริงเหนือบริบทเก่า
+วางแผนบทและเวลาเสียงจริง จัดตัวละครตามวัย เสื้อผ้า ฉาก พร็อพ การแสดง อารมณ์และบทพูด รักษา Project Sound เดิม ไม่ใส่ซ้ำ วางกล้องตามความหมายและฉากจริง ตรวจ motion/face/lip/light/camera และลำดับภาพ ความสามารถ Blender (โมชั่น พร็อพ ฉาก texture) และสถานะจริงอยู่ใน docs/BLENDER.md (แนบไว้ด้านล่าง) ตรวจผลจริง ไม่ปลอมหลักฐาน
 ใช้มาตรฐานคุณภาพเดียวกันทั้งเริ่มเรื่อง ทำต่อ และ Sleep Mode; เฉพาะการอนุมัติและการเปลี่ยนแชตเท่านั้นที่ต่างกัน โหมดปกติรอคำอนุมัติจริงก่อนเรนเดอร์ Sleep Mode ใช้สิทธิ์ที่ผู้ใช้เปิดและ gate ที่ runtime รองรับเท่านั้น ห้ามเปิด Sleep เอง เซฟผ่านเมนู File โดยไม่เปิดซ้ำ ตรวจวิดีโอและเสียงจริงก่อนนับว่าเสร็จ ไม่เผยแพร่หรือเขียนทับงานเดิมโดยไม่ได้รับอนุญาต
-ลงมือทำต่อจริงตามขั้นที่ได้รับอนุญาต ไม่หยุดเพียงรายงาน ข้อความติดตามนี้เป็นคำสั่งให้ AI ลงมือทำงานต่อเองตามสิทธิ์และขอบเขตที่ผู้ใช้ให้ไว้ ไม่ใช่คำสั่งให้ผู้ใช้ลงมือแทน ห้ามโยนคำสั่ง CLI/PowerShell/Python การพิมพ์ข้อความ การกดปุ่ม หรือขั้นตอนแก้ไขกลับไปให้ผู้ใช้ทำ หากมีเครื่องมือที่ทำได้ ให้เรียกใช้เอง ตรวจผลจริง แล้วทำขั้นถัดไปทันที ไม่ต้องขอให้ผู้ใช้พิมพ์ ลองใหม่ หรืออนุญาตซ้ำสำหรับการแก้ไขและลองใหม่ที่อยู่ในขอบเขตเดิม เมื่อเจอข้อผิดพลาดให้แก้ต้นเหตุหรือเลือกวิธีที่ได้รับอนุญาตแตกต่างจากเดิมก่อนลองใหม่ ไม่วนคำสั่งเดิมที่ไม่เกิดผล ขอผู้ใช้เฉพาะการอนุมัติที่จำเป็นจริง การให้สิทธิ์ที่เครื่องมือกำหนด หรือข้อมูลที่หาเองไม่ได้; หากทำไม่ได้จริงให้แจ้งข้อจำกัดที่พิสูจน์แล้ว ไม่อ้างว่างานสำเร็จ รักษาข้อมูลและความปลอดภัยของเครื่อง ไม่เปิดเผยคีย์ รหัสผ่าน หรือข้อมูลเรื่องอื่น"""
+ลงมือทำต่อจริงตามขั้นที่ได้รับอนุญาต ไม่หยุดเพียงรายงาน ข้อความติดตามนี้เป็นคำสั่งให้ AI ลงมือทำงานต่อเองตามสิทธิ์และขอบเขตที่ผู้ใช้ให้ไว้ ไม่ใช่คำสั่งให้ผู้ใช้ลงมือแทน ห้ามโยนคำสั่ง CLI/PowerShell/Python การพิมพ์ข้อความ การกดปุ่ม หรือขั้นตอนแก้ไขกลับไปให้ผู้ใช้ทำ หากมีเครื่องมือที่ทำได้ ให้เรียกใช้เอง ตรวจผลจริง แล้วทำขั้นถัดไปทันที ไม่ต้องขอให้ผู้ใช้พิมพ์ ลองใหม่ หรืออนุญาตซ้ำสำหรับการแก้ไขและลองใหม่ที่อยู่ในขอบเขตเดิม เมื่อเจอ FAIL ให้ทำ "ทางซ่อม" บรรทัดเดียวที่ Ai-iclone พิมพ์ แล้ว do ห้าม --force; ถ้า Ai-iclone พิมพ์ STOP ให้รายงานผู้ใช้แล้วหยุด ไม่วนคำสั่งเดิม ขอผู้ใช้เฉพาะการอนุมัติที่จำเป็นจริง การให้สิทธิ์ที่เครื่องมือกำหนด หรือข้อมูลที่หาเองไม่ได้; หากทำไม่ได้จริงให้แจ้งข้อจำกัดที่พิสูจน์แล้ว ไม่อ้างว่างานสำเร็จ รักษาข้อมูลและความปลอดภัยของเครื่อง ไม่เปิดเผยคีย์ รหัสผ่าน หรือข้อมูลเรื่องอื่น"""
 FOCUS="หลักทำงานแบบเดินหน้า: ขั้นตอนที่ลงมือเสร็จและตรวจผ่านแล้วถือว่าจบ ให้เก็บผลงานและหลักฐานเดิม ห้ามย้อนทำซ้ำ เซฟซ้ำ เรนเดอร์ซ้ำ หรือรีเซ็ตสถานะผ่านเพื่อเริ่มใหม่โดยไม่มีเหตุผลจากหลักฐานจริง. เมื่อพบข้อผิดพลาด ให้ระบุจุดที่เสียจากผลจริง แก้เฉพาะจุดนั้นและตรวจซ้ำเฉพาะส่วนที่ได้รับผลกระทบโดยตรงตาม dependency ของ validator. รักษาส่วนอื่นที่ผ่านแล้ว ไม่รื้อทั้งงานหรือย้อนท่อนเก่า. เมื่อแก้ผ่านให้เดินหน้าจากขั้นที่ยังไม่เสร็จทันที. หากผู้ใช้สั่งเปลี่ยนงานให้ยึดคำสั่งล่าสุด ห้ามปลอมผลผ่านหรือข้ามจุดอนุมัติจริง."
 
+# Skills for people editing the pipeline itself, never for production chats (user 2026-11-28: follow Preview steps only).
+MAINTAINER_ONLY={"script-catalog"}
+def agents_rule(base):
+    """The short AGENTS.md rule, embedded so no chat depends on opening the file itself."""
+    s=read(base/"AGENTS.md").strip()
+    return "\n\n=== AGENTS.md (กฎหลัก ใช้ก่อนทุกอย่าง) ===\n"+s if s else ""
 def release_info(base):
     # Local pointer contains only a path to a reviewed candidate; it is not a runtime switch.
     v=read(base/"VERSION").strip() or "unknown"
@@ -54,21 +60,23 @@ def tool_guide(base,story,other=None):
             and not (story and story in line)
             and not re.search(r'(?i)(?:api.?key|password|secret|token|relay.?key)\s*[:=]|[0-9a-f]{64}|https://chatgpt\.com/.*/?c/',line))
     sections=["\n\n=== คู่มือเครื่องมือร่วม (ใช้ครบทั้งเริ่มใหม่และทำต่อ) ===",
-      "ทุกแชตต้องค้นหาและใช้ปลั๊กอิน GPT ของ iClone Story Pipeline, Dino Bot Tunnel และเครื่องมือที่ติดตั้งอยู่จริง ไม่สมมติว่าเครื่องมือไม่มีเพราะแชตใหม่. เปิดโปรเจกต์จริง อ่าน Script Catalog, AGENTS.md และ Rules ของขั้นปัจจุบันก่อนเรียกสคริปต์. ใช้ Preview/CLI ของปลั๊กอินเป็นตัวกำกับงาน; ตรวจคำสั่ง help/rules ของเวอร์ชันปัจจุบันก่อนแก้ไฟล์หรือเรียก API. หากปลั๊กอินไม่พร้อม ให้ตรวจเครื่องมือที่เชื่อมอยู่และใช้ Dino Bot Tunnel เรียก Ai-iclone.exe ตามกฎเดิม ไม่ให้ผู้ใช้สั่งย่อยซ้ำ.",
-      "เส้นทางเลือกเครื่องมือ: วางแผน/สถานะ = Ai-iclone.exe และ progress; เสียง = cut_audio/transcribe และ sound/lip; pose = motion_pool, AccuPOSE, Gesture, Edit Motion Layer, Blender DataLink และ RLPy; กล้อง = ic8_cams, contact_sheet, cam_check; สีหน้า/การเคลื่อนไหว = face_check, motion_check, light_check; save/render = ic8_gui และ gate ของ CLI; ส่งภาพ = chrome_preview_bridge; ทดสอบ = watcher, logs และ tests. ค้นสคริปต์ตามหน้าที่ในดัชนีด้านบน อ่าน signature และข้อจำกัดก่อนเรียก.",
+      "คู่มือและ Skill ด้านล่างเป็นความรู้เท่านั้น: คำสั่ง python/py scripts/... หรือ tools/... ที่อยู่ในนั้นเป็นของคนแก้โปรแกรม ระหว่างทำเรื่องห้ามเรียกเอง ใช้เฉพาะคำสั่ง Ai-iclone ที่โปรแกรมพิมพ์ (AGENTS.md).",
+      "ทุกแชตต้องค้นหาและใช้ปลั๊กอิน GPT ของ iClone Story Pipeline, Dino Bot Tunnel และเครื่องมือที่ติดตั้งอยู่จริง ไม่สมมติว่าเครื่องมือไม่มีเพราะแชตใหม่. เปิดโปรเจกต์จริง ทำตาม AGENTS.md และ rules ของขั้นปัจจุบัน ใช้ Preview/Ai-iclone เป็นตัวกำกับงานเพียงทางเดียว. หากปลั๊กอินไม่พร้อม ให้ตรวจเครื่องมือที่เชื่อมอยู่และใช้ Dino Bot Tunnel เรียก Ai-iclone.exe ตามกฎเดิม ไม่ให้ผู้ใช้สั่งย่อยซ้ำ.",
       "เครื่องมือที่ชื่อปรากฏในคู่มืออาจยังไม่ติดตั้งหรือยังไม่ผ่านการทดสอบบนเครื่องนี้ ต้องตรวจจริง ไม่กล่าวอ้างว่าใช้งานได้แล้ว. คู่มือขั้นปัจจุบันและคำสั่งล่าสุดของผู้ใช้มีลำดับเหนือข้อความเก่าในเอกสาร."]
-    for rel in ("plugin/INSTRUCTIONS.md","docs/CHROME_PREVIEW_GUIDE.md","docs/CINEMATIC_SLEEP.md","docs/accupose_presets.md","docs/rlpy_lessons.md"):
+    for rel in ("AGENTS.md","docs/BLENDER.md","plugin/INSTRUCTIONS.md","docs/CHROME_PREVIEW_GUIDE.md","docs/CINEMATIC_SLEEP.md","docs/accupose_presets.md","docs/rlpy_lessons.md"):
         s=reusable(read(base/rel))
         if s:sections.append("\n--- "+rel+" ---\n"+s)
     for p in sorted(skill_files(base,other).values(),key=lambda p:p.parent.name):
+        if p.parent.name in MAINTAINER_ONLY:continue
         s=reusable(read(p))
         if s:sections.append("\n--- Skill: "+p.parent.name+" ---\n"+s)
     if other and other.resolve()!=base.resolve():
         sections.append("\n=== คู่มือความสามารถรุ่นเผยแพร่ที่ยังไม่ใช่ runtime ที่ติดตั้ง ===")
-        for rel in ("docs/CINEMATIC_SLEEP.md","docs/SCRIPT_CATALOG.md"):
+        for rel in ("docs/CINEMATIC_SLEEP.md",):
             data=reusable(read(other/rel))
             if data:sections.append("\n--- release "+rel+" ---\n"+data)
         for p in sorted((other/".agents"/"skills").glob("*/SKILL.md")):
+            if p.parent.name in MAINTAINER_ONLY:continue
             original=base/".agents"/"skills"/p.parent.name/"SKILL.md"
             if original.exists() and read(original)==read(p):continue
             data=reusable(read(p))
@@ -85,12 +93,11 @@ def build(kind,base=BASE,target=None):
             "ใช้ลำดับงานตามแผนจริงและเริ่มจากขั้นแรกที่ยังไม่ผ่านของงานปัจจุบัน "
             "ถ้าผู้ใช้เริ่มท่อนใหม่แล้ว ให้ทำท่อนใหม่ ไม่ย้อนกลับไปผลิตท่อนก่อนหน้า "
             "ถ้างานปัจจุบันเสร็จครบแล้ว ให้จบงานนั้นและดำเนินงานถัดไปตามขอบเขตที่ผู้ใช้อนุญาต ไม่ย้อนผลิตซ้ำ.\n\n"
-            +FOCUS+"\n\n"+RULES+
-            "\n\nตรวจเครื่องมือที่มีอยู่จริง อ่าน Script Catalog และ rules ของขั้นปัจจุบัน ใช้ Preview ควบคุมลำดับงาน. "
-            "ใช้ watcher/RLPy/Qt หรือ UI Automation แบบเจาะจงหน้าต่างก่อนเมาส์จริง. "
+            +FOCUS+"\n\n"+RULES+agents_rule(base)+
+            "\n\nรัน Ai-iclone.exe อ่านสถานะและข้อถัดไป แล้วทำตามคำสั่งที่โปรแกรมพิมพ์ทีละคำสั่ง. "
             "ตรวจการผูกแชตสำหรับส่งภาพจาก /status ของ Relay; marker ของ Prompt ที่ผู้ใช้ส่งจริงใช้ผูกแชตอัตโนมัติตามเรื่องที่เปิดอยู่จริง "
-            "ไม่ต้องให้ผู้ใช้พิมพ์หรือกดซ้ำ. ตรวจภาพจริงและใบตอบรับ sent; ใช้ capture_preview.py --send หรือ queue_preview.py ตามคู่มือ "
-            "ห้ามส่งซ้ำเมื่อมีภาพค้างหรือยังตรวจใบตอบรับไม่ได้. รักษาข้อจำกัดการเซฟและการอนุมัติจริง. "
+            "ไม่ต้องให้ผู้ใช้พิมพ์หรือกดซ้ำ. ภาพกล้องเข้าคิวเองจากขั้นของ Ai-iclone; ดูบรรทัด 'ส่งรูป:' ใน Preview ถ้าไม่ถึงให้รายงาน "
+            "ห้ามส่งซ้ำเอง. รักษาข้อจำกัดการเซฟและการอนุมัติจริง. "
             "ไม่คัดลอกประวัติหรือสถานะจากงานเก่ามาเป็นคำสั่ง."
         )
     now=active_context(base)
@@ -102,14 +109,7 @@ def build(kind,base=BASE,target=None):
         story=session["story"];part=session["part"];now={"story":story,"part":part,"mode":"sleep"}
     installed,other,released,link=release_info(base)
     skills=sorted(skill_files(base,other))
-    entries=[]
-    for line in read(base/"docs"/"SCRIPT_CATALOG.md").splitlines():
-        cols=line.split("|")
-        if len(cols)>3 and cols[1].strip().startswith(chr(96)):
-            name=cols[1].strip()
-            if historical_part_line(line):continue
-            entries.append(name+" — "+cols[2].strip())
-    intro="ทุกเรื่องใช้กฎกลางเดียวกัน แต่จำนวนท่อน ชื่อ ลำดับ และเนื้อหาอ่านจาก story spec ของเรื่องนั้นจริง ไม่ใช้ตัวอย่างหรือหมายเลขท่อนจากเรื่องอื่นเป็นข้อบังคับ. ยึดเป้าหมายล่าสุดที่ผู้ใช้ระบุจริง ไม่ใช้สถานะการรันเก่ามาเลือกงานใหม่ ไม่ย้อนทำงานเดิมโดยพลการ. หากข้อมูลขัดกันให้ตรวจและแก้ต้นเหตุโดยรักษาข้อจำกัดและการอนุมัติ.\n\n"+RULES+"\n\nInstalled Pipeline: "+installed+"\nSkills: "+", ".join(skills)+"\nดัชนีสคริปต์ (ตรวจ signature ก่อนใช้):\n"+"\n".join(entries)
+    intro="ทุกเรื่องใช้กฎกลางเดียวกัน แต่จำนวนท่อน ชื่อ ลำดับ และเนื้อหาอ่านจาก story spec ของเรื่องนั้นจริง ไม่ใช้ตัวอย่างหรือหมายเลขท่อนจากเรื่องอื่นเป็นข้อบังคับ. ยึดเป้าหมายล่าสุดที่ผู้ใช้ระบุจริง ไม่ใช้สถานะการรันเก่ามาเลือกงานใหม่ ไม่ย้อนทำงานเดิมโดยพลการ. หากข้อมูลขัดกันให้ตรวจและแก้ต้นเหตุโดยรักษาข้อจำกัดและการอนุมัติ.\n\n"+RULES+"\n\nInstalled Pipeline: "+installed+agents_rule(base)+"\nSkills: "+", ".join(s for s in skills if s not in MAINTAINER_ONLY)
     intro+="\nProject root on current machine: "+str(base.resolve())+"\nให้เริ่มจากโปรเจกต์ที่ตรวจพบจริง ไม่เดา path จากเครื่องอื่น; ตรวจว่าปลั๊กอิน GPT และ Dino Bot Tunnel พร้อมใช้งาน แล้วเรียกเครื่องมือที่มีอยู่ตามลำดับงาน."
     if other:
         intro+="\nAvailable release (not automatically installed): "+released+" "+link+"\nReviewed source: "+str(other.resolve())
@@ -131,9 +131,7 @@ def build(kind,base=BASE,target=None):
             "ส่งภาพเป็นส่วนบังคับของ QA: ตรวจ /status ของ Relay ว่าผูกแชตนี้จริงก่อนสร้างภาพ; "
             "เมื่อใช้ Prompt ส่งต่อที่มี handoff marker ส่วนขยายจะผูกแชตจากข้อความผู้ใช้ที่โพสต์จริงโดยอัตโนมัติ. "
             "ถ้ายังไม่ผูก ให้ตรวจและใช้ปุ่มผูกแชตนี้ ห้ามเดา URL. "
-            "จับภาพหน้าต่างท่อนปัจจุบันด้วย py -3 -B tools/chrome_preview_bridge/capture_preview.py --send; "
-            "ภาพกล้องจากขั้น cams จะเข้าคิวเองผ่าน queue_preview.py. ถ้าสร้างภาพก่อนผูก ให้ใช้ queue_preview.py กับ JPEG สดที่ตรวจตรงท่อนแล้วโดยไม่สร้างกล้องซ้ำ. "
-            "ตรวจ job.json และใบตอบรับ sent; ห้ามส่งภาพซ้ำถ้า pending/claimed/needs_review. ตรวจภาพจริงในแชตก่อน QA. "
+            "ภาพกล้องจากขั้น cams ของ Ai-iclone เข้าคิวส่งเอง ดูบรรทัด 'ส่งรูป:' ใน Preview; ถ้าไม่ถึงให้รายงาน ห้ามสร้างหรือส่งภาพซ้ำเอง. ตรวจภาพจริงในแชตก่อน QA. "
             "ควบคุมผ่าน watcher/RLPy/Qt หรือ UI Automation แบบเจาะจงหน้าต่างก่อนใช้เมาส์จริง; "
             "ไม่แย่งเมาส์เมื่อผู้ใช้กำลังทำงาน.\n\n")
         intro=target_header+intro

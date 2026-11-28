@@ -1,3 +1,5 @@
+> ⚠ ไฟล์นี้เก่า (2026-11-11) สถานะปัจจุบันอยู่ที่ `docs/WHAT_WORKS.md`
+
 # CURRENT PROJECT STATUS — Clone Story Pipeline
 
 Updated: 2026-11-11T03:20:13+07:00

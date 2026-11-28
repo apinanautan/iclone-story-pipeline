@@ -15,6 +15,7 @@ where the work stands (the same state the Ai-iclone window shows) and the single
   Ai-iclone update                  get the newest release from GitHub now (every command also checks, at most once per 10 min)
   Ai-iclone clean                   delete iClone temp files older than 2 days (also automatic after each part)
   Ai-iclone log                     what runs now (real %), log with clock + seconds, last FAIL report (screen text, picture)
+  Ai-iclone setup                   new PC: check + fix everything, list what is left for the user (Thai)
   Ai-iclone doctor                  check this PC's tools (ffmpeg, ffprobe, Python, Blender, iClone jobs folder)
   Ai-iclone motions [story] [part] [--write]
                                     body motions per line from the WHOLE library (talk / listen / mood, never the same clip all story)
@@ -456,6 +457,38 @@ def doctor():
     return 1 if bad else 0
 
 
+def setup():
+    """user 2026-11-28: a new PC = download Ai-iclone.exe, run `Ai-iclone setup`, nothing else to remember.
+    The exe already fetched the newest release before this runs. Checks everything, fixes what it can,
+    prints ONE Thai line per thing left for the user."""
+    import glob
+    left = []
+    out("1/4 เครื่องมือ"); doctor()
+    out("2/4 โฟลเดอร์ของเครื่องนี้ (paths.local.json)")
+    subprocess.run([PY, str(SCR / "paths.py")], cwd=ROOT)
+    pf = os.environ.get("ProgramFiles", r"C:\Program Files")
+    ic = os.path.join(pf, "Reallusion", "iClone 8", "Bin64")
+    out("3/4 iClone")
+    if not os.path.isdir(ic): left.append("ลง iClone 8 ก่อน แล้วรัน Ai-iclone setup อีกครั้ง")
+    elif os.path.isfile(os.path.join(ic, "OpenPlugin", "iCloneStoryBridge", "main.py")): out("OK   ตัวรับงานเปิดเองตอนเปิด iClone")
+    else:
+        out("..   ติดตั้งตัวรับงานให้เปิดเองกับ iClone (Windows จะถามสิทธิ์ ให้กด Yes)")
+        subprocess.run(["powershell", "-NoProfile", "-Command", "Start-Process powershell -Verb RunAs -Wait -ArgumentList "
+                        "'-NoProfile','-ExecutionPolicy','Bypass','-File','\"%s\"'" % (ROOT / "mcp_server" / "install_openplugin.ps1")])
+        if not os.path.isfile(os.path.join(ic, "OpenPlugin", "iCloneStoryBridge", "main.py")):
+            left.append("ใน iClone: Script > Load Python > scripts/ic8_watch.py (ทุกครั้งที่เปิด iClone)")
+    out("4/4 Blender (ใช้ตรวจโมชั่น ทำพร็อพ)")
+    bl = sorted(glob.glob(os.path.join(pf, "Blender Foundation", "Blender*", "blender.exe")))
+    if not bl: left.append("ลง Blender จาก blender.org (ไม่บังคับ ใช้แค่ตรวจโมชั่นและทำพร็อพ)")
+    elif not glob.glob(os.path.join(os.environ.get("APPDATA", ""), "Blender Foundation", "Blender", "*", "*", "addons", "cc_blender_tools*")):
+        left.append("ใน Blender ลงปลั๊กอิน CC/iC Tools ของ Reallusion (ไม่บังคับ)")
+    else: out("OK   Blender และ CC/iC Tools")
+    if not list((ROOT / "stories").glob("*.json")): left.append("คัดลอกโฟลเดอร์ stories และ parts จากเครื่องเดิม หรือสั่ง Ai-iclone new-story <ชื่อเรื่อง>")
+    out("setup: " + ("ครบแล้ว ใช้งานได้" if not left else "เหลือ %d อย่างที่ต้องทำเอง:" % len(left)))
+    for i, x in enumerate(left, 1): out("  %d. %s" % (i, x))
+    return 0
+
+
 def main(a):
     for s in (sys.stdout, sys.stderr):
         try: s.reconfigure(encoding="utf-8")
@@ -543,6 +576,7 @@ def main(a):
         if rc == 0: save_sel({"story": a[1]})
         return rc
     if c == "doctor": return doctor()
+    if c == "setup": return setup()
     if c == "log":
         import ailog; out(ailog.show()); return 0
     if c == "motions":   # pick body motions per line from the whole library (scripts/motion_pool.py)

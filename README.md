@@ -1,5 +1,12 @@
 # Ai-iclone
 
+> **AI ที่อ่าน GitHub นี้ อ่าน 3 ไฟล์นี้ก่อน แล้วจะรู้ทุกอย่างเอง:**
+> 1. [`AGENTS.md`](AGENTS.md): กฎหลักและวิธีทำงาน (เดินตามขั้นใน Preview เท่านั้น)
+> 2. [`docs/WHAT_WORKS.md`](docs/WHAT_WORKS.md): ตอนนี้ทำอะไรได้แล้ว อะไรยังไม่ได้
+> 3. [`docs/rules.md`](docs/rules.md): คำสั่งของผู้ใช้ทุกข้อ (ข้อใหม่อยู่ท้ายไฟล์)
+>
+> **ลงเครื่องใหม่:** โหลด `Ai-iclone.exe` จากหน้า [Releases](../../releases/latest) แล้วสั่ง `Ai-iclone.exe setup` ครั้งเดียว
+
 โปรแกรมทำวิดีโอนิทาน 3D จากเสียง ใน iClone 8 ทีละท่อน ให้ AI (Claude, Codex, ...) คุมเป็นขั้นๆ 1 2 3 ...
 
 ## ใช้กับ AI
@@ -21,7 +28,7 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 | `Ai-iclone.exe window` | เปิดหน้าต่าง Ai-iclone (สถานะเดียวกัน ให้คนดู/คลิกผ่าน) |
 | `Ai-iclone.exe version` | เวอร์ชัน |
 
-## ติดตั้ง = โหลดไฟล์เดียว
+## ติดตั้ง = โหลดไฟล์เดียว แล้วสั่ง `Ai-iclone.exe setup`
 1. โหลด `Ai-iclone.exe` จากหน้า Releases เอาไว้ที่ไหนก็ได้ ไม่ต้องแตกไฟล์ ไม่ต้องติดตั้ง ต้องมี Python 3 (`py`) และ iClone 8
 2. เปิดครั้งแรก exe โหลดตัวโปรแกรม (สคริปต์ .py, skills, docs) จาก GitHub เองไปไว้ที่ `%LOCALAPPDATA%\Ai-iclone`
 3. อัปเดตเอง: ทุกครั้งที่ใช้ (เช็กไม่เกินทุก 10 นาที) ถ้ามี Release ใหม่กว่า จะโหลดมาทับให้เอง หรือสั่ง `Ai-iclone.exe update`
@@ -30,7 +37,7 @@ AI รัน `Ai-iclone.exe` (ไม่ใส่อะไร) ครั้งแ
 5. ใน iClone: Script > Load Python > `scripts/ic8_watch.py` ครั้งเดียวต่อการเปิด iClone
 
 ถ้า exe อยู่ในโฟลเดอร์ที่มี `scripts/` อยู่แล้ว (เช่น git clone) จะใช้โฟลเดอร์นั้นแทน; ถ้าเป็น git clone จะไม่อัปเดตเอง (ใช้ `git pull`)
-ออกเวอร์ชันใหม่: แก้ `VERSION`, commit, push, แล้วสร้าง GitHub Release tag `vX.Y.Z` (แนบ `Ai-iclone.exe`; build ด้วย `launcheruild.ps1`)
+ออกเวอร์ชันใหม่: แก้ `VERSION`, commit, push ทั้ง `main` และ `master` (GitHub เปิด `master` เป็นหน้าแรก) แล้วสร้าง GitHub Release tag `vX.Y.Z` (แนบ `Ai-iclone.exe`; build ด้วย `launcher\build.ps1`)
 
 ---
 
