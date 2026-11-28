@@ -9,7 +9,7 @@ class Handoff(unittest.TestCase):
         self.tmp=tempfile.TemporaryDirectory();self.base=Path(self.tmp.name)
         self.root=self.base/"tools/chrome_preview_bridge";self.root.mkdir(parents=True)
         self.state=self.root.parent/"preview_bridge_local";self.state.mkdir()
-        self.patches=[patch.multiple(b,ROOT=self.root,STATE=self.state),patch.object(q,"STATE",self.state)]
+        self.patches=[patch.multiple(b,ROOT=self.root,STATE=self.state),patch.object(q,"STATE",self.state),patch.object(q,"ensure_relay",lambda:True)]
         for p in self.patches:p.start()
         self.put("stories/Fixture.json",{"name":"Fixture","parts":[{"n":"2"},{"n":"3"},{"n":"8.2"}]})
         self.put("progress/now.json",{"story":"Fixture","part":"2","step":"render","state":"failed"})

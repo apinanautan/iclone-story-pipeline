@@ -803,7 +803,7 @@ def step_cams(S, base):
     bridge = os.path.join(ROOT, "tools", "chrome_preview_bridge", "queue_preview.py")
     if os.path.isfile(bridge):
         br = subprocess.run([sys.executable, "-B", bridge, sheet, str(S.get("story","")), str(S.get("part",""))], capture_output=True, text=True, encoding="utf-8", errors="replace", env=dict(os.environ, PYTHONIOENCODING="utf-8"))
-        say("Preview bridge: " + (br.stdout.strip() if not br.returncode else "queue failed"))
+        say("Preview bridge: " + (br.stdout.strip() if not br.returncode else "queue failed: " + (br.stderr.strip().splitlines() or ["?"])[-1][:200]))
     say("OK cams -> %s (LOOK: faces 3/4, speaker visible, no bed/clipping, nobody cut by the frame edge)" % os.path.join(J, "part_cams.jpg"))
 
 

@@ -284,6 +284,35 @@ def step_states(story, n):
     return out, live
 
 
+_SEND = [0.0, ""]
+def send_status():
+    """Image-to-chat state (user 2026-11-28: images silently never arrived). Cached 5 s: it pings the relay."""
+    if time.time() - _SEND[0] > 5:
+        try:
+            import sys
+            sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+            import queue_preview
+            _SEND[1] = queue_preview.status_line()
+        except Exception:
+            _SEND[1] = ""
+        _SEND[0] = time.time()
+    return _SEND[1]
+
+
+def start_relay():
+    """Opening the Preview window brings the image/Goal Tracker relay up too (background, never blocks the window)."""
+    import threading
+    def go():
+        try:
+            import sys
+            sys.path.insert(0, str(ROOT / "tools" / "chrome_preview_bridge"))
+            import queue_preview
+            queue_preview.ensure_relay()
+        except Exception:
+            pass
+    threading.Thread(target=go, daemon=True).start()
+
+
 class App(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -434,6 +463,8 @@ class App(tk.Tk):
         from repair_queue import lines as repair_lines
         checks=repair_lines(PROG,story,n)
         if checks: txt += "\n" + "\n".join(checks)
+        send = send_status()
+        if send: txt += "\n" + send
         self.head.configure(text=txt)
         ss = story_states(story); sdone = sum(1 for s, _ in ss.values() if s == "done")
         allok = sdone == len(STORY_STEPS)
@@ -528,4 +559,5 @@ class App(tk.Tk):
 
 
 if __name__ == "__main__":
+    start_relay()
     App().mainloop()
